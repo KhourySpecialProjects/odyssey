@@ -65,9 +65,9 @@ export function DropletDueDateBlock({
   };
 
   return (
-    <div className="flex w-full flex-row items-center justify-between space-x-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xl dark:border dark:border-slate-500 dark:bg-slate-800">
+    <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xl dark:border dark:border-slate-500 dark:bg-slate-800">
       <Link href={`/d/${currentDroplet.slug}`}>{currentDroplet.name}</Link>
-      <div className="flex flex-row items-center space-x-2">
+      <div className="flex flex-row items-center gap-2">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
@@ -99,7 +99,10 @@ export function DropletDueDateBlock({
               <Trash2Icon />
             </Button>
           </div>
-          <Dialog open={removePopupVisible}>
+          <Dialog
+            open={removePopupVisible}
+            onOpenChange={setRemovePopupVisible}
+          >
             <DialogContent>
               <DialogHeader className="flex flex-col items-center text-center">
                 <DialogTitle>

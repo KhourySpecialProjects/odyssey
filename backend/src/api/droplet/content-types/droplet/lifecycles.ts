@@ -1,10 +1,17 @@
 import { sendSlackNotification, escapeSlackMrkdwn, SlackBlock } from '../../../../lib/slack';
-import { generateSlug, formatPersonName, capitalize } from '../../../../lib/lifecycle-utils';
+import {
+  generateSlug,
+  formatPersonName,
+  capitalize,
+  markClaimedVoyageNodesAuthored,
+} from '../../../../lib/lifecycle-utils';
 import { DropletStatus, DropletWithRelations } from '../../types';
 
 module.exports = {
   async beforeCreate(event) {
     event.params.data.slug = await generateSlug('api::droplet.droplet', event.params.data);
+    // Server-owned submission counter; client values are ignored.
+    event.params.data.reviewRound = event.params.data.inReview === true ? 1 : 0;
   },
 
   async beforeUpdate(event) {
@@ -13,14 +20,28 @@ module.exports = {
     }
     delete event.params.data.regenerateSlug;
 
-    // Only capture previous status when the update touches the status field.
-    if ('status' in event.params.data) {
-      const existing = await strapi.entityService.findOne(
-        'api::droplet.droplet',
-        event.params.where.id,
-        { fields: ['status'] }
-      );
-      event.state = { previousStatus: existing ? (existing.status as DropletStatus) : null };
+    // Server-owned counter: drop any client value, then bump when inReview turns true.
+    delete event.params.data.reviewRound;
+
+    const data = event.params.data;
+    if ('status' in data || data.inReview === true) {
+      // Resolve the row by numeric id, else documentId (Query Engine callers). Neither: skip, so
+      // afterUpdate sees no previousStatus and nothing bumps.
+      const { id, documentId } = event.params.where ?? {};
+      const filters = id !== undefined ? { id } : documentId ? { documentId } : null;
+      const existing = filters
+        ? await strapi.documents('api::droplet.droplet').findFirst({
+            filters,
+            fields: ['status', 'inReview', 'reviewRound'],
+          })
+        : null;
+      // Only capture previous status when the update touches the status field.
+      if ('status' in data && filters) {
+        event.state = { previousStatus: existing ? (existing.status as DropletStatus) : null };
+      }
+      if (data.inReview === true && existing && existing.inReview !== true) {
+        data.reviewRound = (existing.reviewRound ?? 0) + 1;
+      }
     }
   },
 
@@ -28,16 +49,28 @@ module.exports = {
     const { result } = event;
     const prevStatus = event.state?.previousStatus as DropletStatus | null | undefined;
 
+    // Publishing a claimed voyage droplet finishes the claim. Logged instead of
+    // thrown: the droplet is already saved, so the publish must not fail here.
+    if (result.status === 'published' && prevStatus !== undefined && prevStatus !== 'published') {
+      try {
+        await markClaimedVoyageNodesAuthored({ id: result.id });
+      } catch (error) {
+        strapi.log.error(`Could not mark voyage claims authored for droplet ${result.id}`, error);
+      }
+    }
+
     // Only fire when status transitions *into* 'edit'.
     if (result.status !== 'edit' || prevStatus === 'edit' || prevStatus === undefined) return;
 
-    const droplet = (await strapi.entityService.findOne('api::droplet.droplet', result.id, {
+    // After hooks have the result's documentId, so a plain findOne works.
+    const droplet = (await strapi.documents('api::droplet.droplet').findOne({
+      documentId: result.documentId,
       populate: {
         lessons: { fields: ['name'] },
         authorized_users: { fields: ['firstName', 'lastName', 'email'] },
         tags: { fields: ['name'] },
       },
-    })) as DropletWithRelations | null;
+    })) as unknown as DropletWithRelations | null;
 
     if (!droplet) return;
 

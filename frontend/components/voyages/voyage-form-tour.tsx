@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
@@ -12,13 +12,8 @@ interface VoyageFormTourProps {
 }
 
 export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
-  const driverRef = useRef<ReturnType<typeof driver> | null>(null);
-
   useEffect(() => {
-    if (!run) {
-      driverRef.current?.destroy();
-      return;
-    }
+    if (!run) return;
 
     const d = driver({
       showProgress: true,
@@ -34,13 +29,12 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
       nextBtnText: "Next",
       prevBtnText: "Back",
       doneBtnText: "Got it!",
-      onCloseClick: () => {
-        setRun(false);
-        localStorage.setItem(VOYAGE_TOUR_KEY, "completed");
-      },
+      // X, Done, Escape and overlay clicks all land here. Destroy directly: a
+      // parent unmounted by navigation never re-renders to do it
       onDestroyStarted: () => {
-        setRun(false);
         localStorage.setItem(VOYAGE_TOUR_KEY, "completed");
+        d.destroy();
+        setRun(false);
       },
       steps: [
         {
@@ -48,7 +42,7 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
             title: "Let's build a Voyage!",
             description:
               "A voyage is a learning path your students follow, island by island. You can mix playlists, individual droplets, and even leave spots open for others to contribute.",
-            side: "over",
+            // No element, so driver.js centres this popover on screen
             align: "center",
           },
         },
@@ -115,8 +109,11 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
       ],
     });
 
-    driverRef.current = d;
     d.drive();
+    // Leaving the page mid-tour would otherwise orphan it on document.body
+    return () => {
+      if (d.isActive()) d.destroy();
+    };
   }, [run, setRun]);
 
   return null;

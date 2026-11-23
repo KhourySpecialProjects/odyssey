@@ -12,6 +12,7 @@ import {
 } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { DateTime } from "luxon";
+import { userTimeZone } from "@/lib/time-zones";
 import { useState, useEffect, useRef } from "react";
 
 interface GroupDropletTileProps {
@@ -59,7 +60,7 @@ export function GroupDropletTile({
     daysUntil = Math.ceil(diffDays);
 
     finalDate = DateTime.fromISO(dueDate)
-      .setZone(authUser?.timeZone?.trim() || "America/New_York")
+      .setZone(userTimeZone(authUser?.timeZone))
       .toFormat("MM/dd hh:mm a");
   }
 
@@ -74,7 +75,7 @@ export function GroupDropletTile({
               </Badge>
               <Badge
                 variant="secondary"
-                className="text-xs dark:bg-slate-900 dark:text-white"
+                className="text-xs dark:bg-slate-900 dark:text-white dark:hover:bg-slate-900"
               >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>

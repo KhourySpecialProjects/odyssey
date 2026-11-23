@@ -13,6 +13,26 @@ cd frontend && npx jest --coverage         # Generate coverage report
 
 Config: `frontend/jest.config.js` with `jest-environment-jsdom`. Setup file: `frontend/jest.setup.ts` (imports `@testing-library/jest-dom` matchers).
 
+### Backend Tests (Strapi v5 lifecycle hooks)
+
+```bash
+npm --prefix backend test                              # All backend tests (jest --maxWorkers=2)
+npm --prefix backend test -- tests/lifecycles/droplet  # One file
+```
+
+A Jest `globalSetup` (`backend/tests/global-setup.js`) compiles the TypeScript app into `dist/` once per run. Then each test file boots a real Strapi v5 instance on a throwaway SQLite database (`backend/.tmp/test-*.db`, removed in teardown), using `better-sqlite3`. Needs no Postgres, S3 or `.env`. `better-sqlite3` is pinned to 12.9.0 because the backend Docker images are Node 20 and newer versions drop Node 20 (bump with ODY-604).
+
+- `backend/tests/helpers/strapi.js` sets the test env in code (dummy secrets, `DATABASE_CLIENT=sqlite`, `SLACK_WEBHOOK_URL`), runs `compileStrapi` + `createStrapi().load()`, mounts the server and tears it down.
+- `backend/config/env/test/plugins.ts` turns the documentation plugin off (so the boot doesn't rewrite tracked docs JSON) and uses the local upload provider.
+- `backend/tests/helpers/api-token.js` makes a full-access API token for REST tests with supertest.
+- `backend/tests/helpers/admin-auth.js` (`createSuperAdminToken`) creates a super-admin and logs in through `POST /admin/login`, for admin and content-manager routes (`tests/admin/`). TS source under `src/` can't be required from Jest; require the compiled `dist/src/...` that `setupStrapi` builds.
+- `backend/tests/helpers/slack.js` counts Slack sends by spying on `fetch`; `fixtures.js` has minimal valid payloads.
+- DB-level duplicate tests (raw driver errors) use `expectUniqueViolation` from `backend/tests/helpers/unique.js` (`.rejects.toThrow()` can miss raw driver errors). Import it, don't copy it.
+- `test.failing` marks known issues; when one is fixed Jest reports it as failing, and it gets flipped to `it`.
+- Tooling: regenerate the lockfile fresh (it can't be upgraded in place from v4). The 5.56.0 pins are intentional. Bump `ckeditor5` only together with `@_sh/strapi-plugin-ckeditor`. `backend/.prettierrc.json` is required.
+
+A run must leave `git status` clean. Needs Node 20 or later. CI runs these as the `backend` entry of the matrix in `.github/workflows/test.yml`, on Node 20.14.0 (the ECS image version).
+
 ### Test Directory Structure
 
 ```
@@ -167,7 +187,7 @@ Each role directory contains tests scoped to that role's permissions. Tests auth
 The CI pipeline runs on pull requests to `develop` and `production`:
 
 1. **Prettier** — Format check on all files
-2. **ESLint** — Lint check on `frontend/app`, `frontend/components`, `frontend/lib`
+2. **ESLint** — the frontend flat config (`frontend/eslint.config.mjs`: core recommended + Next) on `app`, `components`, `lib`, `hooks` and `types`
 3. **Jest** — All unit tests
 4. **Frontend build** — `next build` (catches TypeScript errors)
 5. **Backend build** — Strapi build
@@ -183,12 +203,18 @@ Use the `/ci` slash command in Claude Code:
 
 The command runs each check sequentially, reports pass/fail with relevant output, and gives a final verdict (READY TO PUSH or NOT READY TO PUSH).
 
+### Dependency audits (feature/strapi-v5, temporary)
+
+Dependabot only targets `develop`, and reads its config from `production`. At every `develop` → `feature/strapi-v5` merge and before the ODY-602 rehearsal, run `cd backend && npm audit`.
+Compare advisory names against the Decision Record in `docs/plans/ODY-701.md`, and triage any new name before merging.
+Delete this subsection when v5 merges to `develop`.
+
 ### Quality Gate Hook
 
 The `quality-gate.sh` hook runs automatically after every agent turn (Stop and SubagentStop events):
 
 - Auto-fixes formatting with Prettier on all changed files
-- Does NOT run ESLint — a version mismatch between frontend and root ESLint configs causes plugin resolution errors
+- Does NOT run ESLint — use `npm run lint` to check
 - Always exits 0 (never blocks the agent)
 - Linting is checked by `npm run lint` in CI and the `/ci` command
 
@@ -235,7 +261,7 @@ bug/description
 improvement/description
 ```
 
-All work starts from `develop`. Branch naming: `feature/[description]`, `bug/[description]`, or `improvement/[description]`.
+All work starts from `develop`. Branch naming: `feature/[description]`, `bug/[description]`, or `improvement/[description]`. Cloud agent sessions push `claude/[description]`; CI accepts those too (`.github/workflows/pull-request.yml`).
 
 ### Local Development
 

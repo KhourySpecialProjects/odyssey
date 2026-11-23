@@ -6,6 +6,7 @@ import { DropletTile } from "../droplets/droplet-tile";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { useSearch } from "@/contexts/SearchContext";
 import { useSortKey } from "@/hooks/use-sort-key";
+import { matchesDropletSearch } from "@/lib/author-names";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -146,7 +147,7 @@ export function EnrolledDropletsGridClient({
     // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter((droplet) =>
-        droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        matchesDropletSearch(droplet, searchQuery),
       );
     }
 

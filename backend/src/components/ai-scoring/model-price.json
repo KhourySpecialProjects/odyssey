@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_ai_scoring_model_prices",
+  "info": {
+    "displayName": "Model Price",
+    "description": "What one Claude model costs, in US dollars per million tokens (ODY-815)"
+  },
+  "options": {},
+  "attributes": {
+    "model": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "inputPerMillionUsd": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "outputPerMillionUsd": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    }
+  }
+}

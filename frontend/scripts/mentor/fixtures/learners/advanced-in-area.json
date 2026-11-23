@@ -1,0 +1,26 @@
+{
+  "about": "Advanced in data science: three advanced data droplets finished. Reusable. The droplet names are made up: no fixture is an advanced data droplet.",
+  "finished": [
+    {
+      "name": "Machine Learning with scikit-learn",
+      "tags": ["data science", "python", "machine learning"],
+      "difficulty": "advanced",
+      "month": "2026-10"
+    },
+    {
+      "name": "Statistical Modeling in Python",
+      "tags": ["statistics", "python"],
+      "difficulty": "advanced",
+      "month": "2026-09"
+    },
+    {
+      "name": "Data Visualization with matplotlib",
+      "tags": ["data science", "visualization"],
+      "difficulty": "intermediate",
+      "month": "2026-07"
+    }
+  ],
+  "inProgress": [],
+  "prerequisites": [],
+  "viewedLessons": []
+}

@@ -32,6 +32,17 @@ describe("ContentTypeSelector", () => {
     );
   });
 
+  it("starts the other tab at page 1 (ODY-865)", () => {
+    (useSearchParams as jest.Mock).mockReturnValue(
+      new URLSearchParams("q=py&page=3"),
+    );
+    render(<ContentTypeSelector droplets={0} playlists={0} />);
+    fireEvent.click(screen.getByText("Playlists (0)"));
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      "/explore?q=py&contentType=playlists",
+    );
+  });
+
   it("highlights Droplets when the URL has an unknown content type", () => {
     (useSearchParams as jest.Mock).mockReturnValue(
       new URLSearchParams("contentType=bogus"),

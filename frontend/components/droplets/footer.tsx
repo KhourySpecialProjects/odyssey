@@ -14,6 +14,10 @@ import {
   useViewedLessonsStore,
 } from "@/stores/viewed-lessons-store";
 import { toast } from "sonner";
+import {
+  refreshStreakAfterLesson,
+  StreakLessonBanner,
+} from "@/components/streaks/streak-lesson-banner";
 
 type PaginationProps = {
   link: string;
@@ -42,14 +46,18 @@ export default function DropletFooter({
   const isViewed = (lessonId: number) => viewedLessonIds.includes(lessonId);
 
   /**
-   * Saves the current lesson as viewed. Returns true when server data changed
+   * Saves the current lesson as viewed. "changed" means server data changed
    * (the lesson was newly viewed, or the droplet became complete).
    */
-  const saveLessonViewed = async (): Promise<boolean> => {
-    if (!enrollmentId || !currentLessonId || !droplet.lessons) return false;
+  const saveLessonViewed = async (): Promise<
+    "changed" | "unchanged" | "failed"
+  > => {
+    if (!enrollmentId || !currentLessonId || !droplet.lessons) {
+      return "unchanged";
+    }
     // Already recorded: nothing to save (missing completion data on legacy
     // enrollments is filled in by <CompletionBackfill> on the page).
-    if (isViewed(currentLessonId)) return false;
+    if (isViewed(currentLessonId)) return "unchanged";
 
     const lessonId = currentLessonId;
     // Show it as viewed in the sidebar right away; see viewed-lessons-store.
@@ -62,16 +70,21 @@ export default function DropletFooter({
 
     if (!result.success) {
       unmarkViewed(enrollmentId, lessonId);
-      toast.error("Couldn't save your progress on this lesson.");
-      return false;
+      return "failed";
     }
-    return !result.alreadyViewed;
+    return result.alreadyViewed ? "unchanged" : "changed";
   };
 
   // The recap page shows the droplet as completed based on this save, so
-  // wait for it before going there.
+  // wait for it before going there. Throwing keeps the user on the lesson.
   const saveBeforeRecap = async () => {
-    await saveLessonViewed();
+    const outcome = await saveLessonViewed();
+    if (outcome === "failed") {
+      throw new Error("Lesson progress wasn't saved");
+    }
+    // The recap page has no banner, so the streak is told in a toast
+    if (outcome === "changed")
+      void refreshStreakAfterLesson({ announce: true });
   };
 
   // Lesson to lesson: navigate first and save in the background, then
@@ -80,7 +93,22 @@ export default function DropletFooter({
   // Action runs when the navigation finishes, which can be before the save
   // lands, so it can't be relied on for this.
   const saveInBackground = async () => {
-    if (await saveLessonViewed()) router.refresh();
+    const lessonId = currentLessonId;
+    const outcome = await saveLessonViewed();
+    if (outcome === "changed") {
+      router.refresh();
+      // The next lesson's banner is off screen, so the streak is told in a toast
+      void refreshStreakAfterLesson({ announce: true });
+    }
+    if (outcome === "failed") {
+      // Usually shown after moving on, so name the lesson it's about
+      const lessonName = droplet.lessons?.find((l) => l.id === lessonId)?.name;
+      toast.error(
+        lessonName
+          ? `Failed to save progress for ${lessonName}`
+          : "Failed to save lesson progress",
+      );
+    }
   };
 
   const handleMarkAsComplete = () => {
@@ -89,15 +117,21 @@ export default function DropletFooter({
     startTransition(async () => {
       // Same action as "Next" so finishing the last lesson here also records
       // the droplet's completion (isComplete + completionDate).
-      const { success } = await updateViewedLessons(
+      // A rejected call (network drop, redeployed action) is a failure too;
+      // left uncaught it would reach the lesson's error boundary
+      const result = await updateViewedLessons(
         enrollmentId,
         currentLessonId,
         allDropletLessonIds,
-      );
+      ).catch(() => ({ success: false as const }));
       // No router.refresh(): the action's revalidateTag already re-renders
       // the route, and a refresh here would be a second full server render.
-      if (!success) {
+      if (!result.success) {
         console.error("Failed to mark lesson as complete");
+        toast.error("Failed to mark lesson as complete");
+      } else if (!result.alreadyViewed) {
+        // The banner below lights in place, so no toast
+        void refreshStreakAfterLesson({ announce: false });
       }
     });
   };
@@ -232,15 +266,26 @@ export default function DropletFooter({
               canProceed={canProceed}
               onClick={nextIsRecap ? saveBeforeRecap : saveInBackground}
               awaitOnClick={nextIsRecap}
+              label={nextIsRecap ? undefined : `Next: ${next.name}`}
             >
-              Next
-              <IconArrowRight className="h-4 w-4" />
+              {nextIsRecap ? (
+                <span>Finish → Recap</span>
+              ) : (
+                <>
+                  <span className="shrink-0">Next</span>
+                  <span className="max-w-[12rem] truncate">: {next.name}</span>
+                </>
+              )}
+              <IconArrowRight className="h-4 w-4 shrink-0" />
             </PaginationLinkWrapper>
           ) : (
             <div className="flex-1"></div>
           )}
         </div>
       </div>
+      {isOnLesson && enrollmentId && (
+        <StreakLessonBanner lessonCompleted={isCompleted} />
+      )}
     </div>
   );
 }
@@ -252,6 +297,7 @@ const PaginationLinkWrapper = ({
   canProceed,
   onClick,
   awaitOnClick = false,
+  label,
 }: {
   link: string;
   className?: string;
@@ -259,12 +305,26 @@ const PaginationLinkWrapper = ({
   canProceed: boolean;
   onClick?: () => Promise<void>;
   awaitOnClick?: boolean;
+  /** Full accessible name and tooltip, for a label that gets truncated */
+  label?: string;
 }) => {
   const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleClick = async () => {
     if (onClick && awaitOnClick) {
-      await onClick();
+      // Same "Saving..." feedback as "Mark as complete" while the save runs.
+      // It stays on until the next page replaces this one.
+      setIsSaving(true);
+      try {
+        await onClick();
+      } catch (error) {
+        // Stay on the lesson with the button usable so the user can retry
+        console.error("Failed to save lesson progress:", error);
+        toast.error("Failed to save lesson progress");
+        setIsSaving(false);
+        return;
+      }
     } else if (onClick) {
       // Navigate right away; the save finishes in the background and onClick
       // handles its own result (see saveInBackground).
@@ -278,12 +338,15 @@ const PaginationLinkWrapper = ({
   return canProceed ? (
     <button
       onClick={handleClick}
+      disabled={isSaving}
+      title={label}
+      aria-label={label}
       className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+        "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
         className,
       )}
     >
-      {children}
+      {isSaving ? "Saving..." : children}
     </button>
   ) : (
     <div className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] opacity-40 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">

@@ -67,15 +67,6 @@ export type PopulateValue =
       [key: string]: PopulateValue;
     };
 
-function withoutPaginationCount(urlParams?: object): object {
-  const params = (urlParams ?? {}) as { pagination?: Record<string, unknown> };
-  if (params.pagination && "withCount" in params.pagination) return params;
-  return {
-    ...params,
-    pagination: { ...params.pagination, withCount: false },
-  };
-}
-
 /**
  * Asks Strapi v5 to keep answering in the v4 response shape (`data.attributes`),
  * which flattenAttributes relies on. Strapi v4 ignores it. Spread it into the
@@ -116,15 +107,7 @@ export async function fetchAPI<T>(
       ...(config.next && { next: config.next }),
     };
 
-    // backend/config/api.ts enables withCount globally, which costs an extra
-    // COUNT query per list request. Flattened responses drop `meta`, so skip
-    // it unless the caller asks for the raw response or sets withCount itself.
-    const shouldFlatten = config.flattenResponse !== false;
-    const urlParams = shouldFlatten
-      ? withoutPaginationCount(config.urlParams)
-      : config.urlParams;
-
-    const queryString = qs.stringify(urlParams, {
+    const queryString = qs.stringify(config.urlParams, {
       encodeValuesOnly: true,
     });
 
@@ -144,7 +127,10 @@ export async function fetchAPI<T>(
 
     const data = await response.json();
 
-    if (shouldFlatten) {
+    if (
+      config.flattenResponse ||
+      typeof config.flattenResponse === "undefined"
+    ) {
       const temp = flattenAttributes(data.data);
       return temp;
     }
@@ -677,9 +663,10 @@ function blockNoteBlockToMarkdown(block: any): string {
   const text = inlineContentToMarkdown(block.content);
 
   switch (block.type) {
-    case "heading":
+    case "heading": {
       const level = "#".repeat(props.level || 1);
       return `${level} ${text}`;
+    }
 
     case "paragraph":
       return text || "";
@@ -693,18 +680,20 @@ function blockNoteBlockToMarkdown(block: any): string {
     case "table":
       return tableContentToMarkdown(block.content);
 
-    case "image":
+    case "image": {
       const imgCaption = props.caption || "";
       return props.url ? `![${imgCaption}](${props.url})` : "";
+    }
 
     case "video":
       return props.url
         ? `#### Video\n\nVideo Link: ${props.url}${props.caption ? `\n\n*${props.caption}*` : ""}`
         : "";
 
-    case "callout":
+    case "callout": {
       const calloutType = props.calloutType || "default";
       return `> **${calloutType.charAt(0).toUpperCase() + calloutType.slice(1)}**\n> \n> ${text}`;
+    }
 
     case "quiz-true-false":
       return `#### True/False Question\n\n**Q:** ${props.question}\n\n**Correct Answer:** ${props.correctAnswer ? "True" : "False"}`;
@@ -712,7 +701,7 @@ function blockNoteBlockToMarkdown(block: any): string {
     case "quiz-open-ended":
       return `#### Open-Ended Question\n\n**Q:** ${props.question}\n\n**Answer:** ${props.correctAnswer}`;
 
-    case "quiz-multiple-choice":
+    case "quiz-multiple-choice": {
       const options = props.options
         ?.map(
           (opt: any, idx: number) =>
@@ -720,6 +709,7 @@ function blockNoteBlockToMarkdown(block: any): string {
         )
         .join("\n");
       return `#### Multiple Choice Question\n\n**Q:** ${props.question}\n\n${options}`;
+    }
 
     default:
       return "";

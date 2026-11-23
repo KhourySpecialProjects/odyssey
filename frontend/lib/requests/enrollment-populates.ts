@@ -1,3 +1,5 @@
+import { USER_POPULATES } from "./user-populates";
+
 export const ENROLLMENT_POPULATES = {
   /** Just droplet.id + viewedLessons ids — covers ~15 callsites */
   minimal: {
@@ -18,6 +20,7 @@ export const ENROLLMENT_POPULATES = {
       populate: {
         lessons: { fields: ["id", "name", "slug"] },
         tags: { fields: ["id", "name", "slug"] },
+        authorized_users: USER_POPULATES.authorName,
       },
       fields: [
         "id",
@@ -39,7 +42,7 @@ export const ENROLLMENT_POPULATES = {
         lessons: { fields: ["id", "name", "slug"] },
         tags: { fields: ["id", "name", "slug"] },
         usersFavorited: { fields: ["id"] },
-        authorized_users: { fields: ["id"] },
+        authorized_users: USER_POPULATES.authorName,
       },
       fields: [
         "id",

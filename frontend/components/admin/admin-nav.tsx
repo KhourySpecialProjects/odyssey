@@ -13,6 +13,7 @@ import {
   IconUserPlus,
   IconMessageReport,
   IconMap,
+  IconSparkles,
   type IconProps,
 } from "@tabler/icons-react";
 
@@ -28,7 +29,8 @@ export type AdminNavVariant =
   | "Access Manager"
   | "Creators Manager"
   | "Reports"
-  | "Voyages";
+  | "Voyages"
+  | "Scorecard Prompts";
 
 // ——— Per-icon sub-components ———
 function NavIcon({
@@ -85,6 +87,10 @@ export function VoyagesIcon({ active }: { active: boolean }) {
   return <NavIcon Icon={IconMap} active={active} />;
 }
 
+export function ScorecardPromptsIcon({ active }: { active: boolean }) {
+  return <NavIcon Icon={IconSparkles} active={active} />;
+}
+
 // ——— Nav item definitions ———
 export const NAV_ITEMS: {
   label: string;
@@ -134,6 +140,12 @@ export const NAV_ITEMS: {
     variant: "Reports",
     href: "/admin/reports",
     Icon: ReportsIcon,
+  },
+  {
+    label: "Scorecard Prompts",
+    variant: "Scorecard Prompts",
+    href: "/admin/scorecard-prompts",
+    Icon: ScorecardPromptsIcon,
   },
 ];
 

@@ -19,6 +19,13 @@ import { CACHE_TAGS } from "../cache-tags";
 import { USER_POPULATES } from "./user-populates";
 import { getCurrentUser } from "../auth/session";
 import { requireRole } from "../auth/require-role";
+import {
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -475,17 +482,17 @@ export async function createAuthorizedUser(
     isEnabled: formData.get("isEnabled"),
   });
 
-  const dataToSend = {
-    data: {
-      email,
-      isEnabled,
-      roles: {
-        set: [{ id: roleID }],
-      },
-    },
-  };
-
   try {
+    const dataToSend = {
+      data: {
+        email,
+        isEnabled,
+        roles: {
+          set: [await resolveDocumentId("authorized-user-roles", roleID)],
+        },
+      },
+    };
+
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users",
       {
@@ -502,6 +509,10 @@ export async function createAuthorizedUser(
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Strapi used to reject a relation to a missing role with a 400.
+      return { ok: false, error: err.message, data: null };
+    }
     console.error(err);
     return { error: "Database Error: Failed to Create Authorized User." };
   }
@@ -535,7 +546,7 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
             email,
             isEnabled: true,
             roles: {
-              set: [{ id: roleID }],
+              set: [await resolveDocumentId("authorized-user-roles", roleID)],
             },
           },
         };
@@ -599,6 +610,7 @@ export async function updateUserInfo(
     isEnabled?: boolean;
     isPublic?: boolean;
     firstTime?: boolean;
+    mentorPersonalization?: boolean;
     linkedin?: string | null;
     github?: string | null;
     photo?: string | null;
@@ -611,6 +623,10 @@ export async function updateUserInfo(
     return { ok: false, error: auth.error, data: null };
   }
   const isSelf = auth.user.id === userId;
+  // Self-only: not even an admin sets another user's Mentor choice
+  if (!isSelf && updates.mentorPersonalization !== undefined) {
+    return { ok: false, error: "forbidden", data: null };
+  }
   const isAdmin = auth.user.roles.some(
     (r) => r === AuthorizedUserRoleTitle.SysAdmin,
   );
@@ -644,6 +660,7 @@ export async function updateUserInfo(
       isEnabled,
       isPublic,
       firstTime,
+      mentorPersonalization,
       linkedin,
       github,
       photo,
@@ -665,35 +682,51 @@ export async function updateUserInfo(
     if (isEnabled !== undefined) data.isEnabled = isEnabled;
     if (isPublic !== undefined) data.isPublic = isPublic;
     if (firstTime !== undefined) data.firstTime = firstTime;
+    if (mentorPersonalization !== undefined)
+      data.mentorPersonalization = mentorPersonalization;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;
     if (website !== undefined) data.website = website;
     if (photo !== undefined) data.profilePhoto = photo;
-    if (roles && roles.length > 0) {
-      data.roles = {
-        set: roleIds.map((id) => ({ id })),
-      };
-    }
+    try {
+      if (roles && roles.length > 0) {
+        data.roles = {
+          set: await resolveDocumentIds("authorized-user-roles", roleIds),
+        };
+      }
 
-    await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
+      const res = await fetch(
+        await strapiEntryUrl("authorized-users", userId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+          body: JSON.stringify({ data }),
         },
-        body: JSON.stringify({ data }),
-      },
-    );
+      );
+      // A refused save must not look saved (the toggle reverts on ok:false).
+      if (!res.ok) {
+        console.error("Error updating user info: PUT status", res.status);
+        return { ok: false, error: "update_failed", data: null };
+      }
+    } catch (err) {
+      // A missing user has nothing to update; keep ignoring it.
+      if (!(err instanceof StrapiEntryNotFoundError)) throw err;
+    }
     // firstTime and isPublic never appear in another user's cached view: the
     // user lists/search (`users`) and creator lists (`authors`) don't select
     // them, and every other read of them goes through
     // getAuthorizedUserByEmail, which carries the per-user tag. Any other
     // field (names, photo, links, roles, isEnabled) is visible in those lists,
     // so it still needs the global sweep. Unknown fields default to global.
-    const SELF_ONLY_FIELDS = new Set(["firstTime", "isPublic"]);
+    const SELF_ONLY_FIELDS = new Set([
+      "firstTime",
+      "isPublic",
+      "mentorPersonalization",
+    ]);
     const selfOnlyChange =
       isSelf && Object.keys(data).every((key) => SELF_ONLY_FIELDS.has(key));
 
@@ -730,21 +763,26 @@ export async function deleteAuthorizedUser(formData: FormData) {
   });
 
   try {
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users/" + id,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
+    const response = await fetch(await strapiEntryUrl("authorized-users", id), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
-    const data = await response.json();
-    if (!response.ok || (response.ok && data.error))
-      return { ok: false, error: data.error.message, data: null };
+    });
+    const body = await readJsonOrNull(response);
+    if (!response.ok || body?.error)
+      return {
+        ok: false,
+        error: body?.error?.message ?? "Failed to delete authorized user.",
+        data: null,
+      };
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same result as the 404 body Strapi used to return.
+      return { ok: false, error: "Not Found", data: null };
+    }
     console.error(err);
     return {
       ok: false,
@@ -775,9 +813,9 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
           },
         },
       },
-      fields: ["id", "username", "email"],
+      fields: ["id", "firstName", "lastName", "email"],
       populate: {},
-      sort: ["username"],
+      sort: ["lastName"],
       pagination: {
         pageSize,
         page,

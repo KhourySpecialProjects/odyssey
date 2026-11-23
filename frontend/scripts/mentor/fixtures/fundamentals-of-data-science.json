@@ -1,0 +1,1050 @@
+{
+  "snapshotVersion": 1,
+  "takenAt": "2026-11-06T14:33:11.854Z",
+  "source": {
+    "strapiUrl": "http://localhost:1337",
+    "dropletId": 131
+  },
+  "droplet": {
+    "id": 131,
+    "name": "Fundamentals of Data Science",
+    "slug": "fundamentals-of-data-science",
+    "description": null,
+    "type": "knowledge",
+    "focusArea": "technical",
+    "difficulty": "beginner",
+    "learningObjectives": [
+      "Understand fundamental python libraries"
+    ],
+    "overview": null,
+    "prerequisites": [],
+    "previousReview": null
+  },
+  "lessons": [
+    {
+      "id": 422,
+      "name": "Introduction to Data Science and Its Workflow",
+      "type": "general",
+      "blocksVersion": "v2",
+      "blocks": [],
+      "blocksV2": [
+        {
+          "id": "9c9e0fd2-f9c4-4fa7-8ee9-7babb8376525",
+          "type": "heading",
+          "props": {
+            "level": 1,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "What Is Data Science?",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9591f9a1-600e-4d53-b106-fb7b50bc20da",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Overview",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "67f3a95a-785f-4147-b222-8ac4fbd31127",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Data science is an interdisciplinary field combining domain expertise, programming, and statistics to",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9e7295e4-56ae-475c-bedf-ece6be1ed8e7",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "extract meaningful insights from data. A typical workflow follows five stages: collect, clean, explore,",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9f0705b3-95d5-4ee3-bff9-981faa813156",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "model, and communicate.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "dd9568fe-f1c3-464d-b767-3166ff6d6760",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "The Data Science Workflow",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "153b5d83-3f8f-49d4-9d98-4336c5d66b1a",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Collect — gather raw data from APIs, databases, sensors, and surveys.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "3422a600-b9f5-4692-9180-1cdf596cee93",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Clean — handle missing values, outliers, and formatting errors using tools like pandas.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "1dd5e076-acf4-4a3f-864a-a19dbf17008c",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Explore — summarize distributions and correlations with matplotlib and seaborn.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "6c76833a-8d54-4e4c-a6b6-ec43a63976ab",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Model — apply statistical or machine learning methods using scikit-learn or statsmodels.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "00e27986-270f-4a02-90d1-bb46380700e0",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Communicate — present findings clearly using Jupyter notebooks, slides, or dashboards.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "922a0f09-e4bf-4de8-ab92-3e13ef9edad1",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Key Insight",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "c61f6105-f977-4398-a8f2-df6595106643",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "The most impactful data scientists spend the majority of their time on the first three stages: collecting,",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "95cf97f3-e60a-4686-9669-97f418cf9e8a",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "cleaning, and understanding data before a single model is trained.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 423,
+      "name": "Understanding Data Types and Variable Classification",
+      "type": "general",
+      "blocksVersion": "v2",
+      "blocks": [],
+      "blocksV2": [
+        {
+          "id": "dfbfc0ec-10b0-40c9-8e85-4438b569a1aa",
+          "type": "heading",
+          "props": {
+            "level": 1,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Data Types & Structures",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "e4654a9e-6671-4c83-9280-e75dbed4c97a",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Core Concepts",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "8dfce5ff-0de7-49d2-846d-4dba8b2e98f8",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "The type of variable you are working with determines which operations, visualizations, and models are",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9ab3cf25-9379-465b-89e8-9ddce4d9eb5f",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "appropriate. Treating a categorical variable as a number is one of the most common beginner mistakes.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "c8cea304-d391-48f8-a1bb-be8a359a277b",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Variable Types",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "42896e9f-e3ee-42a2-afcf-51660dfc90b7",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Continuous — numeric with infinite possible values (e.g. salary, temperature). Best summarized",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "5e60c169-9fbd-4b19-a5bb-5ca7dbb92b11",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "with mean and standard deviation.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "546831ac-56b4-4bd5-bb58-1472e4161ff5",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Discrete — numeric but countable (e.g. number of purchases). Use count or median.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "c4ba5882-64e0-47f4-8795-a563b9ae5b0d",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Nominal — categories with no meaningful order (e.g. country, color). Use mode or frequency.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "35bb5669-8e7d-4b20-b1b5-e3108ba8724e",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Ordinal — categories with a meaningful order (e.g. star ratings 1–5). Use median or rank.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "89e02779-9fbc-496e-9a6e-bfe09d7cb46a",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Boolean — only two possible values, yes/no or true/false. Summarized as a proportion.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "1f75b274-7c01-4143-a22e-bedcfc29a42f",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Common Pitfall",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "56be9273-1e7c-408c-92e8-68a7dc8a1717",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Zip codes, phone numbers, and ID columns look numeric but are nominal. Always ask: does arithmetic",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9e926269-8b11-48e6-abb8-711a97510498",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "on this column make sense? If not, treat it as categorical.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 424,
+      "name": "Exploratory Data Analysis: Concepts and Techniques",
+      "type": "general",
+      "blocksVersion": "v2",
+      "blocks": [],
+      "blocksV2": [
+        {
+          "id": "09ce26fa-895d-491d-8134-2a6e74e7fdee",
+          "type": "heading",
+          "props": {
+            "level": 1,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Exploratory Data Analysis",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "be788559-8c9f-450f-860e-d615d2a11307",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Core Concepts",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "faa7cf3b-3776-4130-8de5-520be95ee675",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Exploratory Data Analysis (EDA) is the process of visually and statistically summarizing a dataset",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "2eb334be-b7d0-4c68-b710-af90739c36a4",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "before applying any models. The goal is to understand the shape, spread, and relationships in the data.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "d0eeb7d4-efe5-4dfc-9bab-697ecd035ad3",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "EDA was formalized by statistician John Tukey in 1977 and remains the most critical step in any",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "20179225-1410-4210-8113-1c146e54d50a",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "analysis.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "98629002-d3e2-4254-b88b-8a0c7b130d14",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Key Visualizations",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "cf238528-0ebd-4082-9064-93be51c212cd",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Histogram — shows the distribution of a single variable. Use df[\"col\"].plot.hist() or plt.hist(df[\"col\"]).",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9c6984e5-7337-4f05-a4a1-bc885fdda67c",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Boxplot — displays spread and highlights outliers. Use df.boxplot(column=\"col\").",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "1b696ef3-5057-426a-92c8-2e38ef22312b",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Scatter plot — reveals the relationship between two numeric variables. Use df.plot.scatter(x=\"a\",",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "9bf04099-6526-4e68-a5d6-c29a3217f0e5",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "y=\"b\").",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "887cdee8-90b0-4e31-8927-2bdab43232a0",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Correlation matrix — df.corr() gives you the numbers; plt.imshow(df.corr()) renders the heatmap.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "2aae01fe-daa0-4f49-b0cf-b854925a5643",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Bar chart — shows frequency counts for categorical variables. Use",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "8ee9b3dc-7bb1-42a1-b7bc-95d8f22a975a",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "df[\"col\"].value_counts().plot.bar().",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "828a4b23-bb5a-4d62-b0d7-4395d661ad73",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Quick-Look Helpers",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "41288dd5-0a4c-458f-af4b-cb3a98afacfe",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Before you plot, pandas gives you three one-liners worth memorizing:",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "dc087392-e5d8-457a-8e01-262a68770d2a",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "df.head() — first five rows, to sanity-check the load.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "868af038-6567-4199-ad7b-1afe2e9f45ae",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "df.info() — column names, dtypes, non-null counts. Catches missing data fast.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "f6b9fcc5-69a6-4eea-bcb4-ca4de736486f",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "df.describe() — count, mean, std, min/max, and quartiles for every numeric column.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "856e38b9-71e9-464b-995c-eafa68924295",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "a9569b49-dfb5-4049-8672-bb5085f0df96",
+          "type": "notebook-code",
+          "props": {
+            "code": "import pandas as pd\nimport matplotlib.pyplot as plt\ndf = pd.read_csv(\"housing_prices.csv\")",
+            "editable": "true",
+            "language": "python",
+            "testCode": ""
+          },
+          "children": []
+        },
+        {
+          "id": "081203ce-2b42-48da-ae31-d694e53a218b",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "5afacf7e-6531-4227-b1c7-d8a54f750acc",
+          "type": "notebook-code",
+          "props": {
+            "code": "df.info()",
+            "editable": "true",
+            "language": "python",
+            "testCode": ""
+          },
+          "children": []
+        },
+        {
+          "id": "c71d72f9-14b6-424a-be47-5bbce5ab45a6",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "63a26e06-72e9-4722-b2ba-86b24a986164",
+          "type": "notebook-code",
+          "props": {
+            "code": "df[\"price\"].plot.hist(bins=30, edgecolor=\"black\")\nplt.xlabel(\"Price\")\nplt.title(\"Distribution of Housing Prices\")\nplt.show()",
+            "editable": "true",
+            "language": "python",
+            "testCode": ""
+          },
+          "children": []
+        },
+        {
+          "id": "0628e48e-4446-48d2-9b08-5ef093fcf795",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "53fd3498-9690-4dd3-a63f-3a451fcaa3ef",
+          "type": "notebook-code",
+          "props": {
+            "code": "df.boxplot(column=\"price\")\nplt.title(\"Housing Price — spread & outliers\")\nplt.show()",
+            "editable": "true",
+            "language": "python",
+            "testCode": ""
+          },
+          "children": []
+        },
+        {
+          "id": "2b8fa6bf-8118-4d4f-a274-18600e3a5a98",
+          "type": "heading",
+          "props": {
+            "level": 3,
+            "textColor": "default",
+            "isToggleable": false,
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Rule of Thumb",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "1a7b99e3-bd03-43e5-a881-80643f8370f5",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "Always plot before you model. A single histogram can reveal a bimodal distribution, an outlier, or a data",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "0151c22d-aa13-4530-956b-7c7a4b6608f6",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [
+            {
+              "text": "entry error that would silently distort every downstream result.",
+              "type": "text",
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "id": "827ab740-2dc7-4edc-b04b-e1d0e864f65f",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        },
+        {
+          "id": "da24b5ee-07f9-4f27-9198-2031bbe55bfa",
+          "type": "quiz-multiple-choice",
+          "props": {
+            "options": "[{\"id\":\"1\",\"text\":\"To train a predictive model as quickly as possible\",\"isCorrect\":false},{\"id\":\"2\",\"text\":\"To clean the dataset by removing all outliers\",\"isCorrect\":false},{\"id\":\"1776781027920\",\"text\":\"To understand the shape, spread, and relationships in the data before modeling\",\"isCorrect\":true},{\"id\":\"1776781028727\",\"text\":\"To produce a final report for stakeholders\",\"isCorrect\":false}]",
+            "question": "What is the primary goal of EDA?",
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "children": []
+        },
+        {
+          "id": "caf9f6f4-10bd-4f5b-adc3-368d1afa41ca",
+          "type": "paragraph",
+          "props": {
+            "textColor": "default",
+            "textAlignment": "left",
+            "backgroundColor": "default"
+          },
+          "content": [],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

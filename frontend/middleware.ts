@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { safeCallbackPath } from "@/lib/auth/callback-url";
 
 /**
  * Public pages that signed-in users skip, mapped to where they land instead.
@@ -21,8 +22,21 @@ export default withAuth(
     if (!destination || !req.nextauth.token?.user) return;
 
     const url = req.nextUrl.clone();
-    url.pathname = destination;
-    url.search = "";
+    // A signed-in user on /auth/login has usually just come back from the
+    // provider (signIn() without a callbackUrl returns to the current page),
+    // so send them on to the page they were trying to reach (ODY-628).
+    const callbackPath =
+      req.nextUrl.pathname === "/auth/login"
+        ? safeCallbackPath(req.nextUrl.searchParams.get("callbackUrl"))
+        : undefined;
+    if (callbackPath) {
+      const target = new URL(callbackPath, url.origin);
+      url.pathname = target.pathname;
+      url.search = target.search;
+    } else {
+      url.pathname = destination;
+      url.search = "";
+    }
     return NextResponse.redirect(url);
   },
   {
@@ -48,5 +62,8 @@ export const config = {
     "/d/:path*",
     "/activity",
     "/activity/:path*",
+    // Group pages need a session; matching them sends signed-out visitors
+    // to sign-in with a callbackUrl instead of rendering a blank page.
+    "/g/:path*",
   ],
 };

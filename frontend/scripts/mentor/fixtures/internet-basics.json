@@ -1,0 +1,710 @@
+{
+  "snapshotVersion": 1,
+  "takenAt": "2026-11-06T14:33:11.921Z",
+  "source": {
+    "strapiUrl": "http://localhost:1337",
+    "dropletId": 7
+  },
+  "droplet": {
+    "id": 7,
+    "name": "Internet Basics",
+    "slug": "internet-basics",
+    "description": "Learn how the Internet is organized, structured, and used in our day-to-day lives.",
+    "type": "knowledge",
+    "focusArea": "technical",
+    "difficulty": null,
+    "learningObjectives": [
+      "TBD"
+    ],
+    "overview": "<p>Your understanding of the Internet can range from “the magic that connects my phone“ to “it’s a distributed packet-switched network that communicates through the Internet Protocol suite.”</p><p>Simply put, the internet (inter-network) is the way computers or devices connect to each other. It is increasingly foundational and entwined in our modern lives, spurring numerous ethical debates over influence, access, and security.</p>",
+    "prerequisites": [],
+    "previousReview": null
+  },
+  "lessons": [
+    {
+      "id": 39,
+      "name": "A Network of Cables",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 54,
+          "content": "<p>While our focus this week is not on physical infrastructure, it is incredibly interesting to touch on how global connections are made. About 99% of transoceanic internet traffic actually travels through underwater <a href=\"https://www.lifewire.com/fiber-optic-cable-817874\">fiber-optic</a> cables. They transmit data by guiding light as pulsating binary code through reflective glass.</p><p><img src=\"https://content.khouryodyssey.org/uploads/network_bce566cbc1.png\" alt=\"network.png\"></p><p>Source: <a href=\"https://ripley-tools.com/taking-a-closer-look-at-the-anatomy-of-a-fiber-optic-cable/\"><i>Ripley Tools</i></a></p><p>Ownership and maintenance of these cables are distributed across large telecommunication networks like AT&amp;T and China Telecom, tech giants such as Google and Meta, and national government agencies, to serve their needs and regions. An interactive map of these cables is available <a href=\"https://www.submarinecablemap.com/\">here</a>.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 13,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "text": "You may be wondering",
+                  "type": "text"
+                },
+                {
+                  "text": ": why aren’t satellites used? When transmitting data to and from space, satellites introduce a delay known as latency. This is problematic for services that need an immediate response, but they have proven useful for connecting remote and rural areas where laying traditional cable infrastructure is challenging.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 55,
+          "content": "<p>At each end, cables connect to terrestrial infrastructure at <strong>cable termination stations</strong>. This allows for the high-speed data transmission from a data center across the world to your computer or device.</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 40,
+      "name": "Internet Protocol",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 56,
+          "content": "<p>As mentioned in our introduction, the Internet is a “distributed packet-switched network.” Let’s break down what each component means:</p><ul><li><strong>Distributed</strong>: No single entity or location has control over the Internet. Any computer that can send and receive data according to the agreed upon rules can join, creating a web of computers, servers, and devices.</li><li><strong>Packet-switched</strong>: A <a href=\"https://www.cloudflare.com/learning/network-layer/what-is-a-packet/\">packet</a> is a small piece of data. Messages are broken into smaller pieces and travel independently to their destination.</li><li><strong>Network</strong>: The collection of computers that are somehow linked together, whether on a local, regional, or global scale.</li></ul><p>It is fundamental that data packets reach the correct destination and are reassembled properly with other packets. The standardized procedure that allows computers and devices to communicate over a global network is known as the Internet Protocol.</p><p>The <strong>Internet Protocol</strong> is a protocol or set of rules that govern how packets are addressed and routed over the Internet. It provides the essential framework that enables information to be properly exchanged to an intended recipient.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 14,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Throughout the remainder of this module, note that “IP” is used as an acronym for “Internet Protocol”.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 41,
+      "name": "IP Addresses",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 57,
+          "content": "<p>An <strong>IP Address</strong> is a unique numeric label that identifies a computer on a network. Every domain or device that is connected to the Internet, whether it's your mobile phone, personal computer, or router, has one. This is just like how every building has a street address. IP Addresses are assigned by <a href=\"https://www.iana.org/\">IANA</a>, the Internet Assigned Numbers Authority.</p><p>Since its inception, there have been many IP formats. The fourth version of IPs, <strong>IPv4</strong>, was introduced in 1983. An IPv4 address has four (4) sets of numbers, each ranging from 0 to 255. Each set is separated by a dot (<code>.</code>). An example is <code>172.16.254.1</code>.</p><p><img src=\"https://content.khouryodyssey.org/uploads/ipv4_9f930897d4.png\" alt=\"ipv4.png\"></p><p>An important thing to remember is that computers represent data with a <strong>binary</strong> number system. Binary uses <strong>bits</strong> (binary digits) to store information in a state of either “0” or “1”. Each bit represents an increasing power of 2: the first is 2^1, the second is 2^2, the third is 2^3, and so on.</p><p>In each set of IPv4, there are 256 possible numbers, which is equivalent to 2^8, 8 bits, or a byte. A <strong>byte</strong> is simply a unit of digital information that is 8 bits long. Putting it all together, with 4 sets of bytes, there are 32 possible binary digits, producing 2^32 or ~4.3 billion possible IPv4 addresses.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 15,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Known as the “loopback address”, ",
+                  "type": "text"
+                },
+                {
+                  "text": "localhost",
+                  "type": "text",
+                  "italic": true
+                },
+                {
+                  "text": " is the domain name describing IPv4 `127.0.0.1`. It refers to the current device that was used to access it, allowing you to access network services on *your own* computer. Localhost is important for web development, testing, and debugging reasons.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": null,
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 58,
+          "content": "<p>An IPv6 address has 8 groups of 4 characters using <a href=\"https://en.wikipedia.org/wiki/Hexadecimal\">hexadecimal numbers</a> separated by colons (<span style=\"background-color:rgba(135,131,120,.15);color:#EB5757;font-family:&quot;SFMono-Regular&quot;, Menlo, Consolas, &quot;PT Mono&quot;, &quot;Liberation Mono&quot;, Courier, monospace;\">:</span>). In binary, this produces 128 possible digits or 16 bytes long, supporting 2^128 or about <i>320 trillion</i> possible addresses!</p><p><img src=\"https://content.khouryodyssey.org/uploads/ipv6_50bb58c714.png\" alt=\"ipv6.png\"></p><p>Despite IPv6’s enhanced security features and routing efficiency, its complete adoption has been delayed largely due to <a href=\"https://www.comptia.org/content/guides/what-is-network-address-translation\">network address translation</a> (NAT). NAT allows machines to map multiple private addresses (used in a local network) to a single public IP address (globally routable through the Internet).</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 20,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "While subtle, there is a difference between an internet and ",
+                  "type": "text"
+                },
+                {
+                  "text": "the Internet",
+                  "type": "text",
+                  "italic": true
+                },
+                {
+                  "text": ". When written with a capital “I”, the Internet refers to the worldwide set of interconnected networks we normally associate with the term. A lowercase “i” denotes any generic interconnected network.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": null,
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 42,
+      "name": "DNS",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 59,
+          "content": "<h3>What is DNS?</h3><p>We mentioned earlier that each <i>domain</i> and device have an IP address. So, why do we not need to memorize IP Addresses to navigate the web? The answer is the “phonebook of the Internet”, better known as DNS. The <strong>Domain Name System (DNS)</strong> is a collection of databases that map human-readable domain names to computer-friendly IP Addresses.</p><p>Consider navigating to the domain <code>www.google.com</code>:</p><p>Using the <a href=\"https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/ping\">ping</a> command from our terminal, we can test our IP-level connectivity to a destination computer.</p><pre><code class=\"language-plaintext\">user&gt; ping www.google.com\n\nPinging www.google.com [142.251.40.100] with 32 bytes of data:\nReply from 142.251.40.100: bytes=32 time=27ms TTL=113\nReply from 142.251.40.100: bytes=32 time=27ms TTL=113\n\nPing statistics for 142.251.40.100:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 26ms, Maximum = 32ms, Average = 28ms\n</code></pre><p>This example verifies that our message requests are responded to from an IP Address, specifically <code>142.251.40.100</code>! If you were to run the command multiple times, you will likely receive responses from different IP addresses. Popular websites employ <strong>load balancing</strong> to distribute traffic evenly across multiple servers.</p><p>To understand how DNS can translate domains, let’s first break down their nomenclature:</p><ul><li><code>com</code> is the <strong>top-level domain (TLD)</strong>. TLDs often categorize a website’s purpose. For example, “com” is short for “commercial business”, “edu” stands for education, and country code TLDs (eg: “tv” for Tuvalu). It’s worth noting that there are also generic TLDs such as “win”, “store”, and “xyz”. A full list of TLDs can be found from IANA <a href=\"https://data.iana.org/TLD/tlds-alpha-by-domain.txt\">here</a>.</li><li><code>google</code> is the <strong>second-level domain (SLD)</strong>, which refers to the specific website, project, or organization.</li><li><code>www</code> is the <strong>subdomain</strong>. They are optional and used to further organize domain resources, targeting content to improve <a href=\"https://developers.google.com/search/docs/fundamentals/seo-starter-guide?visit_id=638279908678663983-2664387115&amp;rd=1\">Search Engine Optimization</a>. Common examples include “www” for websites, “blog” for, you guessed it, blogs, and “mail” for email servers. Sometimes subdomains are chained, leading to URLs like “<a href=\"http://sub1.sub2.sub3.google.com\">sub1.sub2.sub3.google.com</a>”.</li></ul><h3>How Does DNS Work?</h3><p>To understand what exactly happens when you enter a domain name in a web browser, please watch the following video <strong>starting at 1:51</strong> and <strong>up to 4:30</strong>. Collectively, this process is called a <strong>DNS lookup</strong>.</p><p><i>Disclaimer: the narrator of the video at times may verbally say \"TDL\" when they mean \"TLD\".</i></p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 8,
+          "url": "https://www.youtube.com/embed/FsGUi5pXpLk?si=Ipg6adem6tUbaWbH",
+          "__component": "droplets.video"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 43,
+      "name": "Transport Protocol",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 61,
+          "content": "<p><strong>IP Packets</strong> attach a header to a packet of data. The header contains notable information about the packet, such as the sending and receiving addresses, and other fields like what transport protocol is being used. These are the two most common protocols:</p><h3>TCP</h3><p>The <strong>Transmission Control Protocol</strong> initially complemented the Internet Protocol, commonly being referred to as the TCP/IP suite. It maintains a connection called a “handshake” between the sender and receiver until the data is transmitted in the preserved order. Since packets can take different routes across a network, TCP assigns numbers to identify corrupted, lost, disordered, or duplicated segments and execute precise error-control to resend packets as needed. This ensures reliability at the cost of speed via a flow control.</p><h3>UDP</h3><p>The <strong>User Datagram Protocol</strong>, known as the UDP/IP suite, is a connectionless means of transmitting data between devices on a network. A connection is not established or terminated for transfer. Instead, it sends packets of data referred to as <strong>datagrams</strong>. This results in improved overhead and latency at the cost of reliability.</p><p>UDP does not execute any error checking or flow control like TCP, nor is it concerned if all the datagrams arrive and in proper order. Likewise, UDP has a much smaller header than TCP, only containing the essential fields. For time-sensitive transmissions, UDP is preferred and used in online gaming, media streaming, VoIP (Voice over IP) services like Teams phones, and DNS lookups.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 6,
+          "questions": [
+            {
+              "id": 6,
+              "content": "<p>378.256.0.0 is a valid IPv4 Address</p>",
+              "answerOptions": [
+                {
+                  "id": 7,
+                  "isCorrect": false,
+                  "content": "TRUE"
+                },
+                {
+                  "id": 8,
+                  "isCorrect": true,
+                  "content": "FALSE"
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "content": "<p>Match the subdomain, second-level domain, and top-level domain of <span style=\"background-color:rgba(135,131,120,.15);color:#EB5757;font-family:&quot;SFMono-Regular&quot;, Menlo, Consolas, &quot;PT Mono&quot;, &quot;Liberation Mono&quot;, Courier, monospace;\">northeastern.instructure.uk</span>.</p>",
+              "answerOptions": [
+                {
+                  "id": 9,
+                  "isCorrect": true,
+                  "content": "Subdomain : northeastern"
+                },
+                {
+                  "id": 10,
+                  "isCorrect": true,
+                  "content": "Second-level domain : instructure"
+                },
+                {
+                  "id": 11,
+                  "isCorrect": true,
+                  "content": "Top-level domain: uk"
+                }
+              ]
+            },
+            {
+              "id": 9,
+              "content": "<p>A domain name can correspond to<i>&nbsp;more than one</i>&nbsp;IP address.</p>",
+              "answerOptions": [
+                {
+                  "id": 13,
+                  "isCorrect": true,
+                  "content": "True"
+                },
+                {
+                  "id": 12,
+                  "isCorrect": false,
+                  "content": "False"
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "content": "<p>The IP address as initially specified by the domain name is returned by which server in the DNS lookup?</p>",
+              "answerOptions": [
+                {
+                  "id": 14,
+                  "isCorrect": false,
+                  "content": "Root name server"
+                },
+                {
+                  "id": 15,
+                  "isCorrect": false,
+                  "content": "TLD name server"
+                },
+                {
+                  "id": 16,
+                  "isCorrect": false,
+                  "content": "SLD name server"
+                },
+                {
+                  "id": 17,
+                  "isCorrect": true,
+                  "content": "Authoritative name server"
+                }
+              ]
+            },
+            {
+              "id": 10,
+              "content": "<p>UDP is known for its low latency and connectionless data transfer, but it sacrifices which element compared to TCP?</p>",
+              "answerOptions": [
+                {
+                  "id": 18,
+                  "isCorrect": true,
+                  "content": "Reliability"
+                },
+                {
+                  "id": 19,
+                  "isCorrect": false,
+                  "content": "Speed"
+                },
+                {
+                  "id": 20,
+                  "isCorrect": false,
+                  "content": "Header Size"
+                },
+                {
+                  "id": 21,
+                  "isCorrect": false,
+                  "content": "Security"
+                }
+              ]
+            }
+          ],
+          "__component": "droplets.quiz"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 44,
+      "name": "World Wide Web",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 62,
+          "content": "<p>The <strong>World Wide Web</strong>, referred to as “WWW”, “W3”, or simply the “Web”, is the leading Internet information retrieval service. Importantly, the Web is <i>not</i> the Internet! It is a service built-on much like file sharing, email, and online gaming, where the Internet is the underlying architecture that enables info to be disseminated.</p><p>The fundamental building block of the Web is a <a href=\"https://en.wikipedia.org/wiki/Web_pagehttps://en.wikipedia.org/wiki/Web_page\">webpage</a>—a document viewable from your device’s browser, such as the one you are viewing now. Webpages feature an organization of plain text, multimedia, and other content. A <strong>website</strong> is a collection of webpages, starting from the homepage.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 16,
+          "content": [
+            {
+              "type": "heading",
+              "level": 2,
+              "children": [
+                {
+                  "text": "Web 2.0",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "The second generation of the World Wide Web, Web 2.0, is a term used to denote the shift from read-only, static webpages to dynamic webpages focused on user-generated content. It became popularized soon after the burst of the dot.com bubble in 2000 from highly speculative investments in internet-based businesses, leading to a mild recession. Some prominent features include a participatory culture, folksonomy (the classification of online content), and cloud computing.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 63,
+          "content": "<p>The World Wide Web was developed by Tim-Berners Lee and colleagues at CERN, located in Geneva, Switzerland, and released in 1992. Lee notably invented <strong>HTML (Hypertext Markup Language)</strong> for marking up text on a webpage, HTTP protocol to standardize communication across devices, and the URL system to identify webpages. Another integral component of their design was the <a href=\"https://en.wikipedia.org/wiki/Hyperlink\">hyperlink</a>, allowing users to seamlessly navigate to other webpages just by clicking a reference.</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 45,
+      "name": "HTTP",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 64,
+          "content": "<p>An <strong>HTTP (Hypertext Transfer Protocol)</strong> request is a message from a client (your computer’s browser) to a server to access a resource or initiate an action. <strong>Hypertext</strong> refers to any text containing hyperlinks. HTTP is a <i>stateless</i> protocol, meaning the receiving server does not retain information from previous requests.</p><p>After the DNS lookup, your browser makes an HTTP request to the address that hosts the site. The web server responds, sending the content for the browser to render on your computer!</p><p>HTTP is structured using <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods\">HTTP request methods</a>, also called <i>HTTP verbs</i>. The most common methods are below:</p><figure class=\"table\"><table><thead><tr><th>HTTP Request Method</th><th>Description</th><th>Associated <a href=\"https://developer.mozilla.org/en-US/docs/Glossary/CRUD\">https://developer.mozilla.org/en-US/docs/Glossary/CRUD</a> Operation</th></tr></thead><tbody><tr><td>POST</td><td>creates a new resource</td><td>Create</td></tr><tr><td>GET</td><td>requests information—should only return, not modify, data</td><td>Read</td></tr><tr><td>PUT</td><td>updates existing data</td><td>Update</td></tr><tr><td>DELETE</td><td>removes existing resources</td><td>Delete</td></tr></tbody></table></figure><p>In response, the server will return a status code and any requested data, if appropriate. <strong>Status codes</strong> are three-digit numbers returned by a web server that indicate the outcome of an HTTP request. They are divided into 5 classes based on the first digit:</p><ul><li><strong>1xx</strong>: Informational</li><li><strong>2xx</strong>: Success</li><li><strong>3xx</strong>: Redirection</li><li><strong>4xx</strong>: Client error</li><li><strong>5xx</strong>: Server error</li></ul><p>For example, try navigating to <code>www.google.com/northeastern</code>. Your browser will display a <code>404 Not Found</code> error 😟: the server cannot find the webpage requested by the client. For a complete description of all status codes, check out the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status\">MDN documentation</a>.</p><h3>HTTP Structure &amp; Security</h3><p>To understand how HTTP requests and responses are structured using headers, please watch the following video from <strong>8:50 to 12:20</strong>.</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 9,
+          "url": "https://www.youtube.com/embed/wW2A5SZ3GkI?si=7iRgdPI99W9wzfU1",
+          "__component": "droplets.video"
+        },
+        {
+          "id": 65,
+          "content": "<p>If you look at your browser’s search bar, you will notice that the URL for Northeastern’s Canvas courses is prefixed by “HTTP<span style=\"color:inherit;\"><code>S</code></span>” as opposed to just “HTTP”. The primary distinction is that HTTPS is more secure, hence why it stands for: Hypertext Transfer Protocol <span style=\"color:inherit;\"><code>Secure</code></span>. For those interested in learning more, a future Cybersecurity module will cover encryption.</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 46,
+      "name": "URL Components",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 66,
+          "content": "<p>Web addresses are formally known as <strong>URLs</strong> or <strong>Uniform Resource Locators</strong>. A <a href=\"https://url.spec.whatwg.org/\">URL</a> is a standardized way to uniquely identify a resource over an internet. Below are the most important elements, some mandatory and some optional, for a URL’s structure:</p><p><code>scheme://host:port/path?query#fragment</code></p><p>For the next section, consider the following URL: <code>https://www.youtube.com/results?search_query=northeastern+khoury&amp;example=123</code>.</p><h3>Scheme</h3><pre><code class=\"language-plaintext\">**https://**\n</code></pre><p>The <strong>scheme</strong> specifies the protocol that will be used for the transmission of data. We just covered HTTP and HTTPS. Alternative protocols include <a href=\"https://en.wikipedia.org/wiki/File_Transfer_Protocol\">FTP</a> (File Transfer Protocol) for exchanging files and <a href=\"https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol\">SMPT</a> (Single Mail Transfer Protocol) for transferring emails.</p><h3>Host</h3><pre><code class=\"language-plaintext\">https://**www.youtube.com**\n</code></pre><p>The <strong>host</strong> identifies the requested web server, either by its domain name or IP address. As discussed earlier, a domain name can be broken down into the subdomain, second-level domain, and top-level domain for categorization and organization.</p><h3>Port</h3><pre><code class=\"language-plaintext\">&lt;https://www.youtube.com&gt;**:443**\n</code></pre><p>The <strong>port</strong> defines a connection endpoint on the server, indicating where the resources will be accessed. By default, HTTP uses port 80 and HTTPS is identified by 443. For other schemes, the port number must be provided. If supplied with the domain name, the host and port are collectively referred to as the <strong>authority</strong>.</p><h3>Path</h3><pre><code class=\"language-plaintext\">&lt;https://www.youtube.com:443&gt;**/results**\n</code></pre><p>The <strong>path</strong> indicates a resource on the web server relative to its root location. It typically references an exact file resource. For more info on path construction and subdirectories, please revisit Module 4a: How to Computer.</p><h3>Query</h3><pre><code class=\"language-plaintext\">&lt;https://www.youtube.com:443/results**?search_query=northeastern+khoury&amp;example=123**&gt;\n</code></pre><p>The <strong>query</strong> is used to pass additional identifying information to a webpage. It consists of key-value pairs separated by an ampersand (<code>&amp;</code>), all together called <strong>parameters</strong>. You may pass any key-values in a URL, but their effects are determined by the given website’s handling.</p><h3>Fragment</h3><p>The <strong>fragment</strong> points to a specific section, typically within HTML headers, of the resource. The entire fragment follows the hashtag (<code>#</code>). The browser can locate the designated spot, or, on video or audio files, it can refer to a timestamp. For example, we have used the fragment to highlight sections in certain referenced links. To do this yourself, highlight text on a webpage, right click the highlight, and click “Copy link to highlight” to generate a URL with a fragment.</p><p>URLs are a type of URI. A <strong>URI (Uniform Resource Identifier)</strong> refers to the unique character sequence that identifies an abstract or physical resource. A URL defines a resource’s location, whereas a URI may also be used to describe a resource’s name.</p>",
+          "__component": "droplets.generic"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 47,
+      "name": "Web Browsers & Search Engines",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 67,
+          "content": "<p>When the World Wide Web was first released, people could only access websites they had remembered or could guess the URL for. Human-edited directories were soon released to reference other sites, such as \"<a href=\"https://en.wikipedia.org/wiki/History_of_Yahoo!\">Jerry and Dave’s Guide to the World Wide Web</a>\" (later renamed Yahoo). As the Web grew, it warranted a better approach for navigation.</p><h3>Search Engines</h3><p>A <strong>search engine</strong> searches for content on the Web. They consist of three main parts:</p><ol><li>A <strong>crawler</strong> automatically scans websites for key information. The bot “chases” all viewable links from a page.</li><li>The <strong>index</strong> accumulates webpages, specifically important content and keywords, found by a crawler. When you perform a search, you are actually searching this database.</li><li>The <strong>search algorithm</strong> ranks all of the webpages that are relevant to the search. It asks questions that combine all of the key factors, including how many credible links point to the site (called <strong>backlinks</strong>), relevancy, authenticity, and spam content, to determine rankings and produce the results you see anytime you search the Web.</li></ol>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 18,
+          "content": [
+            {
+              "type": "heading",
+              "level": 2,
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Search Engine Optimization (SEO)",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "SEO refers to how an organization or entity can maximize their presence in search results. The goal is to increase their quantity and quality of visitors. There are two types:",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "format": "unordered",
+              "children": [
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "bold": true,
+                      "text": "On-page SEO",
+                      "type": "text"
+                    },
+                    {
+                      "text": " refers to optimizing the actual website. This includes improving structure to increase customer engagement, or content changes to boost crawler recognition like using popular search terms, adding meta tags, or editing the URL address.",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "format": "unordered",
+              "children": [
+                {
+                  "type": "list-item",
+                  "children": [
+                    {
+                      "bold": true,
+                      "text": "Off-page SEO",
+                      "type": "text"
+                    },
+                    {
+                      "text": " is building your website authority through other channels. The primary mechanism is to boost link popularity, but it also includes social media and diverse marketing efforts.",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Popular examples of search engines include Google, Bing, DuckDuckGo, Yandex, and Yahoo.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 29,
+          "content": [
+            {
+              "type": "heading",
+              "level": 2,
+              "children": [
+                {
+                  "bold": true,
+                  "text": "Web Browsers",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "A ",
+                  "type": "text"
+                },
+                {
+                  "bold": true,
+                  "text": "web browser",
+                  "type": "text"
+                },
+                {
+                  "text": " (often referred to as just “browser”) is a software application that allows you to retrieve and visit webpages. Browsers utilize search engines to retrieve sites, and they feature a GUI to support visuals and user interaction.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Information, such as cookies or history, may be retained through cache memory to improve user experience. Other prominent features include bookmarking and password storage along with extension support for user customization.",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Common browsers include Google Chrome, Mozilla Firefox, Microsoft Edge, Apple Safari, Opera, and Arc.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 19,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Fun fact: Netscape Navigator, now discontinued, was the first commercially available web browser with a GUI, released in 1994.",
+                  "type": "text"
+                }
+              ]
+            }
+          ],
+          "type": "info",
+          "color": "bg-sky-50",
+          "iconEnabled": null,
+          "__component": "droplets.callout"
+        },
+        {
+          "id": 68,
+          "content": "<h3>Clarification</h3><p>Companies sometimes produce search engines, web browsers, <i>and</i> operating systems, leading to confusion among the three. Remember: search engines are a service that find content on the web, web browsers are infrastructure that allow you to view webpages, and operating systems are software that manage your device’s files and programs by communicating with its hardware.</p><h2>Cookies!</h2><p>Most people blindly agree to terms of service and privacy agreements. Similarly, we may choose to accept all cookies without considering the impact. Please watch the following video to learn what webpage cookies are, how they are used to track user activity, and potential hazards:</p>",
+          "__component": "droplets.generic"
+        },
+        {
+          "id": 10,
+          "url": "https://www.youtube.com/embed/I01XMRo2ESg?si=-g1DO0ylCFGo8KBP",
+          "__component": "droplets.video"
+        }
+      ],
+      "blocksV2": null
+    },
+    {
+      "id": 49,
+      "name": "Check-In Questions",
+      "type": null,
+      "blocksVersion": null,
+      "blocks": [
+        {
+          "id": 7,
+          "questions": [
+            {
+              "id": 11,
+              "content": "<p>Which term is <strong>NOT</strong> used as a shorthand for the “World Wide Web”?</p>",
+              "answerOptions": [
+                {
+                  "id": 22,
+                  "isCorrect": false,
+                  "content": "www"
+                },
+                {
+                  "id": 23,
+                  "isCorrect": false,
+                  "content": "W3"
+                },
+                {
+                  "id": 25,
+                  "isCorrect": false,
+                  "content": "The web"
+                },
+                {
+                  "id": 26,
+                  "isCorrect": true,
+                  "content": "The Internet"
+                }
+              ]
+            },
+            {
+              "id": 12,
+              "content": "<p>The HTTP <span style=\"background-color:rgba(135,131,120,.15);color:#EB5757;font-family:&quot;SFMono-Regular&quot;, Menlo, Consolas, &quot;PT Mono&quot;, &quot;Liberation Mono&quot;, Courier, monospace;\">418 I'm a teapot</span> status code falls into which class? <i>Yes, </i><a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/418\"><code><i>it’s real</i></code></a><i>.</i></p>",
+              "answerOptions": [
+                {
+                  "id": 27,
+                  "isCorrect": false,
+                  "content": "Informational"
+                },
+                {
+                  "id": 28,
+                  "isCorrect": false,
+                  "content": "Success"
+                },
+                {
+                  "id": 29,
+                  "isCorrect": false,
+                  "content": "Redirection"
+                },
+                {
+                  "id": 30,
+                  "isCorrect": true,
+                  "content": "Client"
+                },
+                {
+                  "id": 31,
+                  "isCorrect": false,
+                  "content": "Server"
+                }
+              ]
+            },
+            {
+              "id": 13,
+              "content": "<p>What character or sequence denotes the start of a <i>query</i> in a URL?</p>",
+              "answerOptions": [
+                {
+                  "id": 32,
+                  "isCorrect": false,
+                  "content": "://"
+                },
+                {
+                  "id": 33,
+                  "isCorrect": false,
+                  "content": ":"
+                },
+                {
+                  "id": 34,
+                  "isCorrect": true,
+                  "content": "?"
+                },
+                {
+                  "id": 35,
+                  "isCorrect": false,
+                  "content": "#"
+                }
+              ]
+            },
+            {
+              "id": 14,
+              "content": "<p>Consider this scenario: Steve updates his website’s layout and color theme to align with an upcoming holiday and boost traffic. What technique is Steve most closely employing?</p>",
+              "answerOptions": [
+                {
+                  "id": 36,
+                  "isCorrect": true,
+                  "content": "On-page SEO"
+                },
+                {
+                  "id": 37,
+                  "isCorrect": false,
+                  "content": "Off-page SEO"
+                },
+                {
+                  "id": 38,
+                  "isCorrect": false,
+                  "content": "Indexing"
+                },
+                {
+                  "id": 39,
+                  "isCorrect": false,
+                  "content": "Browser enhancement"
+                }
+              ]
+            }
+          ],
+          "__component": "droplets.quiz"
+        }
+      ],
+      "blocksV2": null
+    }
+  ]
+}

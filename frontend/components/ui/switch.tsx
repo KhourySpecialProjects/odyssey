@@ -14,6 +14,7 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
       <label className="relative inline-flex cursor-pointer items-center">
         <input
           type="checkbox"
+          role="switch"
           className="peer sr-only"
           onChange={(e) => onCheckedChange?.(e.target.checked)}
           ref={ref}
@@ -21,7 +22,7 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
         />
         <div
           className={cn(
-            "peer h-5 w-9 rounded-full bg-slate-200 peer-checked:bg-[#287697] after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white",
+            "peer h-5 w-9 rounded-full bg-slate-200 peer-checked:bg-[#287697] peer-focus-visible:ring-2 peer-focus-visible:ring-[#287697] peer-focus-visible:ring-offset-2 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white",
             className,
           )}
         />

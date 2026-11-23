@@ -1,6 +1,11 @@
 "use server";
 
-import { VoyageEnrollment, VoyageNode, VoyageNodeCompletion } from "@/types";
+import {
+  Enrollment,
+  VoyageEnrollment,
+  VoyageNode,
+  VoyageNodeCompletion,
+} from "@/types";
 import {
   fetchAPI,
   flattenAttributes,
@@ -13,6 +18,14 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "./cached";
 import { requireRole } from "@/lib/auth/require-role";
 import { withAuth, assertOwner } from "@/lib/auth/guards";
+import {
+  resolveDocumentId,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+  type EntryRef,
+  type StrapiCollection,
+} from "@/lib/strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
 
 const STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -23,6 +36,22 @@ const CLAIM_BYPASS_ROLES = [
   AuthorizedUserRoleTitle.SysAdmin,
   AuthorizedUserRoleTitle.Faculty,
 ] as const;
+
+/**
+ * Like strapiEntryUrl, but returns null when the entry no longer exists so the
+ * caller can return the same result a Strapi 404 used to produce.
+ */
+async function entryUrlOrNull(
+  collection: StrapiCollection,
+  ref: EntryRef,
+): Promise<string | null> {
+  try {
+    return await strapiEntryUrl(collection, ref);
+  } catch (error) {
+    if (error instanceof StrapiEntryNotFoundError) return null;
+    throw error;
+  }
+}
 
 /**
  * Fetches a single voyage enrollment for a specific user and voyage.
@@ -167,13 +196,14 @@ export async function enrollInVoyage(voyageId: number) {
     }
 
     // Draft guard: fetch voyage status before enrolling
-    const voyage = await fetchAPI<{ id: number; status: string } | null>(
-      `/voyages/${voyageId}`,
-      {
-        urlParams: { fields: ["id", "status"] },
-        cache: "no-store",
-      },
-    );
+    const voyage = await fetchAPI<{
+      id: number;
+      documentId?: string;
+      status: string;
+    } | null>(`/voyages/${await resolveDocumentId("voyages", voyageId)}`, {
+      urlParams: { fields: ["id", "status"] },
+      cache: "no-store",
+    });
 
     if (!voyage) {
       return { ok: false, error: "not_found", data: null };
@@ -192,6 +222,15 @@ export async function enrollInVoyage(voyageId: number) {
       return { ok: true, error: null, data: existing };
     }
 
+    // Relation values are documentIds on Strapi v5
+    const [userDocId, voyageDocId] = await Promise.all([
+      resolveDocumentId("authorized-users", authorizedUser),
+      resolveDocumentId("voyages", {
+        id: voyageId,
+        documentId: voyage.documentId,
+      }),
+    ]);
+
     const response = await fetch(`${STRAPI_API_URL}/api/voyage-enrollments`, {
       method: "POST",
       headers: {
@@ -201,8 +240,8 @@ export async function enrollInVoyage(voyageId: number) {
       },
       body: JSON.stringify({
         data: {
-          authorizedUser: authorizedUser.id,
-          voyage: voyageId,
+          authorizedUser: userDocId,
+          voyage: voyageDocId,
           enrolledAt: new Date().toISOString(),
         },
       }),
@@ -218,16 +257,23 @@ export async function enrollInVoyage(voyageId: number) {
       };
     }
 
+    const created = flattenAttributes(responseData.data);
+    // Steps finished before joining count right away (ODY-675).
+    if (created?.id) {
+      await recordFinishedVoyageNodes(
+        authorizedUser.id,
+        userDocId,
+        voyageId,
+        created,
+      );
+    }
+
     // Per-user only. Every cached voyage-enrollment read also carries the
     // per-user tag of each user it returns (incl. the group progress grid),
     // and voyage reads (`voyages`) contain no enrollment data or counts.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
 
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data),
-    };
+    return { ok: true, error: null, data: created };
   } catch (err) {
     console.error("Error in enrollInVoyage:", err);
     return {
@@ -253,6 +299,25 @@ export async function enrollInVoyageDirect(
       return { ok: true, error: null, data: existing };
     }
 
+    // Relation values are documentIds on Strapi v5
+    let userDocId: string;
+    let voyageDocId: string;
+    try {
+      [userDocId, voyageDocId] = await Promise.all([
+        resolveDocumentId("authorized-users", authorizedUserId),
+        resolveDocumentId("voyages", voyageId),
+      ]);
+    } catch (error) {
+      if (error instanceof StrapiEntryNotFoundError) {
+        return {
+          ok: false,
+          error: "Failed to enroll in voyage",
+          data: null,
+        };
+      }
+      throw error;
+    }
+
     const response = await fetch(`${STRAPI_API_URL}/api/voyage-enrollments`, {
       method: "POST",
       headers: {
@@ -262,8 +327,8 @@ export async function enrollInVoyageDirect(
       },
       body: JSON.stringify({
         data: {
-          authorizedUser: authorizedUserId,
-          voyage: voyageId,
+          authorizedUser: userDocId,
+          voyage: voyageDocId,
           enrolledAt: new Date().toISOString(),
         },
       }),
@@ -279,15 +344,22 @@ export async function enrollInVoyageDirect(
       };
     }
 
+    const created = flattenAttributes(responseData.data);
+    // Steps the member finished before joining count right away (ODY-675).
+    if (created?.id) {
+      await recordFinishedVoyageNodes(
+        authorizedUserId,
+        userDocId,
+        voyageId,
+        created,
+      );
+    }
+
     // Per-user only (see enrollInVoyage). Group enrollment calls this once
     // per member x voyage, so global sweeps here multiplied quickly.
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUserId));
 
-    return {
-      ok: true,
-      error: null,
-      data: flattenAttributes(responseData.data),
-    };
+    return { ok: true, error: null, data: created };
   } catch (err) {
     console.error("Error in enrollInVoyageDirect:", err);
     return {
@@ -338,34 +410,41 @@ export async function unenrollFromVoyage(voyageId: number) {
     );
 
     await Promise.all(
-      completions.map((completion) =>
-        fetch(
-          `${STRAPI_API_URL}/api/voyage-node-completions/${completion.id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-              ...STRAPI_RESPONSE_FORMAT_HEADER,
-            },
+      completions.map(async (completion) => {
+        // A completion that no longer exists is already gone (the 404 was
+        // ignored before too).
+        const completionUrl = await entryUrlOrNull(
+          "voyage-node-completions",
+          completion,
+        );
+        if (!completionUrl) return;
+        return fetch(completionUrl, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
           },
-        ),
-      ),
+        });
+      }),
     );
 
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/voyage-enrollments/${enrollment.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-      },
+    const enrollmentUrl = await entryUrlOrNull(
+      "voyage-enrollments",
+      enrollment,
     );
+    const response = enrollmentUrl
+      ? await fetch(enrollmentUrl, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+        })
+      : null;
 
-    if (!response.ok) {
+    if (!response?.ok) {
       return {
         ok: false,
         error: "Failed to unenroll from voyage.",
@@ -373,13 +452,17 @@ export async function unenrollFromVoyage(voyageId: number) {
       };
     }
 
-    const data = await response.json();
+    const body = await readJsonOrNull(response);
 
     // Per-user only (see enrollInVoyage). Node completions are read with the
     // per-user tag too (getVoyageNodeCompletions).
     revalidateTag(CACHE_TAGS.voyageEnrollments(authorizedUser.id));
 
-    return { ok: true, error: null, data: flattenAttributes(data.data) };
+    return {
+      ok: true,
+      error: null,
+      data: flattenAttributes(body?.data ?? null),
+    };
   } catch (err) {
     console.error("Error in unenrollFromVoyage:", err);
     return {
@@ -417,6 +500,196 @@ export async function getVoyageNodeCompletions(
       revalidate: 900,
     },
   });
+}
+
+/**
+ * Recounts the user's completed nodes in a voyage and PUTs the new
+ * completionPercentage on their voyage enrollment. Not exported and does no
+ * auth: callers have already checked that `enrollment` is the user's.
+ */
+async function putCompletionPercentage(
+  allNodes: VoyageNode[],
+  voyageId: number,
+  userId: number,
+  enrollment: EntryRef,
+): Promise<Response> {
+  const completions = await fetchAPI<VoyageNodeCompletion[]>(
+    "/voyage-node-completions",
+    {
+      urlParams: {
+        filters: {
+          $and: [
+            { authorizedUser: { id: { $eq: userId } } },
+            { voyageEnrollment: { voyage: { id: { $eq: voyageId } } } },
+          ],
+        },
+        populate: { voyageNode: { fields: ["id"] } },
+        pagination: { pageSize: 250, page: 1 },
+      },
+      next: { revalidate: 0 },
+    },
+  );
+
+  const completedNodeIds = new Set(
+    completions
+      .map((c) => c.voyageNode?.id)
+      .filter((id): id is number => id !== undefined),
+  );
+  const { computeCompletionPercentage } = await import("@/lib/voyage-progress");
+  const newPercentage = Math.round(
+    computeCompletionPercentage(allNodes, completedNodeIds),
+  );
+
+  return fetch(await strapiEntryUrl("voyage-enrollments", enrollment), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      ...STRAPI_RESPONSE_FORMAT_HEADER,
+    },
+    body: JSON.stringify({ data: { completionPercentage: newPercentage } }),
+  });
+}
+
+/** The droplets a node needs finished: its droplet, or its playlist's droplets. */
+function nodeDropletIds(node: VoyageNode): number[] {
+  if (node.nodeType === "droplet") {
+    return node.droplet?.id ? [node.droplet.id] : [];
+  }
+  return (node.playlist?.droplets ?? []).map((d) => d.id);
+}
+
+/**
+ * Records a completion for every node of the voyage the user has already
+ * finished (ODY-675): a droplet node whose droplet is complete, or a playlist
+ * node whose droplets are all complete. Lesson views only record a node at the
+ * moment a droplet first completes, so this runs when the user joins a voyage.
+ * Nodes already recorded on this enrollment are skipped, so it is safe to
+ * repeat.
+ *
+ * Not exported and does no auth: callers pass a user and the voyage enrollment
+ * they just created for that user. Errors are logged and swallowed so joining
+ * still succeeds.
+ */
+async function recordFinishedVoyageNodes(
+  userId: number,
+  userDocId: string,
+  voyageId: number,
+  enrollment: { id: number; documentId?: string },
+): Promise<void> {
+  try {
+    const nodes = await fetchAPI<VoyageNode[]>("/voyage-nodes", {
+      urlParams: {
+        filters: { voyage: { id: { $eq: voyageId } } },
+        fields: ["id", "branchType", "nodeType"],
+        populate: {
+          droplet: { fields: ["id", "status"] },
+          playlist: {
+            fields: ["id"],
+            populate: { droplets: { fields: ["id"] } },
+          },
+        },
+        pagination: { pageSize: 250, page: 1 },
+      },
+      next: { revalidate: 0 },
+    });
+    if (!nodes?.length) return;
+
+    const dropletIds = [...new Set(nodes.flatMap(nodeDropletIds))];
+    if (dropletIds.length === 0) return;
+
+    const completedEnrollments =
+      (await fetchAPI<Enrollment[]>("/enrollments", {
+        urlParams: {
+          filters: {
+            $and: [
+              { authorizedUser: { id: { $eq: userId } } },
+              { droplet: { id: { $in: dropletIds } } },
+              { isComplete: { $eq: true } },
+            ],
+          },
+          fields: ["id"],
+          populate: { droplet: { fields: ["id"] } },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { revalidate: 0 },
+      })) ?? [];
+    const finished = new Set(completedEnrollments.map((e) => e.droplet?.id));
+
+    const recorded =
+      (await fetchAPI<VoyageNodeCompletion[]>("/voyage-node-completions", {
+        urlParams: {
+          filters: {
+            $and: [
+              { authorizedUser: { id: { $eq: userId } } },
+              { voyageEnrollment: { id: { $eq: enrollment.id } } },
+            ],
+          },
+          populate: { voyageNode: { fields: ["id"] } },
+          pagination: { pageSize: 250, page: 1 },
+        },
+        next: { revalidate: 0 },
+      })) ?? [];
+    const recordedNodeIds = new Set(recorded.map((c) => c.voyageNode?.id));
+
+    const toRecord = nodes.filter((node) => {
+      const ids = nodeDropletIds(node);
+      return (
+        !recordedNodeIds.has(node.id) &&
+        ids.length > 0 &&
+        ids.every((id) => finished.has(id))
+      );
+    });
+    if (toRecord.length === 0) return;
+
+    const voyageEnrollment = await resolveDocumentId(
+      "voyage-enrollments",
+      enrollment,
+    );
+    const completedAt = new Date().toISOString();
+    for (const node of toRecord) {
+      const response = await fetch(
+        `${STRAPI_API_URL}/api/voyage-node-completions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+            ...STRAPI_RESPONSE_FORMAT_HEADER,
+          },
+          body: JSON.stringify({
+            data: {
+              voyageNode: await resolveDocumentId("voyage-nodes", node),
+              voyageEnrollment,
+              authorizedUser: userDocId,
+              completedAt,
+            },
+          }),
+        },
+      );
+      if (!response.ok) {
+        console.error(
+          `Failed to record voyage node ${node.id} as complete:`,
+          response.status,
+        );
+      }
+    }
+
+    const putResponse = await putCompletionPercentage(
+      nodes,
+      voyageId,
+      userId,
+      enrollment,
+    );
+    if (!putResponse.ok) {
+      console.error(
+        "Failed to update voyage enrollment percentage:",
+        putResponse.status,
+      );
+    }
+  } catch (err) {
+    console.error("Error in recordFinishedVoyageNodes:", err);
+  }
 }
 
 /**
@@ -494,7 +767,46 @@ export async function markVoyageNodeComplete(
       return { ok: true, error: null, data: existing[0] };
     }
 
-    // Create the voyage-node-completion record
+    // The enrollment check above returned the enrollment entity, so its
+    // documentId is used without a lookup.
+    const enrollmentRef = {
+      id: voyageEnrollmentId,
+      documentId: enrollmentCheck[0].documentId,
+    };
+
+    // Create the voyage-node-completion record. Relation values are
+    // documentIds on Strapi v5.
+    let completionRelations: {
+      voyageNode: string;
+      voyageEnrollment: string;
+      authorizedUser: string;
+    };
+    try {
+      const [voyageNode, voyageEnrollment, authorizedUserDoc] =
+        await Promise.all([
+          resolveDocumentId("voyage-nodes", voyageNodeId),
+          resolveDocumentId("voyage-enrollments", enrollmentRef),
+          resolveDocumentId("authorized-users", {
+            id: userId,
+            documentId: authorizedUser.documentId,
+          }),
+        ]);
+      completionRelations = {
+        voyageNode,
+        voyageEnrollment,
+        authorizedUser: authorizedUserDoc,
+      };
+    } catch (error) {
+      if (error instanceof StrapiEntryNotFoundError) {
+        return {
+          ok: false,
+          error: "Failed to mark node as complete",
+          data: null,
+        };
+      }
+      throw error;
+    }
+
     const completionResponse = await fetch(
       `${STRAPI_API_URL}/api/voyage-node-completions`,
       {
@@ -506,9 +818,7 @@ export async function markVoyageNodeComplete(
         },
         body: JSON.stringify({
           data: {
-            voyageNode: voyageNodeId,
-            voyageEnrollment: voyageEnrollmentId,
-            authorizedUser: userId,
+            ...completionRelations,
             completedAt: new Date().toISOString(),
           },
         }),
@@ -562,51 +872,12 @@ export async function markVoyageNodeComplete(
         },
       });
 
-      // 3. Fetch all completions for this user and voyage (includes newly created)
-      const completions = await fetchAPI<VoyageNodeCompletion[]>(
-        "/voyage-node-completions",
-        {
-          urlParams: {
-            filters: {
-              $and: [
-                { authorizedUser: { id: { $eq: authorizedUser.id } } },
-                { voyageEnrollment: { voyage: { id: { $eq: voyageId } } } },
-              ],
-            },
-            populate: { voyageNode: { fields: ["id"] } },
-            pagination: { pageSize: 250, page: 1 },
-          },
-          next: { revalidate: 0 },
-        },
-      );
-
-      // 4. Count required nodes and completed required nodes
-      const completedNodeIds = new Set(
-        completions
-          .map((c) => c.voyageNode?.id)
-          .filter((id): id is number => id !== undefined),
-      );
-      const { computeCompletionPercentage } = await import(
-        "@/lib/voyage-progress"
-      );
-      const newPercentage = Math.round(
-        computeCompletionPercentage(allNodes, completedNodeIds),
-      );
-
-      // 5. PUT updated percentage on voyage-enrollment
-      const putResponse = await fetch(
-        `${STRAPI_API_URL}/api/voyage-enrollments/${voyageEnrollmentId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            ...STRAPI_RESPONSE_FORMAT_HEADER,
-          },
-          body: JSON.stringify({
-            data: { completionPercentage: newPercentage },
-          }),
-        },
+      // 3-5. Recount completions (incl. the new one) and save the percentage
+      const putResponse = await putCompletionPercentage(
+        allNodes,
+        voyageId,
+        authorizedUser.id,
+        enrollmentRef,
       );
 
       if (!putResponse.ok) {
@@ -916,6 +1187,22 @@ export async function claimNodeForUser(
     let dropletData: any = null;
     let finalName = baseName;
 
+    // Relation values are documentIds on Strapi v5
+    let claimerDocId: string;
+    try {
+      claimerDocId = await resolveDocumentId("authorized-users", userId);
+    } catch (error) {
+      if (error instanceof StrapiEntryNotFoundError) {
+        // Strapi used to reject the unknown relation with a 400 on every retry
+        return {
+          ok: false,
+          error: "Failed to create droplet after retries",
+          data: null,
+        };
+      }
+      throw error;
+    }
+
     for (let attempt = 0; attempt < 5; attempt++) {
       finalName = attempt === 0 ? baseName : `${baseName} (${attempt})`;
       const slug = finalName
@@ -939,13 +1226,8 @@ export async function claimNodeForUser(
             difficulty: "beginner",
             status: "draft",
             isHidden: true,
-            learningObjectives: [
-              {
-                __component: "droplets.learning-objective",
-                objective: "TBD",
-              },
-            ],
-            authorized_users: { connect: [userId] },
+            learningObjectives: [{ objective: "TBD" }],
+            authorized_users: { connect: [claimerDocId] },
           },
         }),
       });
@@ -967,7 +1249,7 @@ export async function claimNodeForUser(
         data: null,
       };
 
-    await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
+    await fetch(await strapiEntryUrl("voyage-nodes", node), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -976,8 +1258,8 @@ export async function claimNodeForUser(
       },
       body: JSON.stringify({
         data: {
-          droplet: dropletData.id,
-          claimedBy: userId,
+          droplet: await resolveDocumentId("droplets", dropletData),
+          claimedBy: claimerDocId,
           claimStatus: "claimed",
         },
       }),
@@ -1026,7 +1308,7 @@ export async function unclaimVoyageDropletNode(voyageNodeId: number) {
   });
   if (!owner.ok) return { ok: false, error: owner.error };
 
-  await fetch(`${STRAPI_API_URL}/api/voyage-nodes/${voyageNodeId}`, {
+  await fetch(await strapiEntryUrl("voyage-nodes", node), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

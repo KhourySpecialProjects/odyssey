@@ -7,13 +7,54 @@ import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { getUserProfile, getUserPhoto } from "./azure";
 import { uploadImage, deleteImage } from "../actions";
 import { AuthorizedUserRoleTitle } from "../globals";
+import {
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+  type EntryRef,
+} from "../strapi-document-id";
+import { CACHE_TAGS } from "../cache-tags";
 
-const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+/**
+ * How often the jwt callback re-checks the account id kept in the token.
+ *
+ * ODY-555 keeps the Strapi authorized-user id in the token so pages can start
+ * id-keyed fetches in parallel. An account that is deleted and re-created gets
+ * a new id, so without a re-check a session would carry a stale or dead id for
+ * up to NextAuth's 30-day rolling expiry. This bounds that window.
+ *
+ * Note: in App Router Server Components getServerSession can't write the
+ * cookie, so a refreshed token is only persisted when the client's
+ * SessionProvider calls /api/auth/session (on load and window focus). Until
+ * then each RSC request re-runs the lookup, which is normally a data-cache hit.
+ */
+const ACCOUNT_ID_RECHECK_MS = 5 * 60 * 1000;
+
+/** Looks up the authorized-user id and documentId by email; null if no user matches. */
+async function fetchAccountId(
+  email: string,
+): Promise<{ id: number; documentId?: string } | null> {
+  const [match] = await fetchAPI<{ id: number; documentId?: string }[]>(
+    "/authorized-users",
+    {
+      urlParams: {
+        filters: { email: { $eq: email } },
+        fields: ["id"],
+        pagination: { pageSize: 1, page: 1 },
+      },
+      // Data-cached so the re-check is normally a cache hit; create/delete
+      // AuthorizedUser revalidate `users`, so an in-app delete/re-create is
+      // seen on the next check.
+      next: { revalidate: 900, tags: [CACHE_TAGS.users] },
+    },
+  );
+  return match ? { id: match.id, documentId: match.documentId } : null;
+}
 
 async function syncAzureProfilePhoto(
   accessToken: string,
-  userId: number,
+  user: EntryRef,
 ): Promise<string | null> {
   const photoBuffer = await getUserPhoto(accessToken);
   if (!photoBuffer) return null;
@@ -29,24 +70,27 @@ async function syncAzureProfilePhoto(
   const profilePhoto = uploadResult.url;
   const fileName = profilePhoto.split("/").pop()!;
   try {
-    const res = await fetch(
-      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({ data: { profilePhoto } }),
+    const res = await fetch(await strapiEntryUrl("authorized-users", user), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({ data: { profilePhoto } }),
+    });
     if (!res.ok) {
       console.error("Strapi profile photo save failed:", res.status);
       await deleteImage(fileName).catch(() => {});
       return null;
     }
   } catch (err) {
+    if (err instanceof StrapiEntryNotFoundError) {
+      // Same outcome as the 404 the PUT used to return.
+      console.error("Strapi profile photo save failed:", 404);
+      await deleteImage(fileName).catch(() => {});
+      return null;
+    }
     console.error("Failed to save profile photo to Strapi:", err);
     await deleteImage(fileName).catch(() => {});
     return null;
@@ -54,6 +98,10 @@ async function syncAzureProfilePhoto(
 
   return profilePhoto;
 }
+
+// Data URIs (Azure Graph photos) bloat the session cookie past Node's 16 KB header limit.
+const safeImage = (src?: string | null) =>
+  src && !src.startsWith("data:") ? src : null;
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -99,6 +147,7 @@ export const authOptions: NextAuthOptions = {
           fetchAPI<
             {
               id: number;
+              documentId?: string;
               roles: { title: string }[];
               profilePhoto: string | null;
             }[]
@@ -116,26 +165,47 @@ export const authOptions: NextAuthOptions = {
         const profilePhoto =
           authorizedUser.profilePhoto ||
           (isAzure && account.access_token
-            ? await syncAzureProfilePhoto(
-                account.access_token,
-                authorizedUser.id,
-              )
+            ? await syncAzureProfilePhoto(account.access_token, authorizedUser)
             : null);
 
         token.user = {
           // Stored so pages can start id-keyed fetches without first looking
           // the user up by email (see lib/auth/current-user-id.ts).
           id: authorizedUser.id,
+          documentId: authorizedUser.documentId,
           name: user.name,
           email: user.email,
-          image: profilePhoto || user.image,
+          image: profilePhoto || safeImage(user.image),
           nuid: graphProfile?.nuid,
           isActive: true,
           roles: authorizedUser.roles.map(
             (elem) => elem.title as AuthorizedUserRoleTitle,
           ),
         };
+        token.userIdCheckedAt = Date.now();
+      } else if (
+        token.user?.email &&
+        (!token.userIdCheckedAt ||
+          Date.now() - token.userIdCheckedAt > ACCOUNT_ID_RECHECK_MS)
+      ) {
+        try {
+          const match = await fetchAccountId(token.user.email);
+          // No match: drop the ids so getAuthorizedUserId falls back to the
+          // email lookup and pages take their not-found/unauthorized paths.
+          token.user = {
+            ...token.user,
+            id: match?.id,
+            documentId: match?.documentId,
+          };
+          token.userIdCheckedAt = Date.now();
+        } catch (err) {
+          console.error("Failed to re-check authorized user id:", err);
+        }
       }
+
+      // Runs on every call so existing oversized cookies shrink without re-login.
+      delete token.picture;
+      if (token.user) token.user.image = safeImage(token.user.image);
 
       return token;
     },

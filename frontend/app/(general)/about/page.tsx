@@ -5,48 +5,35 @@ import {
   BriefcaseIcon,
   TargetIcon,
   UserIcon,
+  type LucideIcon,
 } from "lucide-react";
+import { DROPLET_FOCUS_AREAS, DROPLET_TYPES } from "@/lib/droplet-categories";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About",
 };
 
-const types = [
-  {
-    name: "Knowledge",
-    description:
-      "A Knowledge Droplet provides a comprehensive overview of a specific topic. While completing it, students will evaluate their grasp on the material by responding to check-in questions throughout.",
-    icon: BrainIcon,
-  },
-  {
-    name: "Skill",
-    description:
-      "A Skill Droplet applies student knowledge through guided examples for use in some application. Students will reinforce their understanding through hands-on exposure via guided walkthroughs and DIY activities.",
-    icon: TargetIcon,
-  },
-];
+const typeIcons: Record<string, LucideIcon> = {
+  Knowledge: BrainIcon,
+  Skill: TargetIcon,
+};
 
-const focusAreas = [
-  {
-    name: "Personal",
-    description:
-      "Personal impact Droplets introduce topics related to the Khoury College and Northeastern student experience, as well as tips for constructing mental fortitude. Real student experiences may be included.",
-    icon: UserIcon,
-  },
-  {
-    name: "Professional",
-    description:
-      "Professional impact Droplets advance critical thinking skills used in the workforce along with business best practices.",
-    icon: BriefcaseIcon,
-  },
-  {
-    name: "Technical",
-    description:
-      "Technical impact Droplets leverage technology as a driver for innovation through exposure to recent advances, hands-on development, and fundamental industry knowledge.",
-    icon: BinaryIcon,
-  },
-];
+const focusAreaIcons: Record<string, LucideIcon> = {
+  Personal: UserIcon,
+  Professional: BriefcaseIcon,
+  Technical: BinaryIcon,
+};
+
+const types = DROPLET_TYPES.map((type) => ({
+  ...type,
+  icon: typeIcons[type.name],
+}));
+
+const focusAreas = DROPLET_FOCUS_AREAS.map((area) => ({
+  ...area,
+  icon: focusAreaIcons[area.name],
+}));
 
 export default async function AboutPage() {
   return (

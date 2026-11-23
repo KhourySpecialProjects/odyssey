@@ -15,6 +15,7 @@ import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
 import { ArchivedVoyagesGrid } from "./archived-voyages-grid";
 import { VoyageCard } from "@/components/voyages/voyage-card";
+import { getGroupArchiveState } from "@/lib/group-archive";
 
 export async function MyContent({
   searchParams,
@@ -47,11 +48,13 @@ export async function MyContent({
   const allGroups = userGroups.filter((group) =>
     group.members?.some((member) => member.id === userId),
   );
+  // Uses the same hybrid archive rule as /g/dashboard (getGroupArchiveState):
+  // archived for me (users_archived) OR archived for everyone (isArchived).
   const activeGroups = allGroups.filter(
-    (group) => !group.users_archived?.some((user) => user.id === userId),
+    (group) => !getGroupArchiveState(group, userId).isEffectivelyArchived,
   );
-  const archivedGroups = allGroups.filter((group) =>
-    group.users_archived?.some((user) => user.id === userId),
+  const archivedGroups = allGroups.filter(
+    (group) => getGroupArchiveState(group, userId).isEffectivelyArchived,
   );
 
   return (
@@ -84,7 +87,7 @@ export async function MyContent({
             )}
             <UserGroups
               activeGroups={activeGroups}
-              isArchived={false}
+              viewerId={userId}
               sortKey={sortKey}
             />
           </>
@@ -111,7 +114,7 @@ export async function MyContent({
             )}
             <UserGroups
               activeGroups={archivedGroups}
-              isArchived={true}
+              viewerId={userId}
               sortKey={sortKey}
             />
           </>

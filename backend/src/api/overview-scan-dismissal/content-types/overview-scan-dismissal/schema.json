@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "overview_scan_dismissals",
+  "info": {
+    "singularName": "overview-scan-dismissal",
+    "pluralName": "overview-scan-dismissals",
+    "displayName": "Overview Scan Dismissal",
+    "description": "A scan flag someone marked as fine on a droplet (ODY-905)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "dismissedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "checkId": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "ruleId": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "partId": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "blockId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "message": {
+      "type": "text",
+      "required": true,
+      "maxLength": 5000
+    }
+  }
+}

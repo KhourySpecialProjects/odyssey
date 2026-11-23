@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -15,6 +16,12 @@ import {
   useCreateBlockNote,
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
+import {
+  anchorsPlugin,
+  refreshAnchors,
+  type AnchorsDoc,
+  type DrawnAnchor,
+} from "@/lib/anchors/editor";
 import { blockNoteSchema } from "@/lib/blocknote/schema";
 import {
   isAutolinkFalsePositive,
@@ -41,7 +48,7 @@ import {
 import { TableCellColorButton } from "@/components/ui/blocknote/editor/table-cell-color-button";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { AutoFormatOperation } from "@/lib/actions/auto-format-slides";
-import type { Block } from "@blocknote/core";
+import { createExtension, type Block } from "@blocknote/core";
 import type { CustomBlockNoteBlock } from "@/types";
 import { useSlideOverflowDetection } from "@/hooks/useSlideOverflowDetection";
 
@@ -180,15 +187,34 @@ interface BlockNoteEditorClientProps {
   initialContent?: Block[];
   onChange?: (content: Block[]) => void;
   editable?: boolean;
+  /** Review comment marks to draw as decorations (ODY-806) */
+  anchors?: DrawnAnchor[];
+  /**
+   * The text `anchors` were found in, from `onContent`. While the editor has
+   * changed since, the marks keep following the edits instead (ODY-807).
+   */
+  anchorsFoundIn?: AnchorsDoc;
+  /**
+   * The content as the editor holds it, once it's ready and then at most once
+   * a frame after each change, whether or not it's saved yet (ODY-807)
+   */
+  onContent?: (content: Block[], doc: AnchorsDoc) => void;
 }
+
+const NO_ANCHORS: DrawnAnchor[] = [];
 
 export function BlockNoteEditorClient({
   initialContent,
   onChange,
   editable = true,
+  anchors = NO_ANCHORS,
+  anchorsFoundIn,
+  onContent,
 }: BlockNoteEditorClientProps) {
   const { resolvedTheme } = useTheme();
   const [isReady, setIsReady] = useState(false);
+  const anchorsRef = useRef(anchors);
+  anchorsRef.current = anchors;
 
   const safeInitialContent = initialContent?.filter((b) =>
     knownBlockTypes.has(b.type as string),
@@ -196,6 +222,14 @@ export function BlockNoteEditorClient({
 
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
+    // Review comment marks, drawn as decorations (ODY-806). A BlockNote
+    // extension rather than a TipTap one.
+    extensions: [
+      createExtension({
+        key: "reviewAnchors",
+        prosemirrorPlugins: [anchorsPlugin(() => anchorsRef.current)],
+      }),
+    ],
     initialContent:
       safeInitialContent && safeInitialContent.length > 0
         ? safeInitialContent
@@ -207,14 +241,8 @@ export function BlockNoteEditorClient({
       cellTextColor: false,
     },
     // Additional TipTap extensions layered on top of BlockNote's defaults.
-    // The cast is required because BlockNote ships a nested @tiptap/core,
-    // so types from our top-level @tiptap/core don't line up.
     _tiptapOptions: {
-      extensions: [
-        StripSpuriousAutolinks,
-        MarkdownLinkInputRule,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any,
+      extensions: [StripSpuriousAutolinks, MarkdownLinkInputRule],
     },
   });
 
@@ -256,6 +284,40 @@ export function BlockNoteEditorClient({
     });
     if (changed) view.dispatch(tr);
   }, [editor]);
+
+  // Redraw the review comment marks when they change
+  useEffect(() => {
+    const view = isReady ? editor.prosemirrorView : undefined;
+    if (view) refreshAnchors(view, anchorsFoundIn);
+  }, [editor, isReady, anchors, anchorsFoundIn]);
+
+  // The live content, for finding comments again as the creator edits
+  const onContentRef = useRef(onContent);
+  onContentRef.current = onContent;
+  const wantsContent = !!onContent;
+  useEffect(() => {
+    if (!wantsContent || !isReady) return;
+    let frame = 0;
+    const send = () => {
+      frame = 0;
+      const view = editor.prosemirrorView;
+      if (view) {
+        onContentRef.current?.(
+          editor.document as unknown as Block[],
+          view.state.doc,
+        );
+      }
+    };
+    const later = () => {
+      if (!frame) frame = requestAnimationFrame(send);
+    };
+    later();
+    const unsubscribe = editor.onChange(later);
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe?.();
+    };
+  }, [editor, isReady, wantsContent]);
 
   // Intercept Tab in tables at the DOM level to prevent block nesting
   useEffect(() => {
@@ -652,10 +714,10 @@ export function BlockNoteEditorClient({
 
   const filteredBlockTypeItems = useMemo(
     () =>
-      blockTypeSelectItems(editor.dictionary).filter(
+      blockTypeSelectItems(editor).filter(
         (item) => !BLOCKED_BLOCK_TYPES.has(item.name ?? ""),
       ),
-    [editor.dictionary],
+    [editor],
   );
 
   const toolbarItems = useMemo(() => {

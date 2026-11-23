@@ -16,13 +16,14 @@ describe("AdminNav", () => {
     "Groups",
     "Requests",
     "Reports",
+    "Scorecard Prompts",
   ];
 
   beforeEach(() => {
     usePathname.mockReturnValue("/admin");
   });
 
-  it("renders all 7 nav items", () => {
+  it("renders all nav items", () => {
     render(<AdminNav />);
     NAV_LABELS.forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();

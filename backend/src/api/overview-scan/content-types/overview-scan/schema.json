@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "overview_scans",
+  "info": {
+    "singularName": "overview-scan",
+    "pluralName": "overview-scans",
+    "displayName": "Overview Scan",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "ranBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "ranAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "rulesVersion": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "passed": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "needsAttention": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "couldNotCheck": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "results": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

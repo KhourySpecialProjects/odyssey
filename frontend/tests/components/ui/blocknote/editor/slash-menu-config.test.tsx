@@ -4,7 +4,7 @@ jest.mock("@blocknote/react", () => ({
 }));
 
 jest.mock("@blocknote/core", () => ({
-  insertOrUpdateBlock: jest.fn(),
+  insertOrUpdateBlockForSlashMenu: jest.fn(),
 }));
 
 jest.mock("@/lib/blocknote/schema", () => ({
@@ -86,7 +86,7 @@ describe("getCalloutSlashMenuItems", () => {
 
     warningItem?.onItemClick?.();
 
-    // Note: insertOrUpdateBlock is called internally, so we can't directly test it
+    // Note: insertOrUpdateBlockForSlashMenu is called internally, so we can't directly test it
     // but we can verify the item has an onItemClick function
     expect(warningItem?.onItemClick).toBeDefined();
     expect(typeof warningItem?.onItemClick).toBe("function");

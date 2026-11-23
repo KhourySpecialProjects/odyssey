@@ -92,7 +92,7 @@ describe("convertBlockNoteToV1Blocks - indented (tabbed) children", () => {
 
     const result = convertBlockNoteToV1Blocks(blocks as any);
     const generic = result[0] as any;
-    expect(generic.content).toContain("<h2>Section</h2>");
+    expect(generic.content).toContain('<h2 data-block-id="h1">Section</h2>');
     expect(generic.content).toContain("Nested under heading");
     expect(generic.content).toContain("border-l");
   });

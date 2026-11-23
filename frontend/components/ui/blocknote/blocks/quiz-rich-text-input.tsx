@@ -37,6 +37,10 @@ const BASE_EXTENSIONS = [
     blockquote: false,
     horizontalRule: false,
     codeBlock: false, // replaced by CodeBlockLowlight below
+    link: false,
+    underline: false,
+    trailingNode: false,
+    listKeymap: false,
   }),
   CodeBlockLowlight.extend({
     addNodeView() {
@@ -88,7 +92,7 @@ export function QuizRichTextInput({
     if (!editor || initialized.current) return;
     initialized.current = true;
     if (value?.trim()) {
-      editor.commands.setContent(value, false);
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [editor]); // intentional: one-shot init, value prop is not reactive
 

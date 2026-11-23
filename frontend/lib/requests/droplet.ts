@@ -1,19 +1,34 @@
 "use server";
 
-import { Droplet, Lesson } from "@/types";
+import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
-import { deleteLesson } from "./lesson";
+import { deleteLessonRecord } from "./lesson-delete";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
 import { requireRole } from "../auth/require-role";
 import { withAuth, assertOwner } from "../auth/guards";
+import {
+  checkDropletContentWrite,
+  checkDropletUpdate,
+  checkPublishDraft,
+} from "../auth/review-freeze";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentByUserAndDroplet } from "./enrollment";
 import { CACHE_TAGS } from "../cache-tags";
-import { planLessonSync, type LessonSyncPlan } from "../lesson-sync";
+import { LESSON_BLOCKS_POPULATE } from "./lesson-populates";
+import { USER_POPULATES } from "./user-populates";
+import {
+  type EntryRef,
+  resolveDocumentId,
+  resolveDocumentIds,
+  strapiEntryUrl,
+  StrapiEntryNotFoundError,
+} from "../strapi-document-id";
+import { readJsonOrNull } from "@/lib/strapi-response";
+import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -112,10 +127,13 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   }: StrapiRequestParams = {},
   { fresh = false }: { fresh?: boolean } = {},
 ): Promise<T> {
-  const path = `/droplets/${id}`;
+  // Strapi v5 single-entry routes take a documentId, so read through the list
+  // endpoint with an id filter instead. That needs no lookup, which also keeps
+  // this safe to call while a page renders.
+  const path = `/droplets`;
   const urlParams = {
     sort,
-    filters: { ...filters },
+    filters: { ...filters, id: { $eq: id } },
     populate,
     fields,
     pagination: {
@@ -124,12 +142,20 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
     },
   };
 
-  return await fetchAPI<T>(path, {
+  const droplets = await fetchAPI<T[]>(path, {
     urlParams,
     ...(fresh
       ? { cache: "no-store" as const }
       : { next: { tags: [CACHE_TAGS.droplets], revalidate: 900 } }),
-  }).then((droplet) => droplet);
+  });
+  const droplet = droplets?.[0];
+  if (!droplet) {
+    // Keep the failure a missing droplet used to produce (a 404 from /droplets/:id).
+    const error = new Error(`Failed to fetch data: HTTP error! status: 404`);
+    console.error("Fetch error:", error);
+    throw error;
+  }
+  return droplet;
 }
 
 export async function getDraftDroplets(): Promise<Droplet[]> {
@@ -141,6 +167,11 @@ export async function getDraftDroplets(): Promise<Droplet[]> {
 export async function getInReviewDroplets(): Promise<Droplet[]> {
   return await getDroplets({
     filters: { inReview: true, status: "draft" },
+    populate: {
+      tags: true,
+      lessons: { fields: ["id", "name", "slug"] },
+      authorized_users: USER_POPULATES.authorName,
+    },
   });
 }
 
@@ -185,22 +216,19 @@ export async function updateDropletAverageRating(
       Math.max(0, Number.isFinite(rating) ? rating : 0),
     );
     const rounded = Math.round(clamped * 10) / 10;
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            averageRating: rounded,
-          },
-        }),
+    const response = await fetch(await strapiEntryUrl("droplets", dropletId), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          averageRating: rounded,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update average rating");
@@ -219,23 +247,25 @@ export async function updateDropletAverageRating(
 }
 
 export async function updateDropletFunFact(fact: string, dropletId: number) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+  const check = await checkDropletContentWrite(gate.user, dropletId);
+  if (!check.ok) return { success: false, error: check.error };
+
   try {
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            funFact: fact,
-          },
-        }),
+    const response = await fetch(await strapiEntryUrl("droplets", dropletId), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          funFact: fact,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update fun fact");
@@ -265,11 +295,22 @@ export async function deepDeleteDroplet(id: number) {
 
     if (droplet.lessons) {
       for (const lesson of droplet.lessons) {
-        await deleteLesson(lesson.id, false);
+        await deleteLessonRecord(lesson.id, false);
       }
     }
 
-    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+    // The fetched droplet carries its documentId, so this needs no lookup.
+    let deleteUrl: string;
+    try {
+      deleteUrl = await strapiEntryUrl("droplets", droplet);
+    } catch (err) {
+      // Same result as the 404 Strapi used to return for a missing droplet.
+      if (err instanceof StrapiEntryNotFoundError) {
+        return { ok: false, error: "Failed to delete droplet.", data: null };
+      }
+      throw err;
+    }
+    const response = await fetch(deleteUrl, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -278,7 +319,7 @@ export async function deepDeleteDroplet(id: number) {
       },
     });
 
-    const data = await response.json();
+    const body = await readJsonOrNull(response);
 
     if (!response.ok) {
       return { ok: false, error: "Failed to delete droplet.", data: null };
@@ -294,11 +335,64 @@ export async function deepDeleteDroplet(id: number) {
     revalidateTag(CACHE_TAGS.allGroups);
     revalidateTag(CACHE_TAGS.allUserContent);
     revalidateTag(CACHE_TAGS.allUserDashboards);
-    return { ok: true, error: null, data: data.data };
+    return { ok: true, error: null, data: body?.data ?? null };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Droplet." };
   }
+}
+
+/**
+ * Relation values for a droplet write, as documentIds. Everything in `data` may
+ * come from a client, so it is resolved from its numeric id only.
+ */
+async function dropletRelationData(
+  data: Partial<z.infer<typeof DropletSchema>>,
+): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {};
+  if (data.authorized_users) {
+    out.authorized_users = await resolveDocumentIds(
+      "authorized-users",
+      data.authorized_users,
+    );
+  }
+  if (data.tagIds) {
+    out.tags = await resolveDocumentIds("tags", data.tagIds);
+  }
+  if (data.prerequisiteIds) {
+    out.prerequisites = await resolveDocumentIds(
+      "droplets",
+      data.prerequisiteIds,
+    );
+  }
+  if (data.postrequisiteIds) {
+    out.postrequisites = await resolveDocumentIds(
+      "droplets",
+      data.postrequisiteIds,
+    );
+  }
+  if (data.lessons) {
+    out.lessons = await resolveDocumentIds(
+      "lessons",
+      data.lessons.map((lesson) => lesson.id),
+    );
+  }
+  if (data.datasets !== undefined) {
+    // Only entries that point at a dataset are relations; anything else is sent as is.
+    const isRef = (d: unknown): d is EntryRef =>
+      typeof d === "number" ||
+      (typeof d === "object" && d !== null && ("documentId" in d || "id" in d));
+    // Reduce each ref to its numeric id; a ref with no id is rejected.
+    const toId = (d: EntryRef) => (typeof d === "object" ? { id: d.id } : d);
+    const entries = data.datasets as unknown[];
+    const resolved = await resolveDocumentIds(
+      "datasets",
+      entries.filter(isRef).map(toId),
+    );
+    let next = 0;
+    out.datasets = entries.map((d) => (isRef(d) ? resolved[next++] : d));
+  }
+  return out;
 }
 
 export async function updateDroplet(
@@ -308,7 +402,29 @@ export async function updateDroplet(
     regenerateSlug: false,
   },
 ) {
+  return withAuth([], async (user) => {
+    const check = await checkDropletUpdate(user, id, data, options);
+    if (!check.ok) return { ok: false, error: check.error, data: null };
+    return applyDropletUpdate(id, data, options);
+  });
+}
+
+/** The body of updateDroplet. Not exported, so it isn't a server action. */
+async function applyDropletUpdate(
+  id: number,
+  data: Partial<z.infer<typeof DropletSchema>>,
+  options: { regenerateSlug?: boolean },
+) {
   try {
+    const relationData = await dropletRelationData(data).catch((err) => {
+      if (err instanceof StrapiEntryNotFoundError) return err;
+      throw err;
+    });
+    if (relationData instanceof StrapiEntryNotFoundError) {
+      // Same result as Strapi rejecting a relation that does not exist.
+      return { ok: false, error: relationData.message, data: null };
+    }
+
     const dataToSend: any = {
       ...(data.name && { name: data.name }),
       ...(data.slug && { slug: data.slug }),
@@ -317,8 +433,6 @@ export async function updateDroplet(
       ...(data.difficulty !== undefined && {
         difficulty: data.difficulty || null,
       }),
-      ...(data.authorized_users && { authorized_users: data.authorized_users }),
-      ...(data.tagIds && { tags: data.tagIds }),
       ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
       ...(data.presentationEnabled !== undefined && {
         presentationEnabled: data.presentationEnabled,
@@ -328,21 +442,27 @@ export async function updateDroplet(
           objective: obj,
         })),
       }),
-      ...(data.prerequisiteIds && { prerequisites: data.prerequisiteIds }),
-      ...(data.postrequisiteIds && { postrequisites: data.postrequisiteIds }),
       ...(data.nextSteps && { nextSteps: data.nextSteps }),
-      ...(data.datasets !== undefined && { datasets: data.datasets }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.overview !== undefined && { overview: data.overview }),
-      ...(data.lessons && { lessons: data.lessons }),
-      ...(data.inReview !== undefined && { inReview: data.inReview }),
+      ...relationData,
       ...(data.status !== undefined && { status: data.status }),
-      ...(data.afterReview !== undefined && { afterReview: data.afterReview }),
     };
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+    let dropletUrl: string;
+    try {
+      dropletUrl = await strapiEntryUrl("droplets", id);
+    } catch (err) {
+      // Same result as the 404 Strapi used to return for a missing droplet.
+      if (err instanceof StrapiEntryNotFoundError) {
+        console.error("Update failed with error:", "Not Found");
+        return { ok: false, error: "Not Found", data: null };
+      }
+      throw err;
+    }
+    const response = await fetch(dropletUrl, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
       headers: {
@@ -401,6 +521,11 @@ export async function updateDroplet(
       revalidateTag(CACHE_TAGS.allGroups);
       revalidateTag(CACHE_TAGS.allUserDashboards);
     }
+    // Publishing a claimed voyage droplet finishes the claim (the droplet
+    // lifecycle marks its voyage node "authored"), so voyage maps must refetch.
+    if (data.status === "published") {
+      revalidateTag(CACHE_TAGS.voyages);
+    }
     revalidateTag(CACHE_TAGS.allUserContent);
 
     return { ok: true, error: null, data: responseData.data };
@@ -430,7 +555,11 @@ export async function togglePresentationEnabled(
     );
     if (!owner.ok) return { ok: false, error: owner.error, data: null };
 
-    return updateDroplet(dropletId, { presentationEnabled: enabled });
+    return applyDropletUpdate(
+      dropletId,
+      { presentationEnabled: enabled },
+      { regenerateSlug: false },
+    );
   });
 }
 
@@ -444,8 +573,11 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
       droplet.id,
     );
     if (!enrollment) throw new Error("Not enrolled in this droplet");
+    // The fetched enrollment carries its documentId, so this needs no lookup.
+    // A missing one throws StrapiEntryNotFoundError, which the catch below
+    // turns into the same failure result the old 404 produced.
     const response = await fetch(
-      `${STRAPI_API_URL}/api/enrollments/${enrollment.id}`,
+      await strapiEntryUrl("enrollments", enrollment),
       {
         method: "PUT",
         headers: {
@@ -488,7 +620,11 @@ export async function setDropletHidden(dropletId: number, hidden: boolean) {
     );
     if (!owner.ok) return { success: false, error: "forbidden" };
 
-    const result = await updateDroplet(dropletId, { isHidden: hidden });
+    const result = await applyDropletUpdate(
+      dropletId,
+      { isHidden: hidden },
+      { regenerateSlug: false },
+    );
     if (!result.ok) {
       return { success: false, error: result.error };
     }
@@ -499,7 +635,15 @@ export async function setDropletHidden(dropletId: number, hidden: boolean) {
   }
 }
 
+// Strapi v5 checks a uid (format and uniqueness) before beforeCreate replaces
+// it with one made from the name, so creates send this placeholder. slugify
+// never makes a "~", so no saved slug can equal it (ODY-869). A fixed word
+// like "random" broke every create once something was named "Random".
+const SLUG_PLACEHOLDER = "pending~slug";
+
 export async function createNewTag(tag: string) {
+  const name = tag.trim();
+  if (!name) return { success: false, error: "Enter a tag name" };
   try {
     const response = await fetch(`${STRAPI_API_URL}/api/tags`, {
       method: "POST",
@@ -509,16 +653,24 @@ export async function createNewTag(tag: string) {
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
       body: JSON.stringify({
-        data: {
-          name: tag,
-          slug: tag.replace(/\s/g, ""),
-        },
+        data: { name, slug: SLUG_PLACEHOLDER },
       }),
     });
 
     if (!response.ok) {
-      console.error("adding tag failed:", await response.text());
-      return { success: false, error: "Failed to add new tag" };
+      const body = await response.json().catch(() => null);
+      console.error("adding tag failed:", JSON.stringify(body));
+      const errors: { path?: string[]; message?: string }[] =
+        body?.error?.details?.errors ?? [];
+      const nameTaken = errors.some(
+        (e) => e.path?.[0] === "name" && e.message?.includes("unique"),
+      );
+      return {
+        success: false,
+        error: nameTaken
+          ? `A tag named "${name}" already exists`
+          : `Couldn't create the tag "${name}". Please try again.`,
+      };
     }
 
     const result = await response.json();
@@ -560,15 +712,16 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
 
     const dataToSend = {
       name: data.name,
-      slug: "random", // this gets overwritten when created, but just has to be defined as something
+      slug: SLUG_PLACEHOLDER,
       focusArea: data.focusArea,
       type: data.type,
       difficulty: data.difficulty,
+      // Strapi v5 relation writes take documentIds.
       tags: {
-        connect: data.tagIds,
+        connect: await resolveDocumentIds("tags", data.tagIds),
       },
       authorized_users: {
-        connect: [author.id],
+        connect: [await resolveDocumentId("authorized-users", author)],
       },
 
       learningObjectives: data.learningObjectives.map((obj) => ({
@@ -601,11 +754,15 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       },
     });
 
-    const responseData = await response.json();
+    const responseData = await response.json().catch(() => null);
 
-    if (!response.ok || (response.ok && responseData.error)) {
-      const errorPath = responseData.error.details.errors[0].path[0];
-      const errorMessage = `${responseData.error.message} (${errorPath})`;
+    if (!response.ok || responseData?.error) {
+      // Not every rejection names a field (a 403 or 500 doesn't), so read the
+      // path only when it's there (ODY-868).
+      console.error("Creating droplet failed:", JSON.stringify(responseData));
+      const message = responseData?.error?.message ?? `HTTP ${response.status}`;
+      const errorPath = responseData?.error?.details?.errors?.[0]?.path?.[0];
+      const errorMessage = errorPath ? `${message} (${errorPath})` : message;
       return { ok: false, error: errorMessage, data: null };
     }
     revalidateTag(CACHE_TAGS.authors);
@@ -615,6 +772,10 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     revalidateTag(CACHE_TAGS.userContent(author.id));
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
+    // Same result as Strapi rejecting a tag or author that does not exist.
+    if (err instanceof StrapiEntryNotFoundError) {
+      return { ok: false, error: err.message, data: null };
+    }
     console.error(err);
     return {
       ok: false,
@@ -622,6 +783,29 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       data: null,
     };
   }
+}
+
+// Strapi's reason for a rejected write, e.g. "blocks[2].color must be defined."
+// The first detailed error carries the full field path; error.message alone
+// says "2 errors occurred" when there are several. Falls back to the status
+// when the body isn't JSON (e.g. a proxy's error page).
+async function readStrapiError(response: Response): Promise<string> {
+  try {
+    const body = await response.json();
+    console.error("Strapi error:", JSON.stringify(body, null, 2));
+    const error = body?.error;
+    const details = error?.details?.errors;
+    if (Array.isArray(details) && details[0]?.message) {
+      const more =
+        details.length > 1 ? ` (and ${details.length - 1} more)` : "";
+      return `${details[0].message}${more}`;
+    }
+    if (typeof error === "string") return error;
+    if (error?.message) return error.message;
+  } catch {
+    // Not JSON
+  }
+  return `HTTP ${response.status}`;
 }
 
 export async function duplicateDroplet(dropletId: number) {
@@ -646,15 +830,7 @@ export async function duplicateDroplet(dropletId: number) {
           authorized_users: { fields: ["id"] },
           lessons: {
             fields: ["*"], // Add this to get all lesson fields including blocksV2 and blocksVersion
-            populate: {
-              blocks: {
-                populate: {
-                  questions: {
-                    populate: ["answerOptions"],
-                  },
-                },
-              },
-            },
+            populate: LESSON_BLOCKS_POPULATE,
             sort: ["orderIndex:asc"],
           },
           prerequisites: true,
@@ -773,21 +949,32 @@ export async function duplicateDroplet(dropletId: number) {
       overview: originalDroplet.overview,
       status: "draft",
       originalDropletId: dropletId,
+      // Strapi v5 relation writes take documentIds. These are fetched entities,
+      // so they carry theirs and no lookup is needed.
       tags: {
-        connect: originalDroplet.tags?.map((tag) => tag.id) || [],
+        connect: await resolveDocumentIds("tags", originalDroplet.tags ?? []),
       },
       authorized_users: {
-        connect: authorIds,
+        connect: await resolveDocumentIds("authorized-users", [
+          ...(originalDroplet.authorized_users ?? []),
+          ...(existingAuthorIds.includes(author.id) ? [] : [author]),
+        ]),
       },
       learningObjectives:
         originalDroplet.learningObjectives?.map((obj) => ({
           objective: obj.objective,
         })) || [],
       prerequisites: {
-        connect: originalDroplet.prerequisites?.map((p) => p.id) || [],
+        connect: await resolveDocumentIds(
+          "droplets",
+          originalDroplet.prerequisites ?? [],
+        ),
       },
       postrequisites: {
-        connect: originalDroplet.postrequisites?.map((p) => p.id) || [],
+        connect: await resolveDocumentIds(
+          "droplets",
+          originalDroplet.postrequisites ?? [],
+        ),
       },
       nextSteps: originalDroplet.nextSteps || [],
     };
@@ -819,6 +1006,22 @@ export async function duplicateDroplet(dropletId: number) {
 
     const newDropletId = dropletResponseData.data.id;
     console.log("Created new droplet with ID:", newDropletId);
+    // The created entry carries its documentId (otherwise it is looked up).
+    const newDropletDocumentId = await resolveDocumentId(
+      "droplets",
+      dropletResponseData.data,
+    );
+
+    // Old rows can hold null in required fields that were added later with a
+    // default (callout color and type, answer isCorrect). Strapi fills in a
+    // default only when the field is missing, so drop the null and let it.
+    const dropNulls = (obj: any, keys: string[]) => {
+      const result = { ...obj };
+      for (const key of keys) {
+        if (result[key] == null) delete result[key];
+      }
+      return result;
+    };
 
     // Helper function to remove ids from blocks while preserving structure
     const cleanBlocks = (blocks: any[]): any[] => {
@@ -845,7 +1048,7 @@ export async function duplicateDroplet(dropletId: number) {
                     answerOptions:
                       q.answerOptions?.map((a: any) => {
                         const { id: aId, ...answerWithoutId } = a;
-                        return answerWithoutId;
+                        return dropNulls(answerWithoutId, ["isCorrect"]);
                       }) || [],
                   };
                 }),
@@ -868,7 +1071,7 @@ export async function duplicateDroplet(dropletId: number) {
           case "droplets.callout":
             if (block.content && Array.isArray(block.content)) {
               return {
-                ...blockWithoutId,
+                ...dropNulls(blockWithoutId, ["color", "type"]),
                 content: block.content.map((node: any) => {
                   const { id: nodeId, ...nodeWithoutId } = node;
                   if (
@@ -886,7 +1089,7 @@ export async function duplicateDroplet(dropletId: number) {
                 }),
               };
             }
-            return blockWithoutId;
+            return dropNulls(blockWithoutId, ["color", "type"]);
 
           case "droplets.generic":
           case "droplets.expandable":
@@ -905,7 +1108,9 @@ export async function duplicateDroplet(dropletId: number) {
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      await Promise.all(
+      // allSettled, not all: every copy has to finish before a failure can
+      // remove the draft, or a copy still in flight would outlive it.
+      const results = await Promise.allSettled(
         sortedLessons.map(async (lesson, index) => {
           const lessonTimestamp = Date.now();
           const lessonRandomSuffix = Math.random()
@@ -929,7 +1134,7 @@ export async function duplicateDroplet(dropletId: number) {
             orderIndex: index,
             blocksVersion: blocksVersion,
             notes: lesson.notes || null,
-            droplets: [newDropletId],
+            droplets: [newDropletDocumentId],
             // Lineage: lets publish match this clone back to the live lesson it
             // came from, so that lesson keeps its id and its students' progress.
             originalLessonId: lesson.id,
@@ -962,12 +1167,8 @@ export async function duplicateDroplet(dropletId: number) {
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            console.error(
-              "Failed to create lesson:",
-              JSON.stringify(errorData, null, 2),
-            );
-            throw new Error(`Failed to create lesson: ${lesson.name}`);
+            const reason = await readStrapiError(response);
+            throw new Error(`Couldn't copy lesson "${lesson.name}": ${reason}`);
           }
 
           const createdLesson = await response.json();
@@ -976,6 +1177,27 @@ export async function duplicateDroplet(dropletId: number) {
           );
         }),
       );
+
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failure) {
+        // A draft missing lessons can't be left behind: the next Edit would
+        // open it, and publishing it would delete those lessons from the
+        // live droplet along with their students' progress.
+        const cleanup = await deepDeleteDroplet(newDropletId);
+        const reason =
+          failure.reason instanceof Error
+            ? failure.reason.message
+            : String(failure.reason);
+        if (cleanup.error) {
+          throw new Error(
+            `${reason} (The incomplete draft couldn't be removed. Delete it from the draft editor and don't publish it.)`,
+          );
+        }
+        throw new Error(reason);
+      }
     }
 
     revalidateTag(CACHE_TAGS.authors);
@@ -1015,414 +1237,90 @@ function strapiErrorMessage(body: any, fallback: string): string {
   return field ? `${message} (${field})` : message;
 }
 
-/** Sends one lesson PUT or POST. Throws Strapi's error message if the write didn't go through. */
-async function writeLesson(
-  method: "PUT" | "POST",
-  path: string,
-  data: object,
-): Promise<void> {
-  const response = await fetch(STRAPI_API_URL + path, {
-    method,
-    body: JSON.stringify({ data }),
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-      ...STRAPI_RESPONSE_FORMAT_HEADER,
-    },
-  });
-  // A gateway error page isn't JSON, so don't let a parse error hide the status
-  const body = await response.json().catch(() => null);
-  if (!response.ok || body?.error) {
-    throw new Error(
-      strapiErrorMessage(body, `Strapi responded with ${response.status}`),
-    );
-  }
-}
-
-/** `lesson "Name": reason`: the part of a publish error that says which lesson failed and why. */
-function lessonFailure(lessonName: string, cause: unknown): string {
-  const reason = cause instanceof Error ? cause.message : String(cause);
-  return `lesson "${lessonName}": ${reason}`;
-}
+const PUBLISH_UNCONFIRMED =
+  "Publishing could not be confirmed. Reload to check whether it went through.";
 
 /**
- * Writes a lesson sync plan to the original droplet (ODY-622): updates the matched
- * lessons in place, creates the new ones, then deletes the removed ones.
- *
- * Deleting comes last and only runs once every update and create has succeeded, so
- * a failure never leaves students with fewer lessons than before. Updates and
- * creates run one at a time and stop at the first failure. Every delete is
- * attempted before a failure is reported. Publishing again is safe after any
- * failure: updates are idempotent, and a lesson created earlier is matched by name.
- *
- * Throws a message meant for the author. Not exported, so it isn't a server action.
- */
-async function applyLessonSync(
-  plan: LessonSyncPlan,
-  originalDropletId: number,
-  draftLessons: Pick<Lesson, "id" | "slug">[],
-): Promise<void> {
-  // Send only what changed, and never slug, notes or relations: the lesson keeps
-  // its URL and everything students attached to it.
-  for (const update of plan.updates) {
-    try {
-      await writeLesson(
-        "PUT",
-        `/api/lessons/${update.liveLessonId}`,
-        update.changes,
-      );
-    } catch (error) {
-      throw new Error(
-        `Publishing stopped partway (${lessonFailure(update.name, error)}). No lessons were removed. Publish again to finish.`,
-      );
-    }
-  }
-
-  const draftSlugs = new Map<number, string>(
-    draftLessons.map((lesson): [number, string] => [lesson.id, lesson.slug]),
-  );
-  for (const create of plan.creates) {
-    // Strapi requires a slug on create, but the lesson lifecycle's beforeCreate always
-    // replaces it with one generated from the name, so this value is never stored.
-    const timestamp = Date.now();
-    const randomSuffix = Math.random().toString(36).substring(2, 10);
-    const placeholderSlug = `${draftSlugs.get(create.draftLessonId) ?? "lesson"}-${timestamp}-${randomSuffix}`;
-
-    try {
-      await writeLesson("POST", "/api/lessons", {
-        ...create.data,
-        slug: placeholderSlug,
-        droplets: [originalDropletId],
-      });
-    } catch (error) {
-      throw new Error(
-        `Publishing stopped partway (${lessonFailure(create.name, error)}). No lessons were removed. Publish again to finish.`,
-      );
-    }
-  }
-
-  const notRemoved: string[] = [];
-  for (const lesson of plan.deletes) {
-    try {
-      const result = await deleteLesson(lesson.liveLessonId, false);
-      // Its catch path returns { error } without ok, so anything but ok === true failed
-      if (result?.ok !== true) {
-        notRemoved.push(
-          lessonFailure(lesson.name, result?.error ?? "unknown error"),
-        );
-      }
-    } catch (error) {
-      notRemoved.push(lessonFailure(lesson.name, error));
-    }
-  }
-  if (notRemoved.length > 0) {
-    throw new Error(
-      `Publishing stopped partway (could not remove ${notRemoved.join("; ")}). Publish again to finish.`,
-    );
-  }
-}
-
-/**
- * Publishes an [EDIT] draft over the live droplet it was cloned from (ODY-622).
- *
- * The live lessons are updated in place instead of being deleted and recreated, so
- * their ids and slugs, and everything keyed to them (students' viewedLessons, notes,
- * highlights), survive. Order of operations:
- *  1. Read the draft and the original fresh, run the guards and plan the lesson
- *     sync. Nothing is written yet.
- *  2. Update the original droplet's metadata.
- *  3. Update the matched lessons, create the new ones, then delete the removed ones.
- *  4. Move the draft's own enrollments, then delete the draft.
- * A failure in 2 or 3 returns { ok: false } and keeps the draft, and publishing
- * again finishes the job.
+ * Publishes an [EDIT] draft over the live droplet it was cloned from (ODY-800).
+ * The role check and one POST live here; the whole publish is one Strapi transaction.
  */
 export async function publishDraftToOriginal(
   draftDropletId: number,
   originalDropletId: number,
 ) {
-  let author: { id: number } | null = null;
-  let dbWritesStarted = false;
-  let draftEnrollments: { data?: any[] } = {};
-  let originalSlug: string | null = null;
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error, slug: null };
+  // Who may publish, and that the draft belongs to the original (ODY-810).
+  const check = await checkPublishDraft(
+    gate.user,
+    draftDropletId,
+    originalDropletId,
+  );
+  if (!check.ok) return { ok: false, error: check.error, slug: null };
 
+  let draft: Droplet;
   try {
-    console.log("Starting publishDraftToOriginal", {
+    // Fresh read for the draft's documentId.
+    draft = await getDropletById<Droplet>(
       draftDropletId,
-      originalDropletId,
-    });
-
-    const user = await getCurrentUser();
-    if (!user?.email) throw new Error("No email identified");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email, {
-      populate: {},
-    });
-    if (!authorizedUser) throw new Error("No author identified");
-    author = authorizedUser;
-
-    // Both sides of the lesson sync need every lesson field (content and lineage
-    // included) with the blocks populated.
-    const lessonsPopulate = {
-      fields: ["*"], // Get all lesson fields including blocksV2, blocksVersion and originalLessonId
-      populate: {
-        blocks: {
-          populate: {
-            questions: {
-              populate: ["answerOptions"],
-            },
-          },
-        },
-      },
-      sort: ["orderIndex:asc"],
-    };
-
-    console.log("Fetching draft droplet...");
-    // Fetch the draft droplet with all its data. Both reads skip the data cache:
-    // lesson autosaves don't revalidate it, so a cached read could hold stale
-    // lessons and the sync would silently skip the author's latest edits.
-    const draftDroplet = await getDropletById<Droplet>(
-      draftDropletId,
-      {
-        fields: ["*"],
-        populate: {
-          tags: { fields: ["id", "name"] },
-          learningObjectives: { fields: ["*"] },
-          lessons: lessonsPopulate,
-          prerequisites: { fields: ["id", "name", "slug"] },
-          postrequisites: { fields: ["id", "name", "slug"] },
-          nextSteps: { fields: ["*"] },
-        },
-      },
+      { fields: ["id"] },
       { fresh: true },
     );
+  } catch (err) {
+    console.error("publishDraftToOriginal: could not read the draft", err);
+    return { ok: false, error: "Draft droplet not found", slug: null };
+  }
+  // The route is addressed by the server-fetched documentId only.
+  if (!draft.documentId) {
+    return { ok: false, error: "Draft droplet not found", slug: null };
+  }
 
-    if (!draftDroplet) {
-      throw new Error("Draft droplet not found");
-    }
-    console.log("Draft droplet fetched:", draftDroplet.id);
-
-    console.log("Fetching original droplet...");
-    // Fetch the original droplet with its lessons, to sync them with the draft's
-    const originalDroplet = await getDropletById<Droplet>(
-      originalDropletId,
+  const draftDocumentId = encodeURIComponent(draft.documentId);
+  // The reviews move onto the live droplet; the check above tied the two ids together.
+  const flushCaches = () => {
+    revalidatePublishedEdit();
+    revalidateTag(CACHE_TAGS.review(draft.id));
+    revalidateTag(CACHE_TAGS.review(originalDropletId));
+  };
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${draftDocumentId}/publish-edit`,
       {
-        fields: ["*"],
-        populate: { lessons: lessonsPopulate },
-      },
-      { fresh: true },
-    );
-
-    if (!originalDroplet) {
-      throw new Error("Original droplet not found");
-    }
-    originalSlug = originalDroplet.slug;
-    console.log(
-      "Original droplet fetched:",
-      originalDroplet.id,
-      "with",
-      originalDroplet.lessons?.length || 0,
-      "lessons",
-    );
-
-    // Fail fast before any destructive writes if required fields are missing
-    if (draftDroplet.difficulty == null) {
-      throw new Error(
-        "Draft droplet is missing a difficulty. Set it in the editor before publishing.",
-      );
-    }
-
-    const draftLessons = draftDroplet.lessons ?? [];
-    const originalLessons = originalDroplet.lessons ?? [];
-
-    // An empty draft would delete every live lesson, which is almost certainly a mistake
-    if (draftLessons.length === 0 && originalLessons.length > 0) {
-      throw new Error(
-        "This draft has no lessons. Add at least one lesson before publishing.",
-      );
-    }
-
-    // Decide what to update, create and delete before anything is written
-    const plan = planLessonSync(draftLessons, originalLessons);
-
-    // Strapi would reject an emptied lesson too, but only part way through publishing
-    const emptiedLesson = plan.updates.find(
-      (update) =>
-        Array.isArray(update.changes.blocks) &&
-        update.changes.blocks.length === 0,
-    );
-    if (emptiedLesson) {
-      throw new Error(
-        `Lesson "${emptiedLesson.name}" has no content. Add content or delete the lesson before publishing.`,
-      );
-    }
-
-    console.log(
-      `Lesson sync: ${plan.updates.length} to update, ${plan.unchanged.length} unchanged, ${plan.creates.length} to create, ${plan.deletes.length} to delete`,
-    );
-
-    // Fetch draft enrollments before DB writes begin
-    draftEnrollments = await fetch(
-      `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate[authorizedUser][fields][0]=id`,
-      {
+        method: "POST",
+        cache: "no-store",
         headers: {
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
           ...STRAPI_RESPONSE_FORMAT_HEADER,
         },
+        body: JSON.stringify({ originalDropletId }),
       },
-    ).then((res) => res.json());
-
-    // Update the original droplet with draft data
-    const updatedName = draftDroplet.name.replace(/^\[EDIT\]\s*/i, "");
-
-    const updateData: any = {
-      name: updatedName,
-      status: "published",
-    };
-
-    // Only add fields that exist and are valid
-    if (draftDroplet.focusArea) updateData.focusArea = draftDroplet.focusArea;
-    if (draftDroplet.type) updateData.type = draftDroplet.type;
-    if (draftDroplet.difficulty !== undefined)
-      updateData.difficulty = draftDroplet.difficulty;
-    if (draftDroplet.description !== undefined)
-      updateData.description = draftDroplet.description;
-    if (draftDroplet.overview !== undefined)
-      updateData.overview = draftDroplet.overview;
-
-    if (draftDroplet.tags && draftDroplet.tags.length > 0) {
-      updateData.tagIds = draftDroplet.tags.map((tag) => tag.id);
-    }
-
-    if (
-      draftDroplet.learningObjectives &&
-      draftDroplet.learningObjectives.length > 0
-    ) {
-      // Clean learning objectives - remove ids and extract just the objective text
-      updateData.learningObjectives = draftDroplet.learningObjectives.map(
-        (obj: any) => {
-          if (typeof obj === "string") {
-            return obj;
-          }
-          return obj.objective || obj;
-        },
-      );
-    }
-
-    if (draftDroplet.prerequisites && draftDroplet.prerequisites.length > 0) {
-      updateData.prerequisiteIds = draftDroplet.prerequisites.map((p) => p.id);
-    }
-
-    if (draftDroplet.postrequisites && draftDroplet.postrequisites.length > 0) {
-      updateData.postrequisiteIds = draftDroplet.postrequisites.map(
-        (p) => p.id,
-      );
-    }
-
-    if (draftDroplet.nextSteps && draftDroplet.nextSteps.length > 0) {
-      // Remove id fields from nextSteps components
-      updateData.nextSteps = draftDroplet.nextSteps.map((step: any) => {
-        const { id, __component, ...stepWithoutId } = step;
-        // Keep __component if it exists, remove id
-        return __component ? { __component, ...stepWithoutId } : stepWithoutId;
-      });
-    }
-
-    console.log(
-      "Updating original droplet with data:",
-      JSON.stringify(updateData, null, 2),
     );
-    // The first write: from here on the caches are flushed even if publishing fails
-    dbWritesStarted = true;
-    const updateResult = await updateDroplet(originalDropletId, updateData, {
-      regenerateSlug: false,
-    });
+    // A gateway error page isn't JSON, so don't let a parse error hide the status
+    const body = await response.json().catch(() => null);
 
-    if (!updateResult.ok) {
-      console.error("Failed to update droplet:", updateResult.error);
-      throw new Error(
-        updateResult.error || "Failed to update original droplet",
-      );
+    // A 4xx wrote nothing, so only success and server errors flush caches.
+    if (response.ok || response.status >= 500) flushCaches();
+    if (!response.ok) {
+      // A 5xx with no Strapi message (a gateway page) may still have committed.
+      const unconfirmed = response.status >= 500 && !body?.error?.message;
+      return {
+        ok: false,
+        error: unconfirmed
+          ? PUBLISH_UNCONFIRMED
+          : strapiErrorMessage(
+              body,
+              `Publishing failed (HTTP ${response.status}). Try again.`,
+            ),
+        slug: null,
+      };
     }
-
-    console.log("Updated original droplet successfully");
-
-    // Update the matched lessons in place, create the new ones, then delete the
-    // removed ones. A failure throws before the draft's enrollments are moved or
-    // the draft is deleted, so publishing can simply be tried again.
-    await applyLessonSync(plan, originalDropletId, draftLessons);
-
-    try {
-      console.log("Updating enrollments to point to original droplet");
-
-      // Update each enrollment to point to the original droplet
-      await Promise.all(
-        (draftEnrollments.data || []).map(async (enrollment) => {
-          const res = await fetch(
-            `${STRAPI_API_URL}/api/enrollments/${enrollment.id}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-                ...STRAPI_RESPONSE_FORMAT_HEADER,
-              },
-              body: JSON.stringify({
-                data: {
-                  droplet: originalDropletId,
-                },
-              }),
-            },
-          );
-          if (!res.ok) {
-            console.error(
-              `Failed to update enrollment ${enrollment.id}: ${res.status}`,
-            );
-          } else {
-            console.log(
-              `Updated enrollment ${enrollment.id} to point to original droplet`,
-            );
-          }
-        }),
-      );
-    } catch (error) {
-      console.error("Error updating enrollments:", error);
-    }
-
-    console.log("Successfully merged lessons, now deleting draft droplet");
-
-    // Delete the draft droplet
-    try {
-      await deepDeleteDroplet(draftDropletId);
-      console.log("Draft droplet deleted successfully");
-    } catch (error) {
-      console.error("Error deleting draft droplet:", error);
-      console.warn(
-        "Draft droplet was not deleted but changes were published successfully",
-      );
-    }
-
-    console.log("publishDraftToOriginal completed successfully");
-    return { ok: true, error: null, slug: originalSlug };
+    return { ok: true, error: null, slug: body?.data?.slug ?? null };
   } catch (err) {
-    console.error("Full error in publishDraftToOriginal:", err);
-    return {
-      ok: false,
-      error:
-        err instanceof Error
-          ? err.message
-          : "Database Error: Failed to publish draft.",
-      slug: null,
-    };
-  } finally {
-    if (dbWritesStarted) {
-      revalidateTag(CACHE_TAGS.authors);
-      revalidateTag(CACHE_TAGS.droplets);
-      revalidateTag(CACHE_TAGS.lesson);
-      revalidateTag(CACHE_TAGS.playlists);
-      revalidateTag(CACHE_TAGS.allEnrollments);
-      revalidateTag(CACHE_TAGS.allGroups);
-      revalidateTag(CACHE_TAGS.allUserContent);
-      revalidateTag(CACHE_TAGS.allUserDashboards);
-    }
+    // The request may have committed before the connection failed.
+    console.error("publishDraftToOriginal failed", err);
+    flushCaches();
+    return { ok: false, error: PUBLISH_UNCONFIRMED, slug: null };
   }
 }
 
@@ -1459,15 +1357,28 @@ export async function favoriteDroplet(
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
     // Fetch the latest droplet state to minimize race conditions
-    const latestDropletResponse = await fetch(
-      `${STRAPI_API_URL}/api/droplets/${droplet.id}?populate=usersFavorited`,
-      {
-        headers: {
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
+    // `droplet` comes from the caller, so address it by numeric id only (the
+    // lookup is cached after the first call). A droplet that cannot be found
+    // fails like the 404 it replaces.
+    let dropletUrl: string;
+    try {
+      dropletUrl = await strapiEntryUrl(
+        "droplets",
+        droplet.id,
+        "populate=usersFavorited",
+      );
+    } catch (error) {
+      if (error instanceof StrapiEntryNotFoundError) {
+        throw new Error("Failed to fetch latest droplet state");
+      }
+      throw error;
+    }
+    const latestDropletResponse = await fetch(dropletUrl, {
+      headers: {
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+    });
 
     if (!latestDropletResponse.ok) {
       throw new Error("Failed to fetch latest droplet state");
@@ -1477,40 +1388,39 @@ export async function favoriteDroplet(
     const currentFavorites =
       latestDroplet.data.attributes.usersFavorited?.data || [];
 
-    let updatedFavorites;
+    // Entries to keep favorited. Existing favorites come from the response, so
+    // they carry their documentIds; the current user is added as an entity.
+    let updatedFavorites: EntryRef[];
     if (favoriteState) {
       // Add user to favorites if not already there
-      if (!currentFavorites.some((u: any) => u.id === authorizedUser.id)) {
-        updatedFavorites = [
-          ...currentFavorites.map((u: any) => u.id),
-          authorizedUser.id,
-        ];
-      } else {
-        updatedFavorites = currentFavorites.map((u: any) => u.id);
-      }
+      updatedFavorites = currentFavorites.some(
+        (u: any) => u.id === authorizedUser.id,
+      )
+        ? currentFavorites
+        : [...currentFavorites, authorizedUser];
     } else {
       // Remove user from favorites
-      updatedFavorites = currentFavorites
-        .filter((u: any) => u.id !== authorizedUser.id)
-        .map((u: any) => u.id);
+      updatedFavorites = currentFavorites.filter(
+        (u: any) => u.id !== authorizedUser.id,
+      );
     }
 
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/droplets/${droplet.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            usersFavorited: updatedFavorites,
-          },
-        }),
+    const response = await fetch(await strapiEntryUrl("droplets", droplet.id), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          usersFavorited: await resolveDocumentIds(
+            "authorized-users",
+            updatedFavorites,
+          ),
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update favorite status");
@@ -1533,6 +1443,11 @@ export async function updateDropletLearningObjective(
   oldObjective: string,
   newObjective: string,
 ) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { success: false, error: gate.error };
+  const check = await checkDropletContentWrite(gate.user, dropletId);
+  if (!check.ok) return { success: false, error: check.error };
+
   try {
     // Fetch current droplet with learning objectives
     const droplet = await getDropletById<Droplet>(dropletId, {
@@ -1553,24 +1468,21 @@ export async function updateDropletLearningObjective(
       ) || [];
 
     // Update the droplet
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          ...STRAPI_RESPONSE_FORMAT_HEADER,
-        },
-        body: JSON.stringify({
-          data: {
-            learningObjectives: updatedObjectives.map((obj) => ({
-              objective: obj,
-            })),
-          },
-        }),
+    const response = await fetch(await strapiEntryUrl("droplets", droplet), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          learningObjectives: updatedObjectives.map((obj) => ({
+            objective: obj,
+          })),
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to update learning objective");

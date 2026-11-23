@@ -22,6 +22,22 @@ if [ "$INCOMPLETE_PLANS" -gt 0 ]; then
     ISSUES="${ISSUES}\nWARNING: $INCOMPLETE_PLANS plan file(s) in docs/plans/ have incomplete tasks. Resume or start fresh."
 fi
 
+# ─── Check installed packages match the lockfiles ────────────────────
+# npm ci writes node_modules/.package-lock.json; a lockfile newer than it
+# (after switching to a newer develop) means packages may be missing.
+STALE_DEPS=""
+for dir in "" frontend backend; do
+    LOCK="$PROJECT_ROOT/${dir:+$dir/}package-lock.json"
+    INSTALLED="$PROJECT_ROOT/${dir:+$dir/}node_modules/.package-lock.json"
+    [ -f "$LOCK" ] || continue
+    if [ ! -f "$INSTALLED" ] || [ "$LOCK" -nt "$INSTALLED" ]; then
+        STALE_DEPS="${STALE_DEPS} ${dir:-root}"
+    fi
+done
+if [ -n "$STALE_DEPS" ]; then
+    ISSUES="${ISSUES}\nWARNING: packages may be stale in:${STALE_DEPS}. Run npm ci there before testing."
+fi
+
 # ─── Report warnings to user (stderr) ────────────────────────────────
 if [ -n "$ISSUES" ]; then
     echo "Session baseline check:" >&2
@@ -47,6 +63,15 @@ if [ -d "$PROJECT_ROOT/docs/plans" ]; then
     fi
 fi
 
+# ─── Multi-agent coordination reminder ───────────────────────────────
+# Names the ticket from the branch (e.g. bug/ody-785-… → ODY-785) so the
+# agent checks the team's Slack channel before starting work on it.
+TICKET=$(echo "$BRANCH" | grep -oiE 'ody-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
+COORDINATION="Coordination: before starting work${TICKET:+ on $TICKET}, run /coord status${TICKET:+ $TICKET} (Linear blockers, PRs on develop, the tracker), list any [OPEN] items owed by or to you in #prj-odyssey-agents (C0CG95FFZ09), and follow \"Multi-Agent Development Coordination\" in CLAUDE.md"
+
+DEPS_NOTE=""
+[ -n "$STALE_DEPS" ] && DEPS_NOTE="Packages may be stale in:${STALE_DEPS}; run npm ci there before testing."
+
 # ─── Check for progress file from previous session ───────────────────
 PROGRESS_FILE="$PROJECT_ROOT/docs/plans/PROGRESS.md"
 PROGRESS_CONTEXT=""
@@ -61,7 +86,9 @@ Session context:
 - Recent commits: $RECENT_COMMITS
 - Working tree: $CHANGED_FILES
 ${ACTIVE_PLAN:+- $ACTIVE_PLAN}
-${PROGRESS_CONTEXT:+
+- $COORDINATION
+${DEPS_NOTE:+- $DEPS_NOTE
+}${PROGRESS_CONTEXT:+
 Previous session progress:
 $PROGRESS_CONTEXT}
 EOF

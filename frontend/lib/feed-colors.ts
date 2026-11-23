@@ -60,6 +60,30 @@ export const FEED_COLORS: Record<AnnouncementType, FeedColor> = {
     card: "border-fuchsia-500 bg-fuchsia-500/5 dark:border-fuchsia-700 dark:bg-fuchsia-500/10",
     accent: "text-fuchsia-700 dark:text-fuchsia-300",
   },
+  review_feedback: {
+    pillActive:
+      "border-rose-700 bg-white text-rose-700 dark:border-rose-300 dark:bg-slate-900 dark:text-rose-300",
+    pillInactive:
+      "border-slate-200 bg-white text-rose-700 hover:border-rose-400 dark:border-slate-700 dark:bg-slate-900 dark:text-rose-300",
+    card: "border-rose-500 bg-rose-500/5 dark:border-rose-700 dark:bg-rose-500/10",
+    accent: "text-rose-700 dark:text-rose-300",
+  },
+  review_published: {
+    pillActive:
+      "border-teal-700 bg-white text-teal-700 dark:border-teal-300 dark:bg-slate-900 dark:text-teal-300",
+    pillInactive:
+      "border-slate-200 bg-white text-teal-700 hover:border-teal-400 dark:border-slate-700 dark:bg-slate-900 dark:text-teal-300",
+    card: "border-teal-500 bg-teal-500/5 dark:border-teal-700 dark:bg-teal-500/10",
+    accent: "text-teal-700 dark:text-teal-300",
+  },
+  reminder: {
+    pillActive:
+      "border-[#2D7597] bg-white text-[#2D7597] dark:border-[#7CC0E0] dark:bg-slate-900 dark:text-[#7CC0E0]",
+    pillInactive:
+      "border-slate-200 bg-white text-[#2D7597] hover:border-[#2D7597]/60 dark:border-slate-700 dark:bg-slate-900 dark:text-[#7CC0E0]",
+    card: "border-[#2D7597]/50 bg-[#2D7597]/5 dark:border-[#7CC0E0]/50 dark:bg-[#2D7597]/10",
+    accent: "text-[#2D7597] dark:text-[#7CC0E0]",
+  },
 };
 
 export function feedColorFor(type: AnnouncementType | AnnouncementTypeTitle) {

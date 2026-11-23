@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import { DateTime, Settings } from "luxon";
+import { Input } from "@/components/ui/input";
 
 /** Value format of `<input type="datetime-local">` (minute precision). */
 const INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
@@ -52,13 +53,17 @@ export default function DateTimePicker({
   };
 
   return (
-    <input
+    // The app's standard text field, so light/dark styling and height match
+    // the other inputs. Input's own focus style is only a border change (none
+    // in dark mode), so this field adds Button's focus ring to stay visible
+    // on the due-date cards. Widens from sm, where the row has room.
+    <Input
       type="datetime-local"
       data-testid="picker"
       aria-label={ariaLabel}
       value={inputValue}
       onChange={handleChange}
-      className="block w-52 rounded-md border-0 bg-slate-300 p-3 text-[0.925rem] text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none md:w-60 dark:bg-slate-700 dark:text-white"
+      className="w-52 focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 sm:w-60 dark:focus-visible:ring-slate-300"
     />
   );
 }

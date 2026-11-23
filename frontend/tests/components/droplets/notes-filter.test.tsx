@@ -22,7 +22,7 @@ describe("NotesFilter", () => {
   it("starts with all colors selected", () => {
     render(<NotesFilter onFilterChange={mockOnFilterChange} />);
 
-    const checkboxes = screen.getAllByRole("checkbox");
+    const checkboxes = screen.getAllByRole("switch");
     checkboxes.forEach((checkbox) => {
       expect(checkbox).toBeChecked();
     });

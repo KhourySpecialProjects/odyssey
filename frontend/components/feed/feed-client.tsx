@@ -3,14 +3,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
+import { useStreakFeedCard } from "@/components/streaks/streak-feed-card";
 import {
   type FeedPage,
   fetchAnnouncements,
+  getUnreadAnnouncementCount,
   markAnnouncementRead,
   markAnnouncementUnread,
 } from "@/lib/requests/feed";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { FILTER_VALUES, toFeedRoles } from "./feed-filter-params";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
+import {
+  checkMyReminder,
+  muteReminder,
+  snoozeReminder,
+  undoReminder,
+} from "@/lib/requests/reminders";
+import { REMINDER_RULES } from "@/lib/reminder-rules";
+import type { RemindLaterChoice } from "./reminder-card";
 
 type Tab = "unread" | "read";
 
@@ -23,6 +35,10 @@ export type InitialFeed = {
 const sameRoles = (a: AnnouncementType[], b: AnnouncementType[]) =>
   a.length === b.length && a.every((role, i) => role === b[i]);
 
+const DEFAULT_ROLES = toFeedRoles(FILTER_VALUES);
+
+const safe = <T extends { ok: boolean }>(promise: Promise<T>) =>
+  promise.catch(() => ({ ok: false as const, error: "network", data: null }));
 const paramsKey = (tab: Tab, page: number, roles: AnnouncementType[]) =>
   `${tab}|${page}|${roles.join(",")}`;
 
@@ -64,6 +80,11 @@ export function FeedClient({
   // Bumped on every read/unread change so fetches started before it are
   // dropped instead of resurrecting the optimistically removed item.
   const mutations = useRef(0);
+  // The learner's latest streak icon (ODY-919), atop the first page
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Where focus goes once a removed card unmounts (an element, or the list)
+  const focusAfterRemoval = useRef<HTMLElement | "list" | null>(null);
+  const streakCard = useStreakFeedCard(authUser.id, tab, currentPage === 1);
 
   // Compared by value so a re-created array doesn't refetch. Resetting the
   // page here (not in an effect) avoids fetching the old page for new filters.
@@ -135,6 +156,68 @@ export function FeedClient({
     };
   }, [pending, currentPage, roles, tab, refresh]);
 
+  // The badge follows the filters (on either tab) while this is mounted. The
+  // layout's count already covers the default filters before any change.
+  useEffect(() => {
+    if (pending) return;
+    const { setFeedCount } = useFeedUnreadStore.getState();
+    if (refresh.key === 0 && sameRoles(roles, DEFAULT_ROLES)) {
+      setFeedCount(null);
+      return;
+    }
+    if (roles.length === 0) {
+      setFeedCount(0);
+      return;
+    }
+    let ignore = false;
+    const mutationsAtStart = mutations.current;
+    getUnreadAnnouncementCount(roles)
+      .then((count) => {
+        // null = the count failed, so keep what the badge shows
+        if (count !== null && !ignore && mutations.current === mutationsAtStart)
+          setFeedCount(count);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, [pending, roles, refresh]);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      useFeedUnreadStore.getState().setFeedCount(null);
+    };
+  }, []);
+
+  // Once per mount, when not pending (ODY-931). A raise refetches the list and, through
+  // the effect above, recounts the badge. A repeat call just answers "today".
+  const checkedReminder = useRef(false);
+  useEffect(() => {
+    if (pending || checkedReminder.current) return;
+    checkedReminder.current = true;
+    checkMyReminder()
+      .then((result) => {
+        if (result.data?.raised) {
+          setRefresh((r) => ({ key: r.key + 1, silent: true }));
+        }
+      })
+      .catch(() => {});
+  }, [pending]);
+
+  // Keyboard focus would fall to <body> when the card unmounts.
+  useEffect(() => {
+    const target = focusAfterRemoval.current;
+    if (!target) return;
+    focusAfterRemoval.current = null;
+    const next =
+      target !== "list" && target.isConnected
+        ? target.querySelector<HTMLElement>("a[href], button:not(:disabled)")
+        : null;
+    (next ?? scrollRef.current)?.focus();
+  }, [announcements]);
+
   const selectTab = (next: Tab) => {
     if (next === tab) return;
     setTab(next);
@@ -143,13 +226,24 @@ export function FeedClient({
 
   const updateReadState = async (
     id: number,
-    update: (id: number) => Promise<{ success: boolean }>,
+    update: (id: number) => Promise<{ success: boolean; error?: unknown }>,
     errorMessage: string,
   ) => {
     mutations.current += 1;
+    const delta = tab === "unread" ? -1 : 1;
+    useFeedUnreadStore.getState().adjustFeedCount(delta);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     const result = await update(id);
-    if (!result.success) toast.error(errorMessage);
+    if (!result.success) {
+      // After unmount the override is gone, so a rollback would recreate it wrongly
+      if (mounted.current)
+        useFeedUnreadStore.getState().adjustFeedCount(-delta);
+      toast.error(
+        typeof result.error === "string" && result.error
+          ? result.error
+          : errorMessage,
+      );
+    }
     // Re-sync with the server: on success this quietly backfills the page;
     // on failure it restores the item behind the spinner.
     setRefresh((r) => ({ key: r.key + 1, silent: result.success }));
@@ -160,6 +254,66 @@ export function FeedClient({
 
   const handleMarkUnread = (id: number) =>
     updateReadState(id, markAnnouncementUnread, "Failed to mark as unread");
+
+  const handleUndo = async (id: number) => {
+    mutations.current += 1;
+    const result = await safe(undoReminder(id));
+    if (!result.ok) toast.error("Couldn't undo");
+    // Skip the badge once unmounted (Undo pressed after leaving My Feed)
+    else if (mounted.current) useFeedUnreadStore.getState().adjustFeedCount(1);
+    // Replaces a refresh the failed attempt may have cancelled
+    setRefresh((r) => ({ key: r.key + 1, silent: true }));
+  };
+
+  const handleRemindLater = async (id: number, choice: RemindLaterChoice) => {
+    const name =
+      announcements.find((a) => a.id === id)?.droplet?.name ?? "this droplet";
+    mutations.current += 1;
+    const card = scrollRef.current?.querySelector(
+      `[data-announcement-id="${id}"]`,
+    );
+    focusAfterRemoval.current =
+      (card?.nextElementSibling as HTMLElement | null) ?? "list";
+    useFeedUnreadStore.getState().adjustFeedCount(-1);
+    const index = announcements.findIndex((a) => a.id === id);
+    const removed = announcements[index];
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    const result =
+      choice === "stop"
+        ? await safe(muteReminder(id))
+        : await safe(snoozeReminder(id, choice));
+    if (result.ok) {
+      toast.success(
+        choice !== "stop" && result.data ? (
+          <>
+            Got it. We&apos;ll remind you about <b>{name}</b> on{" "}
+            {result.data.dateLabel}.
+          </>
+        ) : (
+          <>
+            Got it. We won&apos;t remind you about <b>{name}</b> for{" "}
+            {REMINDER_RULES.muteDays} days.
+          </>
+        ),
+        {
+          action: { label: "Undo", onClick: () => handleUndo(id) },
+          duration: 8000,
+        },
+      );
+    } else {
+      if (mounted.current) useFeedUnreadStore.getState().adjustFeedCount(1);
+      // Put the card back so it stays visible if the refetch fails
+      if (removed) {
+        setAnnouncements((prev) =>
+          prev.some((a) => a.id === id)
+            ? prev
+            : [...prev.slice(0, index), removed, ...prev.slice(index)],
+        );
+      }
+      toast.error("Couldn't update this reminder");
+    }
+    setRefresh((r) => ({ key: r.key + 1, silent: true }));
+  };
 
   const tabButtonClass = (active: boolean) =>
     cn(
@@ -188,7 +342,11 @@ export function FeedClient({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        tabIndex={-1}
+        className="min-h-0 flex-1 overflow-y-auto outline-none"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div
@@ -197,8 +355,9 @@ export function FeedClient({
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             />
           </div>
-        ) : announcements.length > 0 ? (
+        ) : announcements.length > 0 || streakCard ? (
           <ul className="grid grid-cols-1 gap-3 p-1">
+            {streakCard}
             {announcements.map((post) => (
               <FeedBlock
                 key={post.id}
@@ -206,6 +365,7 @@ export function FeedClient({
                 authUser={authUser}
                 onMarkRead={tab === "unread" ? handleMarkRead : undefined}
                 onMarkUnread={tab === "read" ? handleMarkUnread : undefined}
+                onRemindLater={tab === "unread" ? handleRemindLater : undefined}
               />
             ))}
           </ul>

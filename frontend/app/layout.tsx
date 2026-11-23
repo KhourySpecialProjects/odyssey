@@ -6,7 +6,7 @@ import { NuqsAdapter } from "nuqs/adapters/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { FirstVisitPopupLoader } from "@/components/first-time/first-visit-popup-loader";
+import { OnboardingQuizLoader } from "@/components/onboarding/onboarding-quiz-loader";
 import { ThemeClientProvider } from "@/components/theme.client.provider";
 import AccessRequestBanner from "@/components/requests/access-request-banner";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
@@ -58,7 +58,7 @@ export default function RootLayout({
                     <Footer />
                   </div>
                   <Suspense fallback={null}>
-                    <FirstVisitPopupLoader />
+                    <OnboardingQuizLoader />
                   </Suspense>
                 </NuqsAdapter>
               </TooltipProvider>

@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 import { CreateUser } from "@/components/admin/users/create-user";
 
 const mockRouterRefresh = jest.fn();
@@ -29,6 +30,12 @@ describe("CreateUser", () => {
   it("renders the create user button", () => {
     render(<CreateUser />);
     expect(screen.getByText("Create User")).toBeInTheDocument();
+  });
+
+  it("renders exactly one close button", async () => {
+    render(<CreateUser />);
+    fireEvent.click(screen.getByRole("button", { name: "Create User" }));
+    expectSingleCloseButton(await screen.findByRole("dialog"));
   });
 
   it("has the correct button text and icon", () => {
