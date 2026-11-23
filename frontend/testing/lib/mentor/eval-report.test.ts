@@ -536,7 +536,8 @@ describe("reportMarkdown", () => {
     expect(report).toContain(
       "### haiku-low, a+b, rep 1: claims history the block doesn't show; dismissed: it quotes the lesson",
     );
-    expect(report).not.toContain("pers, rep 1: dismissed");
+    expect(report).toContain("### haiku-low, pers, rep 1: fail\n");
+    expect(report).not.toContain("dismissed: not a twin");
     expect(summarise(rows, [], 22, handChecks)[0]).toMatchObject({
       historyClaims: 0,
       recited: 1,
