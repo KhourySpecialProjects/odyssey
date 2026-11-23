@@ -267,7 +267,7 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 
 The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowance` before it and `recordMentorUsage` once after, both from `lib/mentor/usage.ts` (server only, not a `"use server"` file; the contract is in its types). Users with no staff role get the `student` tier in `lib/import/rate-limiter.ts`, which copies `creator-editor`'s limits for every action except `mentor`.
 
-A saved-reply hit (ODY-967: a lesson summary found in the store) runs `checkMentorAccess` instead of `checkMentorAllowance` and writes no usage row, because no model is called. Only Mentor's switch and the pilot can refuse it. Its store reads (`lib/mentor/cached-reply-store.ts`) are `no-store` with no cache tag.
+A saved-reply hit (ODY-967: a lesson summary found in the store) runs `checkMentorAccess` instead of `checkMentorAllowance` and writes no usage row, because no model is called. Only Mentor's switch and the pilot can refuse it. Its store reads (`lib/mentor/cached-reply-store.ts`) are `no-store` with no cache tag. Each hit still writes a chat row, so the route also takes a slot from the `mentor-saved` bucket (60 an hour per ECS task, `lib/import/rate-limiter.ts`) and refuses over it like the live burst guard (429 `rate_limited`); misses never touch that bucket.
 
 ## Recommendations (ODY-957)
 
