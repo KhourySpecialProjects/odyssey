@@ -42,6 +42,8 @@ export type MentorCompleted = {
   citations: Citation[];
   /** Claude's last stop reason: "max_tokens" means it was truncated */
   stopReason: Anthropic.StopReason | null;
+  /** ODY-972's give-away check: passed, or replaced by a fallback. Unset until 972 lands. */
+  check?: "passed" | "replaced";
 };
 
 const failure = (code: MentorErrorCode): MentorEvent => ({

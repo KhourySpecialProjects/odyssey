@@ -108,6 +108,7 @@ export function hintReply(
   }: ReplyVersions = {},
 ): CachedReply {
   checkLesson(context, ids);
+  // ODY-972 should hash its check version into this key
   return build(
     "hint",
     `hint:${ids.lessonId}:${ask.question.questionId}:${ask.chosenOptionId}`,
@@ -118,11 +119,19 @@ export function hintReply(
   );
 }
 
-/** Why a finished answer mustn't be shared, or null when it can be */
+/**
+ * Why a finished answer mustn't be shared, or null when it can be. A hint is
+ * stored only when ODY-972's check passed it: unset means not checked and
+ * replaced means held back. Summaries ignore the check.
+ */
 export function unstorableReason(
   completed: MentorCompleted | null,
+  scope: CachedReplyRow["scope"] = "lesson",
 ): string | null {
   if (!completed) return "not finished";
+  if (scope === "hint" && completed.check !== "passed") {
+    return completed.check === "replaced" ? "held back" : "not checked";
+  }
   if (completed.stopReason !== "end_turn") {
     return `stop reason ${completed.stopReason}`;
   }
@@ -139,7 +148,7 @@ export async function storeCachedReplyWhenDone(
 ): Promise<void> {
   try {
     const done = await completed;
-    const reason = unstorableReason(done);
+    const reason = unstorableReason(done, reply.row.scope);
     if (reason || !done) {
       console.info(
         `[mentor] saved reply not stored (${reason}), ${reply.slot}`,

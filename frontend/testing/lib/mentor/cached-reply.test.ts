@@ -237,6 +237,45 @@ describe("unstorableReason", () => {
   ])("for %s", (_, input, reason) => {
     expect(unstorableReason(input)).toBe(reason);
   });
+
+  it.each<[MentorCompleted["check"], string | null]>([
+    ["passed", null],
+    ["replaced", "held back"],
+    [undefined, "not checked"],
+  ])("for a hint with check %s", (check, reason) => {
+    expect(unstorableReason(completed({ check }), "hint")).toBe(reason);
+  });
+
+  it("still applies the other rules to a passed hint", () => {
+    expect(
+      unstorableReason(completed({ check: "passed", citations: [] }), "hint"),
+    ).toBe("no citations");
+  });
+
+  it("ignores the check for a summary", () => {
+    expect(unstorableReason(completed({ check: "replaced" }), "lesson")).toBe(
+      null,
+    );
+  });
+});
+
+describe("storeCachedReplyWhenDone for a hint", () => {
+  const mocked = storeCachedReply as jest.Mock;
+  const reply = hintReply(context, hintAsk(412), ids);
+
+  it.each([
+    ["passed", true],
+    ["replaced", false],
+    [undefined, false],
+  ] as const)("with check %s, stores: %s", async (check, stored) => {
+    mocked.mockClear();
+    mocked.mockResolvedValue({ stored: true });
+    await storeCachedReplyWhenDone(
+      reply,
+      Promise.resolve(completed({ check })),
+    );
+    expect(mocked).toHaveBeenCalledTimes(stored ? 1 : 0);
+  });
 });
 
 describe("storeCachedReplyWhenDone", () => {
