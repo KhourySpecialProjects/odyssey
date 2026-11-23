@@ -23,7 +23,7 @@ import {
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-20.6";
+export const JUDGE_VERSION = "2026-11-20.7";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 export const JUDGE_MAX_TOKENS = 8000;
 
@@ -48,7 +48,7 @@ const QUESTIONS = {
   fits_level:
     "Is the reply pitched to the student in <learner>: shorter and more technical if they finished related advanced droplets, gentler and more basic if they're new to the area?",
   claims_history:
-    "Does the reply say or imply something about the student's own record that <learner> doesn't show: that they did, finished, studied or know something, including what a droplet they finished taught them? Asking them to read, reread or recall this lesson isn't a claim about their record.",
+    "Does the reply say or imply something about the student's own record that <learner> doesn't show: that they did, finished, studied or know something? Saying they've seen an idea that a finished droplet's name or tags in <learner> show is fine; saying a droplet taught them anything its name and tags don't show is a claim. Asking them to read, reread or recall this lesson isn't a claim about their record.",
   one_question:
     "Does the reply ask the student exactly one quiz question? A multiple-choice question with its options counts as one.",
   from_passages:

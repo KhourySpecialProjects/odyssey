@@ -262,6 +262,8 @@ passage of this lesson isn't a claim about their record (ODY-938 Task 8).
 `2026-11-20.6` words `claims_history` as a claim about the student's own record,
 including what a finished droplet taught them; reading, rereading or recalling
 this lesson doesn't count.
+`2026-11-20.7` lets a reply say the student has seen an idea that a finished
+droplet's name or tags show; anything else a droplet taught is still a claim.
 
 From prompt `2026-11-24.5`, summaries follow ODY-968's summary rule (see
 "Summaries and teaching hints"). Hints still follow the old rule: ODY-972
