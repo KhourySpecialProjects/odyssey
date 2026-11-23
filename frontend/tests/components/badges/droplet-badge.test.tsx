@@ -1,5 +1,3 @@
-import { readFileSync } from "fs";
-import path from "path";
 import { render, screen } from "@testing-library/react";
 import { DropletBadge } from "@/components/badges/droplet-badge";
 import { SAMPLE_BADGE_EMBLEMS } from "@/testing/mocks/badges";
@@ -30,6 +28,7 @@ describe("DropletBadge", () => {
       "aria-hidden",
       "true",
     );
+    expect(screen.queryAllByText(TITLE)).toHaveLength(1);
   });
 
   it("clamps the title to two lines and keeps the full title in a title attribute", () => {
@@ -69,15 +68,19 @@ describe("DropletBadge", () => {
     expect(container.querySelector("img")).toBeNull();
   });
 
-  it("holds only the <img> when given an emblem, never an inline svg", () => {
+  it("keeps the emblem's markup out of the DOM and the frame svg hidden", () => {
     const { container } = render(
-      <DropletBadge title="T" emblemSvg={SAMPLE_BADGE_EMBLEMS[0]} size="md" />,
+      <DropletBadge title="T" emblemSvg={SAMPLE_BADGE_EMBLEMS[1]} size="md" />,
     );
+    // Only the <img> src carries the emblem; the frame is our own svg.
     expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(container.querySelector("svg")).toBeNull();
+    expect(container.querySelector("polygon, text, circle")).toBeNull();
+    const frames = container.querySelectorAll("svg");
+    expect(frames).toHaveLength(1);
+    expect(frames[0]).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("keeps the same wide tile shape for any emblem, and a ribbon no wider than it", () => {
+  it("puts every emblem in the same box, so its shape cannot change the badge", () => {
     const { container } = render(
       <DropletBadge
         title="T"
@@ -87,11 +90,28 @@ describe("DropletBadge", () => {
         size="md"
       />,
     );
-    const tile = container.querySelector("img")!.parentElement!.parentElement!;
-    expect(tile).toHaveClass("aspect-[5/2]", "overflow-hidden", "bg-black");
-    expect(screen.getByText("T").parentElement).toHaveClass(
-      "w-[84%]",
-      "bg-blue-700",
+    const box = screen.getByTestId("badge-emblem-box");
+    expect(box).toContainElement(container.querySelector("img"));
+    expect(container.querySelector("img")).toHaveClass(
+      "h-full",
+      "w-full",
+      "object-contain",
     );
+    expect(screen.getByRole("img", { name: "T badge" })).toHaveClass(
+      "aspect-[1152/846]",
+    );
+  });
+
+  it("gives each badge its own gradient id", () => {
+    const { container } = render(
+      <>
+        <DropletBadge title="A" size="sm" />
+        <DropletBadge title="B" size="sm" />
+      </>,
+    );
+    const ids = [...container.querySelectorAll("linearGradient")].map(
+      (g) => g.id,
+    );
+    expect(new Set(ids).size).toBe(2);
   });
 });

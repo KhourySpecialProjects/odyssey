@@ -1,5 +1,6 @@
 import { emblemToDataUrl } from "@/lib/badges/emblem";
 import { cn } from "@/lib/utils";
+import { BadgeFrame } from "./badge-frame";
 import { BadgeRibbon, type BadgeSize } from "./badge-ribbon";
 
 interface DropletBadgeProps {
@@ -10,9 +11,9 @@ interface DropletBadgeProps {
 }
 
 const WIDTHS: Record<BadgeSize, string> = {
-  sm: "w-24",
-  md: "w-40",
-  lg: "w-72",
+  sm: "w-28",
+  md: "w-48",
+  lg: "w-80",
 };
 
 function PlaceholderEmblem() {
@@ -20,9 +21,9 @@ function PlaceholderEmblem() {
     <svg
       data-testid="badge-placeholder"
       viewBox="0 0 24 24"
-      className="h-3/5 text-white/60"
+      className="h-3/5"
       fill="none"
-      stroke="currentColor"
+      stroke="#6297ae"
       strokeWidth="1.5"
       aria-hidden="true"
     >
@@ -45,23 +46,24 @@ export function DropletBadge({
       aria-label={`${title} badge`}
       data-size={size}
       className={cn(
-        "inline-flex flex-col items-center",
+        "[container-type:inline-size] relative aspect-[1152/846]",
         WIDTHS[size],
         className,
       )}
     >
-      <div className="relative aspect-[5/2] w-full overflow-hidden rounded-[2px] bg-black dark:ring-1 dark:ring-white/15">
-        <div className="pointer-events-none absolute inset-[4%] border border-white/80" />
-        <div className="absolute inset-[4%] flex items-center justify-center p-[2%]">
-          {src ? (
-            // eslint-disable-next-line @next/next/no-img-element -- sanitized data URL
-            <img src={src} alt="" className="h-full w-full object-contain" />
-          ) : (
-            <PlaceholderEmblem />
-          )}
-        </div>
+      <BadgeFrame />
+      <div
+        data-testid="badge-emblem-box"
+        className="absolute top-[6.74%] left-[4.95%] flex h-[55.6%] w-[90.1%] items-center justify-center"
+      >
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element -- sanitized data URL
+          <img src={src} alt="" className="h-full w-full object-contain" />
+        ) : (
+          <PlaceholderEmblem />
+        )}
       </div>
-      <BadgeRibbon title={title} size={size} />
+      <BadgeRibbon title={title} />
     </div>
   );
 }
