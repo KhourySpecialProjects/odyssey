@@ -23,18 +23,18 @@ export function MiniCriterionCircle({
       data-mini-circle
       data-band={band}
       data-suggested={suggested}
-      className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white"
+      className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white text-[#344054] dark:bg-[#131c2e] dark:text-slate-200"
       style={{
         borderStyle: band === "unscored" ? "dashed" : "solid",
         borderColor: colors.outline,
-        color: band === "unscored" ? colors.outline : "#344054",
+        color: band === "unscored" ? colors.outline : undefined,
       }}
     >
       <Icon className="h-3 w-3" aria-hidden />
       {band !== "unscored" && (
         <span
           data-mini-badge
-          className="absolute -right-1 -bottom-1 flex h-2.5 w-2.5 items-center justify-center rounded-full border border-white text-[7px] leading-none font-bold text-white"
+          className="absolute -right-1 -bottom-1 flex h-2.5 w-2.5 items-center justify-center rounded-full border border-white text-[7px] leading-none font-bold text-white dark:border-[#131c2e]"
           style={{ backgroundColor: colors.text }}
         >
           {BADGE[band]}
