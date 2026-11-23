@@ -14,7 +14,7 @@ export function BadgeRibbon({ title }: BadgeRibbonProps) {
     <div
       aria-hidden="true"
       title={title}
-      className="absolute top-[81.6%] left-[18.8%] flex h-[12.2%] w-[62.4%] items-center justify-center text-center text-[length:5.4cqw] leading-tight font-bold text-white"
+      className="absolute top-[81.6%] left-[18%] flex h-[12.2%] w-[64%] items-center justify-center text-center text-[length:4.4cqw] leading-tight font-bold text-white"
     >
       <span className="line-clamp-2 break-words">{title}</span>
     </div>

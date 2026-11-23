@@ -63,7 +63,7 @@ export function DropletBadge({
           <PlaceholderEmblem />
         )}
       </div>
-      <BadgeRibbon title={title} />
+      {size !== "sm" && <BadgeRibbon title={title} />}
     </div>
   );
 }

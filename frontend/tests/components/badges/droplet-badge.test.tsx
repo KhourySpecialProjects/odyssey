@@ -32,12 +32,20 @@ describe("DropletBadge", () => {
   });
 
   it("clamps the title to two lines and keeps the full title in a title attribute", () => {
-    render(<DropletBadge title={TITLE} size="sm" />);
+    render(<DropletBadge title={TITLE} size="md" />);
     expect(screen.getByText(TITLE)).toHaveClass("line-clamp-2");
     expect(screen.getByText(TITLE).parentElement).toHaveAttribute(
       "title",
       TITLE,
     );
+  });
+
+  it("leaves the title text off small badges but keeps the accessible name", () => {
+    render(<DropletBadge title={TITLE} size="sm" />);
+    expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: `${TITLE} badge` }),
+    ).toBeInTheDocument();
   });
 
   it.each(["sm", "md", "lg"] as const)("renders size %s", (size) => {
