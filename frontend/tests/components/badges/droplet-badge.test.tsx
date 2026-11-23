@@ -51,7 +51,7 @@ describe("DropletBadge", () => {
     const { container } = render(
       <DropletBadge title="T" emblemSvg={SAMPLE_BADGE_EMBLEMS[1]} size="md" />,
     );
-    expect(decodedSrc(container)).toContain("<polygon");
+    expect(decodedSrc(container)).toContain('viewBox="0 0 220 100"');
     expect(screen.queryByTestId("badge-placeholder")).not.toBeInTheDocument();
   });
 
@@ -74,7 +74,7 @@ describe("DropletBadge", () => {
     );
     // Only the <img> src carries the emblem; the frame is our own svg.
     expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(container.querySelector("polygon, text, circle")).toBeNull();
+    expect(container.querySelector("circle, polygon, text")).toBeNull();
     const frames = container.querySelectorAll("svg");
     expect(frames).toHaveLength(1);
     expect(frames[0]).toHaveAttribute("aria-hidden", "true");
