@@ -1,4 +1,8 @@
 import { after } from "next/server";
+import {
+  checkRateLimit,
+  formatRateLimitError,
+} from "@/lib/import/rate-limiter";
 import { requireRole } from "@/lib/auth/require-role";
 import { lessonAccess } from "@/lib/lesson-access";
 import { streamMentorAnswer } from "@/lib/mentor/answer";
@@ -148,6 +152,24 @@ export async function POST(request: Request): Promise<Response> {
     if (!allowance.allowed) {
       const { status, reason, message, retryAt } = allowance;
       return refuse(status, reason, message, retryAt);
+    }
+    // A hit skips the live burst guard but still writes a chat row, so it has
+    // its own limit. Same refusal as checkMentorAllowance's burst guard.
+    if (saved) {
+      const limit = checkRateLimit(
+        gate.user.email,
+        gate.user.roles,
+        "mentor-saved",
+      );
+      if (!limit.allowed) {
+        const retryAfterMs = limit.retryAfterMs ?? 0;
+        return refuse(
+          429,
+          "rate_limited",
+          formatRateLimitError(retryAfterMs),
+          new Date(Date.now() + retryAfterMs).toISOString(),
+        );
+      }
     }
 
     // ODY-937: any saved chat of this kind continues on any lesson; quiz hints are never saved

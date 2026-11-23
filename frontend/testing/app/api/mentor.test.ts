@@ -1,6 +1,10 @@
 /** @jest-environment node */
 import { after } from "next/server";
 import { POST } from "@/app/api/mentor/route";
+import {
+  checkRateLimit,
+  formatRateLimitError,
+} from "@/lib/import/rate-limiter";
 import { requireRole } from "@/lib/auth/require-role";
 import { blockNoteIdToNumber } from "@/lib/blocknote/convert-blocks";
 import {
@@ -40,6 +44,10 @@ import {
 } from "@/testing/mocks/mentorLessonMock";
 
 jest.mock("next/server", () => ({ after: jest.fn() }));
+jest.mock("@/lib/import/rate-limiter", () => ({
+  ...jest.requireActual("@/lib/import/rate-limiter"),
+  checkRateLimit: jest.fn(),
+}));
 jest.mock("@/lib/auth/require-role", () => ({ requireRole: jest.fn() }));
 jest.mock("@/lib/mentor/source", () => ({ getMentorSource: jest.fn() }));
 jest.mock("@/lib/mentor/client", () => ({ mentorClient: jest.fn() }));
@@ -62,6 +70,7 @@ jest.mock("@/lib/mentor/usage", () => ({
 const gate = jest.mocked(requireRole);
 const source = jest.mocked(getMentorSource);
 const allowance = jest.mocked(checkMentorAllowance);
+const limit = jest.mocked(checkRateLimit);
 const access = jest.mocked(checkMentorAccess);
 const find = jest.mocked(findCachedReply);
 const store = jest.mocked(storeCachedReply);
@@ -144,6 +153,7 @@ beforeEach(() => {
   gate.mockResolvedValue({ ok: true, user });
   source.mockResolvedValue(sourceOf());
   allowance.mockResolvedValue({ allowed: true });
+  limit.mockReturnValue({ allowed: true });
   access.mockResolvedValue({ allowed: true });
   find.mockResolvedValue(null);
   store.mockResolvedValue({ stored: true });
@@ -654,6 +664,35 @@ describe("POST /api/mentor", () => {
         expect(find).toHaveBeenCalledWith(key());
       });
 
+      it("uses the saved-reply bucket, never the live one", async () => {
+        await readAllMentorEvents((await post(summary())).body!);
+
+        expect(limit).toHaveBeenCalledTimes(1);
+        expect(limit).toHaveBeenCalledWith(
+          user.email,
+          user.roles,
+          "mentor-saved",
+        );
+      });
+
+      it("refuses over the limit like the burst guard, with no chat or store write", async () => {
+        limit.mockReturnValue({ allowed: false, retryAfterMs: 90_500 });
+        const response = await post(summary());
+
+        expect(response.status).toBe(429);
+        expect(response.headers.get("Retry-After")).toBe("91");
+        expect(await response.json()).toEqual({
+          error: "rate_limited",
+          message: formatRateLimitError(90_500),
+          retryAt: expect.any(String),
+        } satisfies MentorHttpError);
+        expect(claude.calls).toHaveLength(0);
+        expect(start).not.toHaveBeenCalled();
+        expect(store).not.toHaveBeenCalled();
+        await afterResponse();
+        expect(save).not.toHaveBeenCalled();
+      });
+
       it("is still served at the daily limit", async () => {
         allowance.mockResolvedValue({
           allowed: false,
@@ -697,6 +736,11 @@ describe("POST /api/mentor", () => {
     });
 
     describe("a miss", () => {
+      it("never uses the saved-reply bucket", async () => {
+        await readAllMentorEvents((await post(summary())).body!);
+        expect(limit).not.toHaveBeenCalled();
+      });
+
       it("generates the canonical request, records usage and stores the reply", async () => {
         const response = await post(summary());
         await readAllMentorEvents(response.body!);
