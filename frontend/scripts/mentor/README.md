@@ -257,6 +257,8 @@ or two on what the lesson needs from the prerequisite, drawn from the lesson.
 `2026-11-20.3` words the contrast prompt for either order of blocks.
 `2026-11-20.4` has the prompt say that A and B in `expect` mean the students
 in `learner_a`/`reply_a` and `learner_b`/`reply_b`, wherever those appear.
+`2026-11-20.5` tells `claims_history` that sending the student to read or reread a
+passage of this lesson isn't a claim about their record (ODY-938 Task 8).
 
 From prompt `2026-11-24.5`, summaries follow ODY-968's summary rule (see
 "Summaries and teaching hints"). Hints still follow the old rule: ODY-972
