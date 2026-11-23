@@ -150,7 +150,7 @@ export function pricedContrasts(
     .map((j) => ({ params: requestFor(j), outputTokens: 2500 }));
 }
 
-/** --pilot: the first case of each kind, format and twin, plus pair partners of kept cases, in file order */
+/** --pilot: the first case of each kind, format and twin, plus the pair partners of those first cases, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {
   const seen = new Set<string>();
   const first = cases.filter((c) => {
