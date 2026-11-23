@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useLayoutEffect, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
 import { IconUserPlus } from "@tabler/icons-react";
 import { AuthorizedUser } from "@/types";
 import { FriendRequestFeedBlock } from "../friends/friend-request-feed-block";
@@ -26,8 +25,6 @@ export function FeedContainer({
   unreadCount: number;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isFeedTab = pathname === "/activity";
   const [headerHeight, setHeaderHeight] = useState(69);
   const leftRef = useRef<HTMLElement>(null);
 
@@ -93,16 +90,10 @@ export function FeedContainer({
         style={{ "--header-h": `${headerHeight}px` } as React.CSSProperties}
       >
         {/* Center */}
+        {/* The page scrolls as a whole, so the feed gets room below the strip (ODY-959) */}
         <div
           className="min-w-0 flex-1"
-          style={
-            isFeedTab
-              ? {
-                  height: `calc(100vh - ${headerHeight}px)`,
-                  overflow: "hidden",
-                }
-              : { minHeight: `calc(100vh - ${headerHeight}px)` }
-          }
+          style={{ minHeight: `calc(100vh - ${headerHeight}px)` }}
         >
           {children}
         </div>

@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { SocialForms } from "@/app/(general)/settings/social-forms";
 import { getCurrentUser } from "@/lib/auth/session";
+import { LearningInterests } from "@/components/settings/learning-interests";
+import { getLearnerProfile } from "@/lib/learner-profile";
+import { tagsToTopics, visibleInterestIds } from "@/lib/onboarding-topics";
 import { getCachedUser } from "@/lib/requests/cached";
-import { AuthorizedUser } from "@/types";
+import { getTags } from "@/lib/requests/tag";
+import { AuthorizedUser, LearnerProfile } from "@/types";
+
+// Generic message only: errors can carry student data (FERPA).
+const logFailure = (what: string, error: unknown) =>
+  console.error(
+    `Settings: ${what} failed`,
+    error instanceof Error ? error.name : "unknown",
+  );
 
 export default async function Settings() {
   const user = await getCurrentUser();
@@ -16,6 +27,25 @@ export default async function Settings() {
   if (!authorizedUser) {
     throw new Error("Authorized user not found");
   }
+
+  const [profile, tags] = await Promise.all([
+    getLearnerProfile(authorizedUser.id).catch((e) => {
+      logFailure("learner profile", e);
+      return null as LearnerProfile | null;
+    }),
+    getTags().catch((e) => {
+      logFailure("tags", e);
+      return null;
+    }),
+  ]);
+
+  const topics = tags
+    ? tagsToTopics(
+        tags.flatMap((t) =>
+          t.documentId ? [{ ...t, documentId: t.documentId }] : [],
+        ),
+      )
+    : [];
 
   return (
     <div className="flex w-full flex-col">
@@ -40,6 +70,21 @@ export default async function Settings() {
         . You may need to log out and back into Odyssey for changes to take
         effect.
       </p>
+
+      {topics.length > 0 && (
+        <LearningInterests
+          topics={topics}
+          initial={{
+            goal: profile?.goal ?? undefined,
+            focusAreas: profile?.focusAreas ?? [],
+            interestTagIds: visibleInterestIds(
+              profile?.interests.map((t) => t.id) ?? [],
+              topics,
+            ),
+            interestNote: profile?.interestNote ?? undefined,
+          }}
+        />
+      )}
     </div>
   );
 }

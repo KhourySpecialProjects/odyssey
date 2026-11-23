@@ -1,5 +1,6 @@
 import "server-only";
 import { revalidateTag } from "next/cache";
+import { writeAnnouncementRead } from "@/lib/announcement-reads";
 import { assertOwner, type AuthUser } from "@/lib/auth/guards";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { earliestDue, reminderHeadline } from "@/lib/reminder-progress";
@@ -244,14 +245,17 @@ export async function loadOwnReminder(
   return { ok: true, row };
 }
 
-/** PUTs only the given reminder-state fields, then revalidates the learner's feed. Throws on failure. */
+/** Writes the snooze and mute fields and the user's read row, then revalidates their feed. Throws on failure. */
 export async function writeReminderState(
   row: Pick<OwnReminder, "id" | "documentId">,
-  data: Partial<{
-    readAt: string | null;
+  {
+    read,
+    ...fields
+  }: {
+    read: boolean;
     reminderSnoozedUntil: string | null;
     reminderMutedUntil: string | null;
-  }>,
+  },
   userId: number,
 ): Promise<void> {
   const response = await fetch(
@@ -266,21 +270,22 @@ export async function writeReminderState(
         Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
         ...STRAPI_RESPONSE_FORMAT_HEADER,
       },
-      body: JSON.stringify({ data }),
+      // readAt is legacy (ODY-786); cleared so the boot backfill can't re-mark the row read
+      body: JSON.stringify({ data: { ...fields, readAt: null } }),
       cache: "no-store",
     },
   );
   if (!response.ok) {
     throw new Error(`Failed to update reminder (${response.status})`);
   }
+  await writeAnnouncementRead(row, userId, read);
   revalidateTag(CACHE_TAGS.userFeed(userId));
 }
 
-/** Marks the droplet's unread reminder read after a new lesson view. Never throws; true if it cleared one. */
+/** Marks the droplet's reminder read for the learner after a new lesson view. Never throws; true if it cleared one. */
 export async function clearReminderOnProgress(
   learner: StreakLearner,
   dropletId: number,
-  now = new Date(),
 ): Promise<boolean> {
   try {
     const rows = await fetchAPI<Pick<OwnReminder, "id" | "documentId">[]>(
@@ -291,21 +296,18 @@ export async function clearReminderOnProgress(
             type: { $eq: "reminder" },
             authorized_user: { id: { $eq: learner.id } },
             droplet: { id: { $eq: dropletId } },
-            readAt: { $null: true },
           },
           fields: ["id"],
+          sort: ["id:asc"],
           pagination: { pageSize: 1, page: 1 },
         },
         cache: "no-store",
       },
     );
     if (!rows?.[0]) return false;
-    await writeReminderState(
-      rows[0],
-      { readAt: now.toISOString() },
-      learner.id,
-    );
-    return true;
+    const cleared = await writeAnnouncementRead(rows[0], learner.id, true);
+    if (cleared) revalidateTag(CACHE_TAGS.userFeed(learner.id));
+    return cleared;
   } catch (error) {
     console.error("Error clearing reminder on progress:", error);
     return false;

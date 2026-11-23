@@ -190,13 +190,13 @@ describe("below 1440", () => {
     expect(main()).toHaveAttribute("data-review-panel", "rail");
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     );
     expect(sidebarOpen()).toBe("false");
     expect(screen.getByTestId("transcript")).toBeVisible();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Collapse Scorecard" }),
     );
     expect(screen.getByTestId("transcript")).not.toBeVisible();
     expect(unmounted).not.toHaveBeenCalled();
@@ -206,17 +206,17 @@ describe("below 1440", () => {
     show();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Collapse Scorecard" }),
     );
     expect(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     ).toHaveFocus();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     );
     expect(
-      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Collapse Scorecard" }),
     ).toHaveFocus();
   });
 
@@ -235,7 +235,7 @@ describe("below 1280", () => {
 
     expect(main()).toHaveAttribute("data-review-panel", "rail");
     expect(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     ).toBeInTheDocument();
   });
 
@@ -245,10 +245,10 @@ describe("below 1280", () => {
     expect(main()).not.toHaveAttribute("inert");
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     );
     expect(
-      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Collapse Scorecard" }),
     ).toHaveFocus();
     expect(main()).toHaveAttribute("inert");
 
@@ -257,7 +257,7 @@ describe("below 1280", () => {
     expect(main()).toHaveAttribute("data-review-panel", "rail");
     expect(main()).not.toHaveAttribute("inert");
     expect(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     ).toHaveFocus();
   });
 
@@ -265,13 +265,13 @@ describe("below 1280", () => {
     wide(1100);
     show();
     await userEvent.click(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     );
 
-    const dialog = screen.getByRole("dialog", { name: "Reviewer Transcript" });
+    const dialog = screen.getByRole("dialog", { name: "Scorecard" });
     expect(dialog).toHaveAttribute("aria-modal", "true");
     const first = screen.getByRole("button", {
-      name: "Collapse Reviewer Transcript",
+      name: "Collapse Scorecard",
     });
     const last = screen.getByRole("button", { name: "last action" });
 
@@ -287,7 +287,7 @@ describe("below 1280", () => {
     wide(1100);
     show();
     await userEvent.click(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     );
 
     expect(screen.queryByRole("separator")).not.toBeInTheDocument();
@@ -298,7 +298,7 @@ describe("below 1280", () => {
     wide(1100);
     show();
     await userEvent.click(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     );
 
     expect(main()).toHaveAttribute("inert");
@@ -308,7 +308,7 @@ describe("below 1280", () => {
     expect(main()).toHaveAttribute("data-review-panel", "rail");
     expect(main()).not.toHaveAttribute("inert");
     expect(
-      screen.getByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Open Scorecard" }),
     ).toHaveFocus();
   });
 });
@@ -331,7 +331,7 @@ describe("at 1440 and up", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("complementary", { name: "Reviewer Transcript" }),
+      screen.getByRole("complementary", { name: "Scorecard" }),
     ).toBeInTheDocument();
     expect(main()).not.toHaveAttribute("inert");
   });
@@ -358,7 +358,7 @@ describe("at 1440 and up", () => {
     expect(main()).toHaveAttribute("data-review-panel", "open");
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Collapse Scorecard" }),
     );
     expect(main()).toHaveClass("xl:pr-12");
     expect(main()).toHaveAttribute("data-review-panel", "rail");
@@ -367,11 +367,11 @@ describe("at 1440 and up", () => {
   it("resizes main and the panel together from the handle", async () => {
     show();
     const aside = screen.getByRole("complementary", {
-      name: "Reviewer Transcript",
+      name: "Scorecard",
     });
     expect(aside).toHaveClass("xl:w-[var(--panel-w,384px)]");
     const handle = screen.getByRole("separator", {
-      name: "Resize Reviewer Transcript",
+      name: "Resize Scorecard",
     });
     expect(handle).toHaveAttribute("aria-controls", aside.id);
 
@@ -421,7 +421,7 @@ describe("at 1440 and up", () => {
   it("has no handle in the rail", async () => {
     show();
     await userEvent.click(
-      screen.getByRole("button", { name: "Collapse Reviewer Transcript" }),
+      screen.getByRole("button", { name: "Collapse Scorecard" }),
     );
 
     expect(screen.queryByRole("separator")).not.toBeInTheDocument();
@@ -451,7 +451,7 @@ describe("not reviewing", () => {
 
     expect(screen.queryByTestId("transcript")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Open Reviewer Transcript" }),
+      screen.queryByRole("button", { name: "Open Scorecard" }),
     ).not.toBeInTheDocument();
     expect(main()).not.toHaveAttribute("data-review-panel");
     expect(main()).not.toHaveClass("group");

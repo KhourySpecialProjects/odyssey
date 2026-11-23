@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { DropletAnalyticsModal } from "@/components/admin/droplets/droplet-analytics-modal";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 import { getDropletAnalytics } from "@/lib/requests/droplet-analytics";
 
 jest.mock("@/lib/requests/droplet-analytics");
@@ -92,5 +93,28 @@ describe("DropletAnalyticsModal — Average Rating stat card", () => {
     expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.getByText("Completion Rate")).toBeInTheDocument();
     expect(screen.getByText("Average Rating")).toBeInTheDocument();
+  });
+
+  it("renders exactly one close button", async () => {
+    mockGetDropletAnalytics.mockResolvedValue(baseAnalytics);
+
+    render(
+      <DropletAnalyticsModal
+        droplet={mockDroplet}
+        open={true}
+        onOpenChange={jest.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Average Rating")).toBeInTheDocument();
+    });
+
+    expectSingleCloseButton(screen.getByRole("dialog"));
+
+    // The close is the only focusable element, so it must not ring on mouse open.
+    const close = screen.getByRole("button", { name: "Close" });
+    expect(close).toHaveClass("focus-visible:ring-2");
+    expect(close).not.toHaveClass("focus:ring-2");
   });
 });

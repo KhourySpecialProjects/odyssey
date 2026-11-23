@@ -88,7 +88,7 @@ export async function snoozeReminder(id: number, choice: SnoozeChoice) {
       const until = dayStartUtc(now, tz, REMINDER_RULES.snoozeDays[choice]);
       return {
         data: {
-          readAt: now.toISOString(),
+          read: true,
           reminderSnoozedUntil: until.toISOString(),
           reminderMutedUntil: null,
         },
@@ -106,7 +106,7 @@ export async function muteReminder(id: number) {
   return withAuth([], async (user) =>
     updateOwnReminder(user, id, true, (now, tz) => ({
       data: {
-        readAt: now.toISOString(),
+        read: true,
         reminderSnoozedUntil: null,
         reminderMutedUntil: dayStartUtc(
           now,
@@ -124,7 +124,7 @@ export async function undoReminder(id: number) {
   return withAuth([], async (user) =>
     updateOwnReminder(user, id, false, () => ({
       data: {
-        readAt: null,
+        read: false,
         reminderSnoozedUntil: null,
         reminderMutedUntil: null,
       },

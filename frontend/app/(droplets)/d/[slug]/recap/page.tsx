@@ -1,8 +1,9 @@
-import { DropletTile } from "@/components/droplets/droplet-tile";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Droplet } from "@/types";
+import { RecapRecommendations } from "@/components/recommendations/recap-recommendations";
+import { RecommendationPicksProvider } from "@/components/recommendations/recommendation-picks";
+import { VoyageBanner } from "@/components/recommendations/voyage-banner";
+import { getRecapPicks } from "@/lib/recommendations/recap";
 import { IconTarget, IconLink } from "@tabler/icons-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -15,7 +16,6 @@ import {
 } from "@/lib/requests/cached";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserId } from "@/lib/auth/current-user-id";
-import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
@@ -66,35 +66,13 @@ export default async function DropletRecapRoute({ params }: Props) {
     redirect(`/d/${p.slug}`);
   }
 
-  const [dropletRecommendations, authUser, enrollments, highlights, notes] =
-    await Promise.all([
-      getDroplets({
-        fields: ["*"],
-        filters: {
-          $and: [
-            { slug: { $nei: p.slug } },
-            droplet.tags && {
-              tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
-            },
-            {
-              $or: [{ status: "published" }, { status: { $null: true } }],
-            },
-          ],
-        },
-        pagination: {
-          page: 1,
-          pageSize: 4,
-        },
-        populate: {
-          tags: { fields: ["name", "slug"] },
-          authorized_users: USER_POPULATES.authorName,
-        },
-      }),
-      getCachedUser(currentUser.email),
-      getCachedEnrollmentsWithLessonIds(userId),
-      getHighlightsByDroplet(userId, droplet.id),
-      getNotesByDroplet(userId, droplet.id),
-    ]);
+  const [recap, authUser, enrollments, highlights, notes] = await Promise.all([
+    getRecapPicks(userId, droplet.id),
+    getCachedUser(currentUser.email),
+    getCachedEnrollmentsWithLessonIds(userId),
+    getHighlightsByDroplet(userId, droplet.id),
+    getNotesByDroplet(userId, droplet.id),
+  ]);
 
   let enrollID: string = "";
   const filteredHighlights = highlights.filter(
@@ -119,7 +97,7 @@ export default async function DropletRecapRoute({ params }: Props) {
   const pdfBytes = await NoteSummary({ filteredHighlights, notes, droplet });
 
   return (
-    <>
+    <RecommendationPicksProvider initialPicks={recap.picks}>
       {enrollment && enrollmentNeedsCompletionBackfill(enrollment) && (
         <CompletionBackfill enrollmentId={enrollment.id} />
       )}
@@ -141,6 +119,11 @@ export default async function DropletRecapRoute({ params }: Props) {
         <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
           Recap
         </h1>
+        {recap.next && (
+          <div className="mt-6">
+            <VoyageBanner recommendation={recap.next} />
+          </div>
+        )}
       </div>
       <div className="w-full space-y-10 px-4 pt-6 sm:px-8 lg:px-40">
         <section>
@@ -227,22 +210,7 @@ export default async function DropletRecapRoute({ params }: Props) {
           </section>
         ) : null}
 
-        {dropletRecommendations && dropletRecommendations.length > 0 ? (
-          <section>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Extend Your Odyssey
-            </h2>
-            <p className="mt-1 text-slate-500 dark:text-slate-300">
-              Have you explored these Droplets yet?
-            </p>
-
-            <ul className="mt-4 grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2">
-              {dropletRecommendations.map((droplet) => (
-                <DropletTile key={droplet.id} droplet={droplet} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        <RecapRecommendations bannerDropletId={recap.next?.droplet.id} />
 
         {/* {droplet.lessons && droplet.lessons.length > 0 ? (
           <section>
@@ -264,6 +232,6 @@ export default async function DropletRecapRoute({ params }: Props) {
         ) : null}
       </div>
       <div className="pb-12"></div>
-    </>
+    </RecommendationPicksProvider>
   );
 }

@@ -42,6 +42,33 @@ describe("Dialog", () => {
     expect(screen.getByRole("dialog")).toHaveClass("fixed", "z-50");
   });
 
+  describe("closeClassName", () => {
+    const StyledCloseDialog = () => (
+      <Dialog>
+        <DialogTrigger>Open</DialogTrigger>
+        <DialogContent closeClassName="top-7 right-7">
+          <DialogTitle>Test Title</DialogTitle>
+          <DialogDescription>Test Description</DialogDescription>
+        </DialogContent>
+      </Dialog>
+    );
+
+    it("merges onto the built-in close, replacing conflicting classes", () => {
+      render(<StyledCloseDialog />);
+      fireEvent.click(screen.getByText("Open"));
+      const close = screen.getByRole("button", { name: "Close" });
+      expect(close).toHaveClass("top-7", "right-7");
+      expect(close).not.toHaveClass("top-4");
+    });
+
+    it("still closes the dialog when clicked", () => {
+      render(<StyledCloseDialog />);
+      fireEvent.click(screen.getByText("Open"));
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
   it("renders DialogDescription with custom className", () => {
     const { container } = render(
       <Dialog>

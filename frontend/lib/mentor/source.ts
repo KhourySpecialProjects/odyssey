@@ -4,20 +4,25 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import { LESSON_BLOCKS_POPULATE } from "@/lib/requests/lesson-populates";
 import { fetchAPI } from "@/lib/utils";
 import type { DropletStatus } from "@/types";
+import type { LearnerPrerequisite } from "./learner";
 import type { MentorDroplet, MentorLesson } from "./types";
 
 type RawDroplet = {
+  id: number;
   name: string;
   difficulty?: string | null;
   status?: DropletStatus | null;
   isHidden?: boolean | null;
   learningObjectives?: { objective?: string | null }[] | null;
   lessons?: MentorLesson[] | null;
+  prerequisites?: LearnerPrerequisite[] | null;
 };
 
 export type MentorSource = {
   /** What Mentor's prompt reads, plus what `lessonAccess` decides with */
   droplet: MentorDroplet & {
+    id: number;
+    prerequisites: LearnerPrerequisite[];
     status: DropletStatus | null;
     isHidden: boolean;
     lessons: { id: number }[];
@@ -45,6 +50,7 @@ export async function getMentorSource(
       fields: ["name", "difficulty", "status", "isHidden"],
       populate: {
         learningObjectives: true,
+        prerequisites: { fields: ["id", "name", "status", "isHidden"] },
         lessons: {
           filters: { id: { $eq: lessonId } },
           fields: ["name", "blocksVersion", "blocksV2"],
@@ -61,6 +67,8 @@ export async function getMentorSource(
   const lesson = raw.lessons?.find((l) => l.id === lessonId) ?? null;
   return {
     droplet: {
+      id: raw.id,
+      prerequisites: raw.prerequisites ?? [],
       name: raw.name,
       difficulty: raw.difficulty ?? null,
       learningObjectives: objectives(raw.learningObjectives),

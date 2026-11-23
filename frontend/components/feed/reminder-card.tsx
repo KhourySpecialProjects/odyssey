@@ -136,46 +136,36 @@ export function ReminderCard({
         )}
       </div>
 
-      <p className="text-base font-medium text-[#0F172A] dark:text-slate-100">
-        {reminder?.headline ?? announcement.content}
-      </p>
+      {/* Headline and time on the left; progress above the actions on the right */}
+      <div className="grid grid-cols-1 items-center gap-x-6 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <p className="text-base font-medium text-[#0F172A] sm:col-start-1 sm:row-start-1 dark:text-slate-100">
+          {reminder?.headline ?? announcement.content}
+        </p>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          {progress && (
-            <div className="flex items-center gap-3">
+        {progress && (
+          <div className="flex items-center gap-3 sm:col-start-2 sm:row-start-1 sm:justify-self-end">
+            <div
+              role="progressbar"
+              aria-label="Lessons viewed"
+              aria-valuenow={progress.viewed}
+              aria-valuemin={0}
+              aria-valuemax={progress.total}
+              className="h-2 w-40 max-w-full overflow-hidden rounded bg-[#E2E8F0] dark:bg-slate-700"
+            >
               <div
-                role="progressbar"
-                aria-label="Lessons viewed"
-                aria-valuenow={progress.viewed}
-                aria-valuemin={0}
-                aria-valuemax={progress.total}
-                className="h-2 w-56 max-w-full overflow-hidden rounded bg-[#E2E8F0] dark:bg-slate-700"
-              >
-                <div
-                  className="h-full rounded bg-[#2D7597] dark:bg-[#7CC0E0]"
-                  style={{
-                    width: `${(progress.viewed / progress.total) * 100}%`,
-                  }}
-                />
-              </div>
-              <span className="text-sm text-[#475569] dark:text-slate-400">
-                {progress.viewed} of {progress.total} lessons
-              </span>
+                className="h-full rounded bg-[#2D7597] dark:bg-[#7CC0E0]"
+                style={{
+                  width: `${(progress.viewed / progress.total) * 100}%`,
+                }}
+              />
             </div>
-          )}
-          {next && (
-            <div className="flex gap-1 text-sm">
-              <span className="text-[#475569] dark:text-slate-400">
-                Up next:
-              </span>
-              <span className="font-medium text-[#0F172A] dark:text-slate-100">
-                {next.name}
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2">
+            <span className="text-sm whitespace-nowrap text-[#475569] dark:text-slate-400">
+              {progress.viewed} of {progress.total} lessons
+            </span>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2 sm:col-start-2 sm:row-start-2 sm:justify-self-end">
           {onRemindLater && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -229,10 +219,10 @@ export function ReminderCard({
             </Link>
           </Button>
         </div>
-      </div>
 
-      <div className="text-left text-sm font-semibold text-[#334155] dark:text-slate-300">
-        {timestamp}
+        <div className="order-last text-left text-sm font-semibold text-[#334155] sm:order-none sm:col-start-1 sm:row-start-2 dark:text-slate-300">
+          {timestamp}
+        </div>
       </div>
     </li>
   );

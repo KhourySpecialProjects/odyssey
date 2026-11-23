@@ -6,7 +6,10 @@ import {
   parseFilters,
   toFeedRoles,
 } from "@/components/feed/feed-filter-params";
+import { ActivityRecommendations } from "@/components/recommendations/activity-recommendations";
+import { RecommendationStrip } from "@/components/recommendations/recommendation-strip";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getRecommendations } from "@/lib/recommendations";
 import { getCachedUserSocial } from "@/lib/requests/cached";
 import {
   type FeedPage as FeedPageData,
@@ -60,10 +63,38 @@ export default async function FeedPage({ searchParams }: Props) {
   if (!authUser) return notFound();
 
   return (
-    <Suspense fallback={<FeedCenterContent authUser={authUser} pending />}>
-      <SeededFeed authUser={authUser} roles={roles} initialPage={initialPage} />
-    </Suspense>
+    <div className="flex h-full flex-col">
+      <Suspense
+        fallback={
+          <div className="mb-6 shrink-0">
+            <RecommendationStrip recommendations={[]} isLoading />
+          </div>
+        }
+      >
+        <RecommendedForYou userId={authUser.id} />
+      </Suspense>
+      <div className="min-h-0 flex-1">
+        <Suspense fallback={<FeedCenterContent authUser={authUser} pending />}>
+          <SeededFeed
+            authUser={authUser}
+            roles={roles}
+            initialPage={initialPage}
+          />
+        </Suspense>
+      </div>
+    </div>
   );
+}
+
+// Enough picks for Refresh to page through a few times (ODY-959)
+const ACTIVITY_PICKS = 12;
+
+async function RecommendedForYou({ userId }: { userId: number }) {
+  const picks = await getRecommendations(userId, {
+    surface: "activity",
+    limit: ACTIVITY_PICKS,
+  });
+  return <ActivityRecommendations initialPicks={picks} />;
 }
 
 async function SeededFeed({

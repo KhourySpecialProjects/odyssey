@@ -11,6 +11,8 @@ const SURFACES = {
 
 export const MAX_RECOMMENDATIONS = 24;
 
+export const RecommendationDropletIdSchema = z.number().int().positive();
+
 export const RecommendationOptionsSchema = z.object({
   surface: z.enum(Object.keys(SURFACES) as [RecommendationSurface]),
   limit: z.number().int().min(1).max(MAX_RECOMMENDATIONS),

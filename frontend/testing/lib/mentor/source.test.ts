@@ -18,6 +18,9 @@ const row = (over: Record<string, unknown> = {}) => ({
   isHidden: false,
   learningObjectives: [{ objective: " Write a join " }, { objective: "" }],
   lessons: [lesson],
+  prerequisites: [
+    { id: 3, name: "SQL Basics", status: "published", isHidden: false },
+  ],
   ...over,
 });
 
@@ -30,6 +33,10 @@ describe("getMentorSource", () => {
     mockFetch.mockResolvedValue([row()]);
     await expect(getMentorSource(5, lesson.id)).resolves.toEqual({
       droplet: {
+        id: 5,
+        prerequisites: [
+          { id: 3, name: "SQL Basics", status: "published", isHidden: false },
+        ],
         name: "Databases 101",
         difficulty: "beginner",
         learningObjectives: ["Write a join"],
@@ -45,6 +52,7 @@ describe("getMentorSource", () => {
         fields: ["name", "difficulty", "status", "isHidden"],
         populate: {
           learningObjectives: true,
+          prerequisites: { fields: ["id", "name", "status", "isHidden"] },
           lessons: {
             filters: { id: { $eq: lesson.id } },
             fields: ["name", "blocksVersion", "blocksV2"],

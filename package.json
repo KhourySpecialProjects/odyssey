@@ -9,7 +9,7 @@
     "dev": "npm run clear && concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
     "prettier-check": "npx prettier . --check",
     "prettier-write": "npx prettier . --write",
-    "lint": "cd frontend && eslint app components --ext .js,.ts,.tsx"
+    "lint": "npm run lint --prefix frontend"
   },
   "dependencies": {
     "concurrently": "^8.2.2"
