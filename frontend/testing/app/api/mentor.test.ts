@@ -12,7 +12,8 @@ import {
   saveMentorExchange,
   startMentorChat,
 } from "@/lib/mentor/chat-history";
-import { summaryReply } from "@/lib/mentor/cached-reply";
+import * as answerModule from "@/lib/mentor/answer";
+import { hintReply, summaryReply } from "@/lib/mentor/cached-reply";
 import {
   findCachedReply,
   storeCachedReply,
@@ -43,6 +44,10 @@ import {
   mentorDroplet,
 } from "@/testing/mocks/mentorLessonMock";
 
+jest.mock("@/lib/mentor/answer", () => {
+  const actual = jest.requireActual("@/lib/mentor/answer");
+  return { ...actual, streamMentorAnswer: jest.fn(actual.streamMentorAnswer) };
+});
 jest.mock("next/server", () => ({ after: jest.fn() }));
 jest.mock("@/lib/import/rate-limiter", () => ({
   ...jest.requireActual("@/lib/import/rate-limiter"),
@@ -852,22 +857,133 @@ describe("POST /api/mentor", () => {
       expect(tasks).toHaveLength(1);
     });
 
-    it("never looks up or stores a quiz hint (until PR 4)", async () => {
-      const response = await post(hint(41, 413));
-      expect(response.status).toBe(200);
-      await readAllMentorEvents(response.body!);
-      await afterResponse();
+    describe("a quiz explanation", () => {
+      const TEXT = "LEFT JOIN keeps unmatched left rows [p2].";
+      const hintOf = (pick: number) =>
+        hintReply(context(), resolvedHint(pick), ids);
+      const resolvedHint = (pick: number) => {
+        const resolved = resolveMentorAsk(
+          lesson,
+          context(),
+          hint(41, pick) as never,
+        );
+        if (!resolved.ok || resolved.ask.kind !== "quiz-hint") {
+          throw new Error("not a hint");
+        }
+        return resolved.ask;
+      };
 
-      expect(find).not.toHaveBeenCalled();
-      expect(access).not.toHaveBeenCalled();
-      expect(allowance).toHaveBeenCalledWith(user);
-      expect(claude.calls).toHaveLength(1);
-      // Only the usage task is scheduled, and nothing is stored
-      expect(tasks).toHaveLength(1);
-      expect(store).not.toHaveBeenCalled();
-      expect(record).toHaveBeenCalledWith(
-        expect.objectContaining({ kind: "quiz-hint" }),
-      );
+      describe("a hit", () => {
+        beforeEach(() => find.mockResolvedValue(TEXT));
+
+        it("replays the saved text under the pick's key, with no model call, usage row or chat", async () => {
+          const response = await post(hint(41, 413));
+
+          expect(find).toHaveBeenCalledWith(hintOf(413).key);
+          const events = await readAllMentorEvents(response.body!);
+          expect(
+            events
+              .slice(0, -1)
+              .map((e) => (e.type === "text" ? e.text : ""))
+              .join(""),
+          ).toBe(TEXT);
+          expect(events.at(-1)).toMatchObject({ type: "done" });
+          await afterResponse();
+          expect(access).toHaveBeenCalledWith(user);
+          expect(limit).toHaveBeenCalledWith(
+            user.email,
+            user.roles,
+            "mentor-saved",
+          );
+          expect(allowance).not.toHaveBeenCalled();
+          expect(claude.calls).toHaveLength(0);
+          expect(record).not.toHaveBeenCalled();
+          expect(start).not.toHaveBeenCalled();
+          expect(save).not.toHaveBeenCalled();
+          expect(store).not.toHaveBeenCalled();
+          expect(console.info).toHaveBeenCalledWith(
+            `[mentor] saved reply hit, ${hintOf(413).slot}`,
+          );
+        });
+
+        it("refuses over the saved-reply limit", async () => {
+          limit.mockReturnValue({ allowed: false, retryAfterMs: 5_000 });
+          const response = await post(hint(41, 413));
+
+          expect(response.status).toBe(429);
+          expect(claude.calls).toHaveLength(0);
+        });
+
+        it("is still served at the daily limit", async () => {
+          allowance.mockResolvedValue({
+            allowed: false,
+            reason: "daily_limit",
+            status: 429,
+            message: "Limit.",
+            retryAt: null,
+          });
+          expect((await post(hint(41, 413))).status).toBe(200);
+        });
+      });
+
+      describe("a miss", () => {
+        it("sends the keyed request, records usage as a quiz hint and never uses the saved bucket", async () => {
+          await readAllMentorEvents((await post(hint(41, 413))).body!);
+          await afterResponse();
+
+          expect(allowance).toHaveBeenCalledWith(user);
+          expect(access).not.toHaveBeenCalled();
+          expect(limit).not.toHaveBeenCalled();
+          expect(sentRequest()).toEqual(
+            JSON.parse(JSON.stringify(hintOf(413).params)),
+          );
+          expect(record).toHaveBeenCalledWith(
+            expect.objectContaining({ kind: "quiz-hint" }),
+          );
+          expect(start).not.toHaveBeenCalled();
+          expect(save).not.toHaveBeenCalled();
+        });
+
+        it.each<["passed" | "replaced" | undefined, boolean]>([
+          ["passed", true],
+          ["replaced", false],
+          [undefined, false],
+        ])("with check %s, stores: %s", async (check, stored) => {
+          const stream = jest.mocked(answerModule.streamMentorAnswer);
+          const real = stream.getMockImplementation()!;
+          stream.mockImplementationOnce(async (options) => {
+            const answer = await real(options);
+            return (
+              answer && {
+                ...answer,
+                completed: answer.completed.then(
+                  (done) => done && { ...done, check },
+                ),
+              }
+            );
+          });
+          await readAllMentorEvents((await post(hint(41, 413))).body!);
+          await afterResponse();
+
+          if (stored) {
+            expect(store).toHaveBeenCalledWith({
+              ...hintOf(413).row,
+              text: SAVED,
+            });
+          } else {
+            expect(store).not.toHaveBeenCalled();
+          }
+        });
+      });
+
+      it("looks up a different key for each wrong pick", async () => {
+        await post(hint(41, 412));
+        await post(hint(41, 413));
+
+        const keys = find.mock.calls.map(([k]) => k);
+        expect(keys).toEqual([hintOf(412).key, hintOf(413).key]);
+        expect(keys[0]).not.toBe(keys[1]);
+      });
     });
   });
 });

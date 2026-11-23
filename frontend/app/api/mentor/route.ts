@@ -16,6 +16,7 @@ import {
   type MentorChatRow,
 } from "@/lib/mentor/chat-history";
 import {
+  hintReply,
   storeCachedReplyWhenDone,
   summaryReply,
   replayCachedReply,
@@ -37,7 +38,7 @@ import { mentorRequestSchema } from "@/lib/validations/mentor";
 // events; the contract is in lib/mentor/events.ts. Route handlers aren't
 // covered by the "use server" auth guard, so every check is here, in this
 // order: sign-in, the body, the droplet and lesson, the ask, then ODY-884's
-// allowance. None of them calls Claude. A saved summary (ODY-967) is looked
+// allowance. None of them calls Claude. A saved summary or quiz explanation (ODY-967) is looked
 // up after the ask, and on a hit only Mentor's switch and the pilot are
 // checked. The browser sends ids only: the lesson comes from Strapi, and quiz
 // answers never reach the model.
@@ -134,17 +135,18 @@ export async function POST(request: Request): Promise<Response> {
       return fail(400, "cannot_answer");
     }
 
-    // ODY-967: a summary is one saved reply per lesson version, shared by
-    // every student. A saved reply calls no model, so only Mentor's switch
-    // and the pilot can refuse it.
+    // ODY-967: a summary is one saved reply per lesson version, and a wrong
+    // pick's explanation one per question and pick, shared by every student.
+    // A saved reply calls no model, so only Mentor's switch and the pilot can
+    // refuse it.
+    const ids = { dropletId: input.dropletId, lessonId: input.lessonId };
     const reply =
       input.kind === "lesson" &&
       isSummaryRequest(input.message, { hasHistory: !!input.history?.length })
-        ? summaryReply(context, {
-            dropletId: input.dropletId,
-            lessonId: input.lessonId,
-          })
-        : null;
+        ? summaryReply(context, ids)
+        : resolved.ask.kind === "quiz-hint"
+          ? hintReply(context, resolved.ask, ids)
+          : null;
     const saved = reply ? await findCachedReply(reply.key) : null;
     const allowance = saved
       ? await checkMentorAccess(gate.user)
@@ -194,8 +196,7 @@ export async function POST(request: Request): Promise<Response> {
         first.splice(1, 0, { type: "text", text: note });
     }
 
-    if (saved)
-      console.info(`[mentor] saved reply hit, lesson:${input.lessonId}`);
+    if (saved && reply) console.info(`[mentor] saved reply hit, ${reply.slot}`);
     const answer = saved
       ? replayCachedReply({ text: saved, context, signal: request.signal })
       : await streamMentorAnswer({
