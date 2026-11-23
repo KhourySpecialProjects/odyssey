@@ -434,30 +434,44 @@ describe("POST /api/mentor", () => {
     },
   );
 
-  it("puts a start note after the learner block, just before the turn", async () => {
-    setting.mockResolvedValue({
-      enabled: true,
-      personalize: true,
-      pilotGroupIds: [],
-    });
-    allows.mockResolvedValue(true);
-    learnerOf.mockResolvedValue(LEARNER);
-    owned.mockResolvedValue({
-      documentId: "ownedchat01",
-      kind: "lesson",
-      lesson: { id: lesson.id + 1, name: "Joins" },
-      droplet: { id: 4, name: "SQL basics" },
-    } as never);
-    const response = await post(ask({ chatId: "ownedchat01" }));
-    await readAllMentorEvents(response.body!);
-    const content = JSON.parse(claude.calls[0].body).messages[0].content;
-    expect(content.map((b: { text: string }) => b.text.slice(0, 9))).toEqual([
-      "<lesson>\n",
-      "<learner>",
-      "This chat",
-      "<student_",
-    ]);
-  });
+  it.each([
+    ["no history", undefined, "What does an index do?"],
+    [
+      "earlier turns",
+      [
+        { role: "student", text: "What is a table?" },
+        { role: "mentor", text: "Rows and columns [p2]." },
+      ],
+      "What is a table?",
+    ],
+  ])(
+    "puts a start note after the learner block, before the first turn (%s)",
+    async (_, history, firstTurn) => {
+      setting.mockResolvedValue({
+        enabled: true,
+        personalize: true,
+        pilotGroupIds: [],
+      });
+      allows.mockResolvedValue(true);
+      learnerOf.mockResolvedValue(LEARNER);
+      owned.mockResolvedValue({
+        documentId: "ownedchat01",
+        kind: "lesson",
+        lesson: { id: lesson.id + 1, name: "Joins" },
+        droplet: { id: 4, name: "SQL basics" },
+      } as never);
+      const response = await post(ask({ chatId: "ownedchat01", history }));
+      await readAllMentorEvents(response.body!);
+      const content = JSON.parse(claude.calls[0].body).messages[0].content;
+      expect(content.map((b: { text: string }) => b.text.slice(0, 9))).toEqual([
+        "<lesson>\n",
+        "<learner>",
+        "This chat",
+        "<student_",
+      ]);
+      expect(content[3].text).toContain(firstTurn);
+    },
+  );
 
   it("sends no learner block for a kind outside the allowlist", async () => {
     setting.mockResolvedValue({
