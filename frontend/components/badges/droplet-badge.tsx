@@ -11,9 +11,9 @@ interface DropletBadgeProps {
 }
 
 const WIDTHS: Record<BadgeSize, string> = {
-  sm: "w-28",
-  md: "w-48",
-  lg: "w-80",
+  sm: "w-20",
+  md: "w-36",
+  lg: "w-64",
 };
 
 function PlaceholderEmblem() {
@@ -23,7 +23,7 @@ function PlaceholderEmblem() {
       viewBox="0 0 24 24"
       className="h-3/5"
       fill="none"
-      stroke="#6297ae"
+      stroke="#9cc4d6"
       strokeWidth="1.5"
       aria-hidden="true"
     >
@@ -46,7 +46,7 @@ export function DropletBadge({
       aria-label={`${title} badge`}
       data-size={size}
       className={cn(
-        "[container-type:inline-size] relative aspect-[1152/846]",
+        "[container-type:inline-size] relative aspect-[712/882]",
         WIDTHS[size],
         className,
       )}
@@ -54,7 +54,7 @@ export function DropletBadge({
       <BadgeFrame />
       <div
         data-testid="badge-emblem-box"
-        className="absolute top-[6.74%] left-[4.95%] flex h-[55.6%] w-[90.1%] items-center justify-center"
+        className="absolute top-[20.3%] left-[25%] flex h-[40.4%] w-[50%] items-center justify-center"
       >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element -- sanitized data URL

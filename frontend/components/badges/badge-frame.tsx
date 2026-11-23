@@ -1,12 +1,20 @@
-import { useId } from "react";
+/** Our own trusted markup: the rosette seal, its black medal face and the ribbon tail behind it. */
+export const BADGE_VIEWBOX = "34 18 712 882";
 
-/** Our own trusted markup: the black tile with its blue edge, and the ribbon behind it. */
-export const BADGE_VIEWBOX = "24 24 1152 846";
+const CX = 390;
+const CY = 375;
+const POINTS = 24;
+const OUTER_RADIUS = 352;
+const INNER_RADIUS = 330;
+
+/** A sawtooth star with a point at the top (first vertex at -90 degrees). */
+const SEAL_POINTS = Array.from({ length: POINTS * 2 }, (_, i) => {
+  const radius = i % 2 === 0 ? OUTER_RADIUS : INNER_RADIUS;
+  const angle = (-90 + (i * 180) / POINTS) * (Math.PI / 180);
+  return `${(CX + radius * Math.cos(angle)).toFixed(1)},${(CY + radius * Math.sin(angle)).toFixed(1)}`;
+}).join(" ");
 
 export function BadgeFrame() {
-  // One gradient id per instance: several badges share a page.
-  const gradientId = `badge-edge-${useId().replace(/:/g, "")}`;
-
   return (
     <svg
       aria-hidden="true"
@@ -14,55 +22,47 @@ export function BadgeFrame() {
       viewBox={BADGE_VIEWBOX}
       className="absolute inset-0 h-full w-full"
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2d7597" />
-          <stop offset="1" stopColor="#173f52" />
-        </linearGradient>
-      </defs>
-      {/* Ribbon, drawn first so the tile covers its top. */}
+      {/* Ribbon tail, drawn first so the seal covers its top. */}
       <path
-        d="M101,590 H1099 V869 L600,817 L101,869 Z"
+        data-part="ribbon"
+        d="M135 560 H645 V893 L390 858 L135 893 Z"
         fill="#2d7597"
-        stroke="#21546d"
+        stroke="#1e5770"
         strokeWidth="3"
       />
       <path
-        d="M123,600 V846 L600,794 L1077,846 V600"
+        data-part="ribbon-line"
+        d="M152 600 V875 L390 841 L628 875 V600"
         fill="none"
-        stroke="#639ab3"
+        stroke="#7fb0c8"
+        strokeOpacity="0.6"
         strokeWidth="2"
       />
-      {/* Tile: dark edge, gradient band, highlight, black field, inner rule. */}
-      <rect x="24" y="24" width="1152" height="583" rx="24" fill="#112a35" />
-      <rect
-        x="28"
-        y="28"
-        width="1144"
-        height="575"
-        rx="20"
-        fill={`url(#${gradientId})`}
+      <polygon
+        data-part="seal"
+        points={SEAL_POINTS}
+        fill="#2d7597"
+        stroke="#1e5770"
+        strokeWidth="2.5"
+        strokeLinejoin="miter"
       />
-      <rect
-        x="37"
-        y="37"
-        width="1126"
-        height="557"
-        rx="13"
+      <circle
+        data-part="ring"
+        cx={CX}
+        cy={CY}
+        r="310"
         fill="none"
-        stroke="#6297ae"
-        strokeWidth="2"
+        stroke="#dbe9f1"
+        strokeWidth="5"
       />
-      <rect x="38" y="38" width="1124" height="555" rx="12" fill="#000" />
-      <rect
-        x="65"
-        y="65"
-        width="1070"
-        height="502"
-        rx="6"
-        fill="none"
-        stroke="#1d4b61"
-        strokeWidth="2"
+      <circle
+        data-part="face"
+        cx={CX}
+        cy={CY}
+        r="287"
+        fill="#000"
+        stroke="#9cc4d6"
+        strokeWidth="1.5"
       />
     </svg>
   );

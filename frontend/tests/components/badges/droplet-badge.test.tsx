@@ -74,7 +74,9 @@ describe("DropletBadge", () => {
     );
     // Only the <img> src carries the emblem; the frame is our own svg.
     expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(container.querySelector("circle, polygon, text")).toBeNull();
+    expect(container.querySelectorAll("svg *:not([data-part])")).toHaveLength(
+      0,
+    );
     const frames = container.querySelectorAll("svg");
     expect(frames).toHaveLength(1);
     expect(frames[0]).toHaveAttribute("aria-hidden", "true");
@@ -98,20 +100,21 @@ describe("DropletBadge", () => {
       "object-contain",
     );
     expect(screen.getByRole("img", { name: "T badge" })).toHaveClass(
-      "aspect-[1152/846]",
+      "aspect-[712/882]",
     );
   });
 
-  it("gives each badge its own gradient id", () => {
-    const { container } = render(
-      <>
-        <DropletBadge title="A" size="sm" />
-        <DropletBadge title="B" size="sm" />
-      </>,
-    );
-    const ids = [...container.querySelectorAll("linearGradient")].map(
-      (g) => g.id,
-    );
-    expect(new Set(ids).size).toBe(2);
+  it("draws a rosette: 24-point seal, light ring, black face and a ribbon behind them", () => {
+    const { container } = render(<DropletBadge title="T" size="md" />);
+    const part = (name: string) =>
+      container.querySelector(`[data-part="${name}"]`)!;
+    expect(part("seal").getAttribute("points")!.split(" ")).toHaveLength(48);
+    expect(part("ring")).toHaveAttribute("r", "310");
+    expect(part("face")).toHaveAttribute("fill", "#000");
+    // The ribbon is drawn first, so the seal covers its top.
+    expect(
+      part("ribbon").compareDocumentPosition(part("seal")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
