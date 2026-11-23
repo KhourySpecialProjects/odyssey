@@ -92,7 +92,7 @@ describe("emblemToDataUrl", () => {
     ],
     ["a doctype before the svg", "<!DOCTYPE svg>&nbsp;" + svgWith("")],
     [
-      "input over 50 KB",
+      "input over 12 KB",
       svgWith(`<desc>${"x".repeat(EMBLEM_MAX_BYTES)}</desc>`),
     ],
   ])("returns null for %s", (_label, svg) => {

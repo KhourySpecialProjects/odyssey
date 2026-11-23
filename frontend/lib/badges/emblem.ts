@@ -5,7 +5,7 @@ import DOMPurify from "isomorphic-dompurify";
  * - a roughly 2.2:1 wide `viewBox`, e.g. `viewBox="0 0 220 100"` (square works, shown centred);
  * - presentation attributes only (`fill`, `stroke`, ...), no `style` attribute or `filter`;
  * - no `<style>`, filters, `<use>`, `<image>`, `<a>` or links of any kind;
- * - at most 50 KB.
+ * - at most 12 KB (the size ODY-987 stores for emblemSvg).
  *
  * The prompt-ready style guide and colour palette live in ./emblem-style.ts.
  *
@@ -14,7 +14,7 @@ import DOMPurify from "isomorphic-dompurify";
  * never loads outside references (for example `fill="url(https://...)"`), so
  * those are harmless even where the sanitizer leaves them in.
  */
-export const EMBLEM_MAX_BYTES = 50 * 1024;
+export const EMBLEM_MAX_BYTES = 12 * 1024;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
