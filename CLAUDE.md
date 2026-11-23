@@ -16,7 +16,7 @@ Frontend fetches from Strapi REST via `STRAPI_ACCESS_TOKEN`. Media on S3/CDN. Au
 
 ## Critical Version Constraints
 
-- **Strapi 5.56** — use the Context7 v5 docs for backend config and APIs.
+- **Strapi 5.62** — use the Context7 v5 docs for backend config and APIs.
 - **Document Service, never Entity Service** — `backend/tests/no-entity-service.test.js` fails on `entityService`.
 - **The frontend sends `Strapi-Response-Format: v4`**, so responses stay nested. Every raw `fetch()` spreads `STRAPI_RESPONSE_FORMAT_HEADER` (guard: `frontend/testing/lib/strapi-response-format-guard.test.ts`).
 - **`id` vs `documentId`** — numeric `id` for filters, comparisons and cache tags; `documentId` for single-entry URLs and relation writes (numeric ids 404). See `docs/agent/data-fetching.md`.
@@ -43,6 +43,7 @@ Workflow commands:
 - `/audit [scope]` — Invoke the auditor agent (expensive, use once before merge)
 - `/ship` — Run CI, prepare PR summary, verify branch is ready to push
 - `/coord [status|watch|open] [ODY-123]` — Coordination check: blockers on develop, the tracker, owed `[OPEN]` items (`watch`: develop every minute, Slack and Linear every 10 min)
+- `/dependabot [triage|fix <pr>|fix all]` — Sort the open Dependabot PRs into lanes, fix failing ones on a `claude/` branch and list the ready ones; never merges (`docs/agent/dependabot-workflow.md`)
 
 ## Core Patterns
 
@@ -79,6 +80,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 | `docs/agent/learnings/`                  | Accumulated gotchas and discoveries from past sessions       |
 | `docs/agent/server-action-auth.md`       | Writing or changing any "use server" export                  |
 | `docs/agent/multi-agent-coordination.md` | Posting to or reading the team's Slack coordination DM       |
+| `docs/agent/question-window.md`          | Asking your developer to decide something, with options      |
 
 ## Skills
 

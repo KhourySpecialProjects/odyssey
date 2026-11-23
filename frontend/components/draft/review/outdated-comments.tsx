@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import type { ReviewComment } from "@/types";
 import { anchorIn, type PopoverAnchor } from "@/lib/selection";
 import { commentSnippet } from "@/lib/review-comments";
@@ -76,7 +77,8 @@ export function OutdatedComments({
     const id = open?.id;
     const viaEsc = escRef.current;
     escRef.current = false;
-    setOpen(null);
+    // Unmount the card now so focus has left it before the timeout below
+    flushSync(() => setOpen(null));
     setTimeout(() => {
       const item = id === undefined ? undefined : itemRefs.current.get(id);
       if (!item?.isConnected) return;

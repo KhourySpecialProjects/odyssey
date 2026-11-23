@@ -80,11 +80,9 @@
  *                   createPlaylistAnnouncement, createGroupAnnouncement,
  *                   createDropletAnnouncement, createSystemAnnouncement,
  *                   createSystemBroadcast, sendFeedback,
- *                   publishWithReview, markAnnouncementRead/Unread
- *                   (friend/kudos only — those rows show in friends' feeds)
+ *                   publishWithReview
  *                 ↳ Per-user tag "user-feed-{userId}" (fetchAnnouncements):
- *                   markAnnouncementRead/Unread on a targeted system
- *                   announcement (only its owner's feed can contain it)
+ *                   markAnnouncementRead/Unread (read state is per user)
  * tags           createNewTag                                              3600s
  * due-dates       assignDropletDueDate, assignPlaylistDueDate,              900s
  *                 updateGroup, updateGroupMembers, deleteGroup,
@@ -104,7 +102,7 @@
  *                 ↳ Per-user tag "user-{email}" (every
  *                   getAuthorizedUserByEmail read, incl. getCachedUser):
  *                   setTimeZone, updateUserInfo (self edits),
- *                   togglePlaylistEnrollment
+ *                   togglePlaylistEnrollment, saveLearnerProfile
  *                 (profile fields, roles, account data only)
  * user-content    Two-level tag system (getCachedUserCreation):              900s
  *                 ↳ Per-user tag "user-content-{userId}":
@@ -159,6 +157,25 @@
  * mentor-setting  Global tag: read by getMentorSetting (Ask Mentor gate);     60s
  *                 no action invalidates it, it just expires (admins edit
  *                 the setting in Strapi)
+ * co-completion   Global tag: read by getCoCompletion (recommendations);   3600s
+ *                 no action invalidates it, it just expires (aggregate counts)
+ * streak          Per-user tag "streak-{userId}": read by getStreakFor (the     900s
+ *                 learner's streak days); invalidated by recordStreakDay,
+ *                 which updateViewedLessons calls on a lesson's first view
+ * recommendations Per-user tag "recommendations-{userId}": read by            900s
+ *                 getDismissedDropletIds and the engine's voyage and
+ *                 playlist reads (lib/recommendations/candidates.ts), only
+ *                 on per-student URLs (never a shared one). Invalidated by
+ *                 dismissRecommendation. Enrollment, voyage and quiz changes
+ *                 reach the picks through enrollments-{id},
+ *                 voyage-enrollments-{id} and learner-profile-{id}, which
+ *                 the engine's reads also carry.
+ * mentor-chats   Per-user tag "mentor-chats-{userId}": read by                60s
+ *                 listMentorChats; invalidated by saveMentorExchange and
+ *                 the delete actions (ODY-937)
+ * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
+ *                 getLearnerProfile (engine, Settings);
+ *                 invalidated by saveLearnerProfile
  */
 
 export const CACHE_TAGS = {
@@ -173,6 +190,7 @@ export const CACHE_TAGS = {
   lesson: "lesson",
   announcements: "announcements",
   mentorSetting: "mentor-setting", // Ask Mentor gate; expires after 60s
+  coCompletion: "co-completion", // droplet pair counts (ODY-962); expires after 3600s
   tags: "tags",
   reports: "reports",
   accessRequests: "access-requests",
@@ -199,6 +217,10 @@ export const CACHE_TAGS = {
   highlights: (userId: number) => `highlights-${userId}`,
   userGroups: (userId: number) => `user-groups-${userId}`, // a user's group list (getUserGroups); invalidated by refreshUserGroups
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
+  streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
+  recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
+  mentorChats: (userId: number) => `mentor-chats-${userId}`, // one student's saved Mentor chats (ODY-937)
+  learnerProfile: (userId: number) => `learner-profile-${userId}`, // one student's quiz answers (ODY-953)
 
   // Per-droplet (scoped to one droplet)
   review: (dropletId: number) => `review-${dropletId}`, // one droplet's reviews, comments, scores

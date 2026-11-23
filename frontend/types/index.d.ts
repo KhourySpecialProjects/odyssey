@@ -26,7 +26,8 @@ export type AnnouncementType =
   | "group"
   | "kudos"
   | "review_feedback"
-  | "review_published";
+  | "review_published"
+  | "reminder";
 
 export type HighlightColor =
   | "#f9a8d4"
@@ -102,6 +103,8 @@ export type AuthorizedUser = {
   github: string;
   website: string;
   firstTime: boolean;
+  mentorPersonalization?: boolean; // self-only; missing counts as on (ODY-935)
+  onboardedAt?: string | null; // set once by saveLearnerProfile (ODY-953)
   firstName: string;
   lastName: string;
   bio: string;
@@ -247,6 +250,26 @@ export type Tag = {
   droplets: Droplet[];
 };
 
+export type LearnerGoal = "class" | "career" | "self" | "browsing";
+
+/** One student's quiz answers (ODY-953). Student data: never log or capture it. */
+export type LearnerProfile = {
+  id: number;
+  documentId?: string;
+  goal: LearnerGoal | null;
+  focusAreas: FocusArea[];
+  interests: Pick<Tag, "id" | "name" | "slug">[];
+  interestNote: string | null;
+};
+
+/** What saveLearnerProfile accepts. An omitted key is left unchanged, and null or [] clears it. */
+export type LearnerProfileInput = {
+  goal?: LearnerGoal | null;
+  focusAreas?: FocusArea[];
+  interestTagIds?: number[];
+  interestNote?: string | null;
+};
+
 export type LearningObjective = {
   id: number;
   objective: string;
@@ -290,6 +313,61 @@ export type Droplet = {
   updatedAt?: string;
 };
 
+export type RecommendationSurface =
+  | "activity"
+  | "recap"
+  | "completion"
+  | "onboarding";
+
+export type RecommendationRule =
+  | "next-in-voyage" // rule 1, voyage
+  | "next-in-playlist" // rule 1, playlist
+  | "postrequisite" // rule 2
+  | "co-completion" // rule 3
+  | "interest" // rule 4, quiz tags and focus areas
+  | "popular"; // rule 5, rating/popularity fallback (also the stub)
+
+/** The droplet fields every recommendation carries, with nested relations trimmed to what is fetched. */
+export type RecommendedDroplet = Omit<
+  Pick<
+    Droplet,
+    | "id"
+    | "documentId"
+    | "name"
+    | "slug"
+    | "type"
+    | "focusArea"
+    | "difficulty"
+    | "description"
+    | "averageRating"
+    | "tags"
+    | "lessons"
+    | "authorized_users"
+  >,
+  "lessons" | "tags" | "authorized_users" | "documentId"
+> & {
+  documentId: string;
+  lessons?: Pick<Lesson, "id" | "documentId">[];
+  tags?: Pick<Tag, "id" | "documentId" | "name" | "slug">[];
+  authorized_users?: Pick<
+    AuthorizedUser,
+    "id" | "documentId" | "firstName" | "lastName"
+  >[];
+};
+
+/** One recommended droplet, why it was picked and by which rule. */
+export type Recommendation = {
+  droplet: RecommendedDroplet;
+  reason: string;
+  rule: RecommendationRule;
+};
+
+export type RecommendationOptions = {
+  surface: RecommendationSurface;
+  limit: number;
+  excludeDropletIds?: number[];
+};
+
 export type QuizAnswerOption = {
   id: number;
   content: string;
@@ -330,6 +408,7 @@ export type Enrollment = {
   isArchived: boolean;
   notes: Note[];
   completionDate: Date;
+  lastProgressDate?: string | null;
 };
 
 export type EnrollmentWithDroplet = Enrollment & { droplet: Droplet };
@@ -425,6 +504,16 @@ export type Friendship = {
   authorized_users: AuthorizedUser[];
 };
 
+/** Worked out when the feed loads, never stored on the reminder. */
+export type ReminderFeedData = {
+  headline: string;
+  progress: { viewed: number; total: number } | null;
+  nextLesson: { name: string; slug: string } | null;
+  started: boolean;
+  dueDate?: string;
+  dueGroupName?: string;
+};
+
 export type Announcement = {
   id: number;
   documentId?: string;
@@ -436,7 +525,10 @@ export type Announcement = {
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
   kudosGiven?: AuthorizedUser[];
-  readAt?: string | null;
+  reminderCount?: number | null;
+  reminderSnoozedUntil?: string | null;
+  reminderMutedUntil?: string | null;
+  reminder?: ReminderFeedData;
 };
 
 export type ReviewState = "open" | "sent" | "published";
@@ -610,7 +702,7 @@ export type TimeZone =
   | "America/Phoenix"
   | "America/Los_Angeles"
   | "America/Anchorage"
-  | "America/Honolulu"
+  | "Pacific/Honolulu"
   | "America/Bogota"
   | "America/Lima"
   | "America/Caracas"
@@ -709,6 +801,21 @@ export interface VoyageNodeCompletion {
   authorizedUser?: AuthorizedUser;
   voyageNode?: VoyageNode;
   voyageEnrollment?: VoyageEnrollment;
+}
+
+/** A day a learner finished at least one new lesson, in their time zone (ODY-918) */
+export interface StreakDayEntry {
+  id: number;
+  documentId?: string;
+  /** `<userId>:<date>`, unique */
+  key: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** The lessons finished for the first time that day */
+  lessonIds: number[];
+  /** A missed day the learner spent a revive on (ODY-920) */
+  revived?: boolean;
+  user?: AuthorizedUser;
 }
 
 interface CustomBlockNoteBlock {

@@ -11,7 +11,9 @@ import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
+import { MentorPersonalizationToggle } from "@/components/settings/mentor-personalization-toggle";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
+import { userTimeZone } from "@/lib/time-zones";
 import Link from "next/link";
 import { CopyIcon, UploadIcon, User2Icon, LoaderIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,11 +45,21 @@ export function SocialForms({
     authorizedUser?.isPublic || false,
   );
   const updatePublicProfile = async (isPublic: boolean) => {
+    if (!authorizedUser?.id) {
+      setIsPublicProfile(isPublic);
+      return;
+    }
+    const previous = isPublicProfile;
     setIsPublicProfile(isPublic);
-    if (authorizedUser?.id) {
-      await updateUserInfo(authorizedUser.id, {
-        isPublic: isPublic,
-      });
+    let saved = false;
+    try {
+      saved = (await updateUserInfo(authorizedUser.id, { isPublic })).ok;
+    } catch {
+      saved = false;
+    }
+    if (!saved) {
+      setIsPublicProfile(previous);
+      toast.error("Couldn't save your profile visibility. Try again.");
     }
   };
   function isValidGithubUrl(url: string) {
@@ -86,11 +98,24 @@ export function SocialForms({
   };
 
   const handleRemovePhoto = async () => {
-    setProfileImage("");
-    setProfileFile(null);
-    if (authorizedUser) {
-      await updateUserInfo(authorizedUser?.id, { profilePhoto: "" });
+    if (!authorizedUser) {
+      setProfileImage("");
+      setProfileFile(null);
+      return;
+    }
+    let removed = false;
+    try {
+      removed = (await updateUserInfo(authorizedUser.id, { profilePhoto: "" }))
+        .ok;
+    } catch {
+      removed = false;
+    }
+    if (removed) {
+      setProfileImage("");
+      setProfileFile(null);
       toast.success("Profile photo removed");
+    } else {
+      toast.error("Couldn't remove your profile photo. Try again.");
     }
   };
 
@@ -121,10 +146,15 @@ export function SocialForms({
       formData.append("image", profileFile as Blob);
       const response = await uploadImage(formData);
       if (response.ok && response.url) {
-        setProfileImage(response.url);
-        await updateUserInfo(authorizedUser.id, {
+        const photoResult = await updateUserInfo(authorizedUser.id, {
           profilePhoto: response.url,
         });
+        if (!photoResult.ok) {
+          toast.error("Failed to save photo");
+          setIsSaving(false);
+          return;
+        }
+        setProfileImage(response.url);
         setProfileFile(null);
       } else {
         toast.error("Failed to upload photo");
@@ -279,7 +309,7 @@ export function SocialForms({
           />
         </div>
         <TimeZoneSelector
-          currentZone={authorizedUser.timeZone?.trim()}
+          currentZone={userTimeZone(authorizedUser.timeZone)}
           userId={authorizedUser.id}
         />
       </div>
@@ -338,6 +368,11 @@ export function SocialForms({
           Save Changes
         </Button>
       </div>
+
+      <MentorPersonalizationToggle
+        userId={authorizedUser.id}
+        initialValue={authorizedUser.mentorPersonalization !== false}
+      />
 
       <div>
         <ProfileBlock

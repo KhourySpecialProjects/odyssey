@@ -155,6 +155,8 @@ All cache tags are defined in `frontend/lib/cache-tags.ts`. Two scoping levels:
 - `CACHE_TAGS.friendships(userId)` → `"friendships-{userId}"`
 - `CACHE_TAGS.notes(userId)` → `"notes-{userId}"`
 - `CACHE_TAGS.highlights(userId)` → `"highlights-{userId}"`
+- `CACHE_TAGS.learnerProfile(userId)` → `"learner-profile-{userId}"`
+- `CACHE_TAGS.recommendations(userId)` → `"recommendations-{userId}"`
 
 Per-droplet: `CACHE_TAGS.review(dropletId)` → `"review-{dropletId}"` (read by `getReviewForDroplet` and `getMyReview`, invalidated by the `lib/requests/reviews.ts` writes).
 
@@ -181,6 +183,14 @@ export async function completeLesson(
 - Per-user mutations invalidate the per-user tag (e.g., `enrollments(userId)`)
 - Content mutations that affect all users also invalidate the global tag (e.g., `CACHE_TAGS.allEnrollments`)
 - See the full invalidation matrix in the docblock at the top of `cache-tags.ts`
+
+### Reminder check (ODY-931)
+
+`FeedClient` (the My Feed list, not its Suspense fallback) calls the `checkMyReminder` action once per mount, when not pending (after load when the page was not seeded, on mount when it was). It reads the learner's data with `cache: "no-store"`, may raise one reminder through Strapi, and on `raised: true` calls `revalidateTag(CACHE_TAGS.userFeed(userId))`. The client then refetches the list silently, which also recounts the badge. There is no `router.refresh()`: the action's revalidation already refreshes the layout's server count. Strapi-written rows can't clear Next's cache (ODY-474), which is why the raise goes through a Next action.
+
+Locally, `/api/dev/reminders` (needs `NODE_ENV=development` and `ENABLE_REMINDER_TEST_CLOCK=true`) previews or raises as of `?at=<ISO with Z or an offset>` (`+09:00` works as typed, or as `%2B09:00`). A future `at` pins your local reminders until that date: real loads answer `today` and the gap blocks the next. Reset by editing the row's `firstCreated` in the local database.
+
+The reminder actions (`snoozeReminder`, `muteReminder`, `undoReminder`) and the clear on a new lesson view (`clearReminderOnProgress`) all call `revalidateTag(CACHE_TAGS.userFeed(userId))`. The actions use `withAuth` plus `assertOwner` with no admin bypass.
 
 ### Default Revalidation Times
 
@@ -256,6 +266,12 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 ## Mentor usage
 
 The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowance` before it and `recordMentorUsage` once after, both from `lib/mentor/usage.ts` (server only, not a `"use server"` file; the contract is in its types). Users with no staff role get the `student` tier in `lib/import/rate-limiter.ts`, which copies `creator-editor`'s limits for every action except `mentor`.
+
+A saved-reply hit (ODY-967: a lesson summary or a wrong pick's quiz explanation found in the store) runs `checkMentorAccess` instead of `checkMentorAllowance` and writes no usage row, because no model is called. Only Mentor's switch and the pilot can refuse it. Its store reads (`lib/mentor/cached-reply-store.ts`) are `no-store` with no cache tag. Each hit still writes a chat row, so the route also takes a slot from the `mentor-saved` bucket (60 an hour per ECS task, `lib/import/rate-limiter.ts`) and refuses over it like the live burst guard (429 `rate_limited`); misses never touch that bucket. A quiz hint takes the same path but is never saved to a chat. A hint is stored only when `MentorCompleted.check === "passed"` (ODY-972's give-away check); until 972 sets `check`, no hint is stored. When ODY-972 starts setting `check: "passed"`, it must also add its check version to the hint hash (`{ promptVersion, checkVersion, params }`), so a stricter check gives new keys. Replaying without re-checking is safe only because of that.
+
+## Recommendations (ODY-957)
+
+`getRecommendations` (`lib/recommendations/`) is server-only. It ranks in memory from one shared candidate read (tag `droplets`) plus per-student reads, so there is no result cache to invalidate. Freshness comes from the input tags: `enrollments(id)` (enroll, finish, archive), `voyageEnrollments(id)`, `voyages` and `playlists` (the voyage read carries both, since playlist nodes expand through the playlist), `learnerProfile(id)` (quiz save) and `recommendations(id)` (dismissals). A new enrollment write needs only its usual `enrollments(id)` revalidate. Exclusion ids are removed in memory and never go in a URL. Rule 3 (co-completion, ODY-962) reads the global `co-completion` tag with `revalidate: 3600` and no `revalidateTag` call. Once the hour is up, the next request still gets the cached counts while Next refreshes them in the background, and a failed refresh keeps the old counts, so they can be older than an hour. The student's own exclusions stay immediate.
 
 ## Common Mistakes
 

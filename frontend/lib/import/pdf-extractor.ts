@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { MAX_FILE_SIZE } from "./constants";
 import type { ImportImage } from "./types";
 
@@ -234,7 +233,7 @@ export async function extractTextFromPDF(file: File): Promise<{
           );
           if (blob && blob.size > 1024) {
             // Skip tiny images (<1KB, likely artifacts)
-            const id = uuidv4();
+            const id = crypto.randomUUID();
             images.set(id, {
               id,
               blob,

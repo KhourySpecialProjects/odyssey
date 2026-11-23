@@ -59,20 +59,27 @@ export const mentorInputSchema = z.discriminatedUnion("kind", [
     questionId: id,
     answerIds: z.array(id).min(1).max(10),
   }),
-]) satisfies z.ZodType<MentorInput, z.ZodTypeDef, unknown>;
+]) satisfies z.ZodType<MentorInput, unknown>;
+
+/** A saved chat's documentId (ODY-937): lesson and explain asks only */
+export const chatIdSchema = z.string().regex(/^[A-Za-z0-9]{8,40}$/);
 
 /** Numeric ids, as `id` filters take: not documentIds */
 const ids = z.object({
   dropletId: z.number().int().positive(),
   lessonId: z.number().int().positive(),
+  chatId: chatIdSchema.optional(),
 });
 
 export type MentorRequest = MentorInput & {
   dropletId: number;
   lessonId: number;
+  chatId?: string;
 };
 
 /** POST /api/mentor's body. Each side drops its own unknown keys. */
-export const mentorRequestSchema = mentorInputSchema.and(
-  ids,
-) satisfies z.ZodType<MentorRequest, z.ZodTypeDef, unknown>;
+export const mentorRequestSchema = mentorInputSchema
+  .and(ids)
+  .refine((r) => r.chatId === undefined || r.kind !== "quiz-hint", {
+    message: "quiz hints are never saved",
+  }) satisfies z.ZodType<MentorRequest, unknown>;

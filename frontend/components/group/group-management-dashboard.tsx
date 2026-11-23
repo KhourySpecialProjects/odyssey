@@ -8,6 +8,7 @@ import { VoyageCard } from "@/components/voyages/voyage-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { userTimeZone } from "@/lib/time-zones";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -185,7 +186,7 @@ export function GroupDashboard({
                         (dueDate) => dueDate.playlist?.id === playlist.id,
                       )?.dueDate || ""
                     }
-                    timeZone={authUser.timeZone?.trim()}
+                    timeZone={userTimeZone(authUser.timeZone)}
                   />
                 ))}
               </div>

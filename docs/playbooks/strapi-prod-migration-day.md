@@ -116,6 +116,7 @@ The v4-only ODY-633 window and rollback steps that used to be here are gone. The
 
 ## After the window
 
+- [ ] Check the boot log for the enrollment last-progress backfill count (`Backfilled lastProgressDate on N enrollment(s)`, ODY-928). It logs nothing if there was nothing to backfill.
 - [ ] Record in ODY-603 (and the audit counts in ODY-633): audit counts before and after, deletes, timings, and anything unexpected. Include **no real user data**.
 - [ ] Keep the frozen copy, the dump and the snapshot until 24 hours after `T_open`, when the rollback horizon closes. Dropping or deleting any of them needs explicit approval.
 - [ ] Delete saved output that holds prod data (audits, fingerprints, the dump) once it's no longer needed for rollback.

@@ -20,7 +20,7 @@ export type TagMode = "full" | "short" | "tight";
 
 /**
  * The right edge tags may reach: the window's, or the content column's when
- * the Reviewer Transcript panel takes the right of `<main>` (ODY-805 D6).
+ * the Scorecard panel takes the right of `<main>` (ODY-805 D6).
  */
 function availableRight(): number {
   const main = document.querySelector<HTMLElement>("main[data-review-panel]");
@@ -30,6 +30,27 @@ function availableRight(): number {
     window.innerWidth,
     main.getBoundingClientRect().right - padding,
   );
+}
+
+/**
+ * Calls `onChange` whenever the room for a layer's tags may have changed
+ * without the layer itself resizing: the window resizing, or `<main>`'s padding
+ * changing as the Scorecard opens, collapses or is dragged, or the
+ * sidebar expands. The text column keeps its width and only moves then, so an
+ * observer on the layer alone misses it (ODY-895). Returns the cleanup.
+ */
+export function watchTagRoom(from: Element, onChange: () => void) {
+  const main = from.closest("main");
+  let observer: ResizeObserver | null = null;
+  if (main) {
+    observer = new ResizeObserver(onChange);
+    observer.observe(main);
+  }
+  window.addEventListener("resize", onChange);
+  return () => {
+    observer?.disconnect();
+    window.removeEventListener("resize", onChange);
+  };
 }
 
 /** Where a layer's tags go: right of its text, or inside it on a phone */

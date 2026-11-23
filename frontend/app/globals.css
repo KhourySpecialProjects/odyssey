@@ -32,10 +32,18 @@
     --primary-600: 255 80% 52%;
     --secondary: 240 12% 8%;
     --destructive: 345 90% 60%;
+  }
+
+  /* .mentor-on-white keeps the light theme's Mentor colours on a surface
+     that stays white in dark mode, such as the lesson's selection toolbar.
+     Before .dark, which overrides them on the page. */
+  :root,
+  .mentor-on-white {
     --mentor: 259 63% 59%;
     --mentor-text: 258 54% 52%;
     --mentor-soft: 264 100% 98%;
     --mentor-line: 268 95% 92%;
+    --onboarding: 198 53% 39%;
   }
 
   .dark {
@@ -48,6 +56,7 @@
     --mentor-text: 265 89% 86%;
     --mentor-soft: 256 48% 20%;
     --mentor-line: 256 48% 42%;
+    --onboarding: 198 55% 55%;
   }
 
   html {
@@ -328,6 +337,12 @@ html:not(.dark) .sp-wrapper .cm-editor ::selection {
 .review-mark--draft {
   background-color: var(--rc-draft);
   border-bottom: 2px solid var(--rc-accent);
+}
+/* A scan's spelling flag, opened from the scan page (ODY-913, hooks/use-scan-target.ts) */
+::highlight(scan-spelling) {
+  background-color: #fef3c7;
+  text-decoration: underline wavy #d97706;
+  text-decoration-thickness: 1.5px;
 }
 /* AI findings (ODY-849): band colours mirror lib/review-panel/colors.ts */
 .review-finding--good {

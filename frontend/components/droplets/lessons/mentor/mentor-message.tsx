@@ -1,16 +1,13 @@
 "use client";
 
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { Check, Copy, NotebookPen } from "lucide-react";
 import { toast } from "sonner";
 import { displayAnswer } from "@/lib/mentor/answer-text";
 import type { MentorMsg, StudentMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
-
-const Markdown = lazy(() => import("react-markdown"));
-
-const ALLOWED = ["p", "strong", "em", "code", "pre", "ul", "ol", "li"];
-// Links aren't allowed, so they unwrap to plain text
+import { MentorMarkdown } from "./mentor-markdown";
+import { MentorRating, type MentorFeedback } from "./mentor-rating";
 
 const toolClass =
   "inline-flex items-center gap-1 rounded text-xs text-slate-600 hover:text-slate-900 aria-disabled:opacity-60 dark:text-slate-300 dark:hover:text-white";
@@ -32,8 +29,9 @@ export function MentorMessage({
   onShowSource,
   onSave,
   onRetry,
-  onRate,
-  rating,
+  feedback,
+  questionText,
+  stale = false,
 }: {
   message: MentorMsg;
   lessonName: string;
@@ -41,8 +39,12 @@ export function MentorMessage({
   /** Resolves true once saved; leave out where there is no notes bar */
   onSave?: () => Promise<boolean>;
   onRetry?: () => void;
-  onRate?: (rating: "up" | "down") => void;
-  rating?: "up" | "down";
+  /** Shows 👍/👎 on a finished answer */
+  feedback?: MentorFeedback;
+  /** The student message right before this answer */
+  questionText?: string;
+  /** Grounded in another lesson: no "Read" line and no sources */
+  stale?: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -50,6 +52,7 @@ export function MentorMessage({
   const streaming = status === "streaming";
   // A stopped answer can end mid-ref, so only a finished one keeps a trailing "["
   const shown = displayAnswer(message.text, { streaming: status !== "done" });
+  const citations = stale ? [] : message.citations;
   const showTools = status === "done" || status === "stopped";
 
   const copy = async () => {
@@ -77,18 +80,16 @@ export function MentorMessage({
       aria-busy={streaming}
       className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
     >
-      <p className="mb-2 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
-        <Check className="h-3 w-3" aria-hidden="true" />
-        Read {lessonName}
-      </p>
+      {!stale && (
+        <p className="mb-2 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <Check className="h-3 w-3" aria-hidden="true" />
+          Read {lessonName}
+        </p>
+      )}
 
       {shown && (
         <div className="prose prose-sm prose-p:my-2 prose-code:before:content-none prose-code:after:content-none dark:prose-invert max-w-none [overflow-wrap:anywhere] text-inherit">
-          <Suspense fallback={<p>{shown}</p>}>
-            <Markdown allowedElements={ALLOWED} unwrapDisallowed>
-              {shown}
-            </Markdown>
-          </Suspense>
+          <MentorMarkdown>{shown}</MentorMarkdown>
         </div>
       )}
       {streaming && (
@@ -128,9 +129,9 @@ export function MentorMessage({
         </div>
       )}
 
-      {status === "done" && message.citations.length > 0 && (
+      {status === "done" && citations.length > 0 && (
         <ul aria-label="Sources" className="mt-2 flex flex-wrap gap-2">
-          {message.citations.map((c) => (
+          {citations.map((c) => (
             <li key={c.ref}>
               <button
                 type="button"
@@ -146,35 +147,12 @@ export function MentorMessage({
       )}
 
       {showTools && (
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-2 flex flex-wrap items-center gap-3">
           {shown.trim() && (
             <button type="button" onClick={copy} className={toolClass}>
               <Copy className="h-3 w-3" aria-hidden="true" />
               Copy
             </button>
-          )}
-          {/* ODY-890: pass onRate to show 👍/👎 */}
-          {status === "done" && onRate && (
-            <>
-              <button
-                type="button"
-                aria-label="Good answer"
-                aria-pressed={rating === "up"}
-                onClick={() => onRate("up")}
-                className={toolClass}
-              >
-                👍
-              </button>
-              <button
-                type="button"
-                aria-label="Bad answer"
-                aria-pressed={rating === "down"}
-                onClick={() => onRate("down")}
-                className={toolClass}
-              >
-                👎
-              </button>
-            </>
           )}
           {status === "done" && onSave && (
             <button
@@ -186,6 +164,16 @@ export function MentorMessage({
               <NotebookPen className="h-3 w-3" aria-hidden="true" />
               {saved ? "Saved" : "Save to notes"}
             </button>
+          )}
+          {status === "done" && feedback && (
+            <MentorRating
+              kind={message.kind ?? "lesson"}
+              answerKey={message.id}
+              citations={citations}
+              answerText={shown.trim()}
+              questionText={questionText}
+              {...feedback}
+            />
           )}
         </div>
       )}

@@ -207,12 +207,38 @@ describe("LessonRenderer (viewer)", () => {
     jest
       .mocked(deleteHighlight)
       .mockResolvedValue({ ok: true, error: null, data: { id: 7 } });
-    jest.mocked(getEnrollByID).mockResolvedValue({ id: "5" } as never);
     jest.mocked(createNote).mockResolvedValue({ success: true });
   });
 
   afterEach(() => {
     Range.prototype.getBoundingClientRect = originalRangeRect;
+  });
+
+  it("shows where the learner is in the droplet above the title", () => {
+    const lessons = [
+      { id: 9, name: "Intro", slug: "intro", orderIndex: 0 },
+      { id: 1, name: "Test Lesson", slug: "test-lesson", orderIndex: 1 },
+      { id: 3, name: "Last", slug: "last", orderIndex: 2 },
+    ];
+    render(
+      <LessonRenderer
+        {...props}
+        completedLessonIds={[9]}
+        droplet={{ ...props.droplet, lessons } as never}
+      />,
+    );
+
+    expect(screen.getByText("Lesson 2 of 3")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "Lesson 2 of 3" }),
+    ).toHaveAttribute("aria-valuenow", "2");
+  });
+
+  it("omits the lesson position when the lesson isn't in the droplet's list", () => {
+    render(<LessonRenderer {...props} />);
+
+    expect(screen.queryByText(/^Lesson \d+ of \d+$/)).toBeNull();
+    expect(screen.queryByRole("progressbar")).toBeNull();
   });
 
   it("draws the server-provided highlights without fetching on mount", async () => {
@@ -532,6 +558,7 @@ describe("LessonRenderer (viewer)", () => {
         1,
         expect.objectContaining({ id: 8, text: "SQL" }),
       );
+      expect(getEnrollByID).not.toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith("Note created");
       expect(toast.success).not.toHaveBeenCalledWith("Highlight saved");
     });
@@ -569,14 +596,150 @@ describe("LessonRenderer (viewer)", () => {
     });
   });
 
-  it("creates a note from a highlight and asks the wrapper to refetch", async () => {
-    jest.mocked(getHighlights).mockResolvedValue(serverHighlights);
-    jest.mocked(createNote).mockResolvedValue({ success: true });
+  it("wraps each drawn block with its index, and an unknown block with none", () => {
+    const generic = (id: number) => ({
+      id,
+      __component: "droplets.generic",
+      content: `<p>Block ${id}</p>`,
+    });
+    const withUnknown = {
+      ...lesson,
+      blocks: [
+        generic(1),
+        { id: 2, __component: "droplets.unknown" },
+        generic(3),
+      ],
+    } as unknown as Lesson;
+
+    const { container } = render(
+      <LessonRenderer {...props} lesson={withUnknown} initialHighlights={[]} />,
+    );
 
     const wrappers = Array.from(
       container.querySelectorAll("[data-lesson-block]"),
     );
-    expect(getEnrollByID).not.toHaveBeenCalled();
+    expect(wrappers.map((w) => w.getAttribute("data-lesson-block"))).toEqual([
+      "0",
+      "2",
+    ]);
+    expect(wrappers[1]).toHaveTextContent("Block 3");
+  });
+
+  describe("across blocks", () => {
+    // From "joins" in block 1 to the end of "inner" in block 2
+    const selectAcrossBlocks = (container: HTMLElement) => {
+      const [first, second] = blocks(container);
+      const start = textNode(first, "joins");
+      const end = textNode(second, "inner");
+      select(
+        start,
+        start.data.indexOf("joins"),
+        end,
+        end.data.indexOf("inner") + 5,
+      );
+    };
+    const joinsToday: Highlight = {
+      id: 4,
+      text: "joins today",
+      color: "#86efac",
+      position: { start: 10, end: 21 },
+      blockId: 1,
+      context: { quote: "joins today", prefix: "Learn SQL ", suffix: "" },
+    };
+    const useInner: Highlight = {
+      id: 5,
+      text: "Use inner",
+      color: "#86efac",
+      position: { start: 0, end: 9 },
+      blockId: 2,
+      context: { quote: "Use inner", prefix: "", suffix: " joins" },
+    };
+
+    it("saves a highlight in each block the selection covers, and says so once", async () => {
+      jest
+        .mocked(createHighlight)
+        .mockResolvedValueOnce({ ok: true, error: null, data: joinsToday })
+        .mockResolvedValueOnce({ ok: true, error: null, data: useInner });
+      const { container } = render(
+        <LessonRenderer {...props} initialHighlights={[]} />,
+      );
+
+      selectAcrossBlocks(container);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Green" }),
+      );
+
+      const { id: _, ...first } = joinsToday;
+      const { id: __, ...second } = useInner;
+      expect(createHighlight).toHaveBeenCalledWith({ ...first, lessonId: 1 });
+      expect(createHighlight).toHaveBeenCalledWith({ ...second, lessonId: 1 });
+      await waitFor(() => expect(pieces(container, 5)).toHaveLength(2));
+      expect(pieces(container, 4)[0]).toHaveTextContent(/^joins today$/);
+      expect(toast.success).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith("Highlight saved");
+    });
+
+    it("saves only a block's own text when the selection starts above the blocks", async () => {
+      const { container } = render(
+        <LessonRenderer {...props} initialHighlights={[]} />,
+      );
+      const [first] = blocks(container);
+
+      // From the lesson's title to the end of "SQL"
+      select(
+        screen.getByText("Test Lesson").firstChild!,
+        0,
+        textNode(first, "SQL"),
+        9,
+      );
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Highlight Green" }),
+      );
+
+      expect(createHighlight).toHaveBeenCalledTimes(1);
+      expect(createHighlight).toHaveBeenCalledWith({
+        text: "Learn SQL",
+        position: { start: 0, end: 9 },
+        color: "#86efac",
+        blockId: 1,
+        lessonId: 1,
+        context: { quote: "Learn SQL", prefix: "", suffix: " joins today" },
+      });
+    });
+
+    it("shows the toolbar in the block where the selection ends", async () => {
+      const { container } = render(
+        <LessonRenderer {...props} initialHighlights={[]} />,
+      );
+      const [, second] = blocks(container);
+
+      selectAcrossBlocks(container);
+
+      const toolbar = await screen.findByRole("toolbar");
+      expect(second.closest("[data-lesson-block]")).toContainElement(toolbar);
+    });
+
+    it("removes them together when the same text is selected again", async () => {
+      const { container } = render(
+        <LessonRenderer
+          {...props}
+          initialHighlights={[joinsToday, useInner]}
+        />,
+      );
+
+      selectAcrossBlocks(container);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Remove highlight" }),
+      );
+
+      expect(deleteHighlight).toHaveBeenCalledWith(4);
+      expect(deleteHighlight).toHaveBeenCalledWith(5);
+      expect(container.querySelector(".lesson-highlight")).toBeNull();
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith("Highlight removed"),
+      );
+      expect(toast.success).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("other kinds of block", () => {

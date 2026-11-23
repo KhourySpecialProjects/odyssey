@@ -28,7 +28,7 @@ export type RenderDetail = (args: {
 }) => ReactNode;
 
 const FOCUS =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A]";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A] dark:focus-visible:outline-sky-400";
 
 /** One panel card (ODY-805); `renderDetail` and `renderActions` fill its slots. */
 export function SectionCard({
@@ -149,13 +149,17 @@ export function SectionCard({
       <section
         aria-label={title}
         onKeyDown={onKeyDown}
-        className="rounded-xl border border-[#D0D5DD] bg-white py-3"
+        className="rounded-xl border border-[#D0D5DD] bg-white py-3 dark:border-[#33425c] dark:bg-[#131c2e]"
       >
         <div className="flex items-baseline justify-between px-3">
-          <h3 className="text-sm font-semibold text-slate-900">{heading}</h3>
-          <span className="text-xs text-[#667085]">Whole droplet</span>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {heading}
+          </h3>
+          <span className="text-xs text-[#667085] dark:text-slate-400">
+            Whole droplet
+          </span>
         </div>
-        <p className="mt-0.5 mb-2 px-3 text-xs text-[#667085]">
+        <p className="mt-0.5 mb-2 px-3 text-xs text-[#667085] dark:text-slate-400">
           Questions that need the whole droplet, such as lesson order and
           objective coverage.
         </p>
@@ -172,11 +176,11 @@ export function SectionCard({
       aria-label={title}
       onKeyDown={onKeyDown}
       className={cn(
-        "rounded-xl border bg-white",
+        "rounded-xl border bg-white dark:bg-[#131c2e]",
         expanded && "pb-2",
         viewing
           ? "border-[#2D7597] shadow-[0_0_0_1px_#2D7597]"
-          : "border-[#D0D5DD]",
+          : "border-[#D0D5DD] dark:border-[#33425c]",
       )}
     >
       <h3>
@@ -190,7 +194,7 @@ export function SectionCard({
             setOpenId(null);
           }}
           className={cn(
-            "flex w-full items-start gap-3 p-3 pb-2 text-left hover:bg-slate-50",
+            "flex w-full items-start gap-3 p-3 pb-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800",
             expanded ? "rounded-t-xl" : "rounded-xl",
             FOCUS,
           )}
@@ -198,22 +202,25 @@ export function SectionCard({
           <span className="min-w-0 flex-1">
             <span className="-mb-1 flex min-w-0 flex-nowrap items-center gap-x-2 overflow-hidden pb-1">
               {eyebrow && (
-                <span className="truncate text-xs font-medium text-[#667085]">
+                <span className="truncate text-xs font-medium text-[#667085] dark:text-slate-400">
                   {eyebrow}
                 </span>
               )}
               {viewing && (
-                <span className="shrink-0 rounded-full bg-[#287697]/10 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-[#1F5E7A]">
+                <span className="shrink-0 rounded-full bg-[#287697]/10 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-[#1F5E7A] dark:bg-sky-400/15 dark:text-sky-300">
                   Viewing
                 </span>
               )}
               {status === "to_confirm" &&
                 (expanded ? (
                   <>
-                    <span aria-hidden className="text-[11px] text-[#667085]">
+                    <span
+                      aria-hidden
+                      className="text-[11px] text-[#667085] dark:text-slate-400"
+                    >
                       ·
                     </span>
-                    <span className="text-[11px] text-[#667085]">
+                    <span className="text-[11px] text-[#667085] dark:text-slate-400">
                       To confirm
                     </span>
                   </>
@@ -222,7 +229,7 @@ export function SectionCard({
                 ))}
               {status === "confirmed" &&
                 (expanded ? (
-                  <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#15803D]">
+                  <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#15803D] dark:text-green-400">
                     <IconCheck className="h-3 w-3" aria-hidden />
                     <span>Confirmed</span>
                   </span>
@@ -242,7 +249,7 @@ export function SectionCard({
                 </span>
               )}
             </span>
-            <span className="mt-0.5 block truncate text-sm font-semibold text-slate-900">
+            <span className="mt-0.5 block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
               {heading}
               {scored && rows.length > 0 && <span className="sr-only">,</span>}
             </span>
@@ -250,7 +257,7 @@ export function SectionCard({
               <span className="sr-only">scores: {summary},</span>
             )}
           </span>
-          <span className="flex shrink-0 items-center gap-2 pt-0.5 text-[#667085]">
+          <span className="flex shrink-0 items-center gap-2 pt-0.5 text-[#667085] dark:text-slate-400">
             <span className="inline-flex items-center gap-1 text-xs">
               <IconMessage2 className="h-4 w-4" aria-hidden />
               <span aria-hidden>{commentCount}</span>
@@ -272,7 +279,7 @@ export function SectionCard({
         {expanded && (
           <>
             {kind === "overview" && (
-              <p className="px-3 text-xs text-[#667085]">
+              <p className="px-3 text-xs text-[#667085] dark:text-slate-400">
                 The Overview isn&apos;t scored on its own. It counts toward the
                 Overall Score below.
               </p>
@@ -280,9 +287,9 @@ export function SectionCard({
             {circleRow}
             {detail}
             {scored && renderActions?.(lessonId)}
-            <div className="mt-2 border-t border-slate-200 px-2 pt-2 pb-1">
+            <div className="mt-2 border-t border-slate-200 px-2 pt-2 pb-1 dark:border-[#33425c]">
               <div className="flex items-center justify-between pb-1">
-                <p className="text-xs font-semibold tracking-wide text-[#667085] uppercase">
+                <p className="text-xs font-semibold tracking-wide text-[#667085] uppercase dark:text-slate-400">
                   Comments · {commentCount}
                 </p>
                 {commentCount > 0 && (
@@ -297,7 +304,7 @@ export function SectionCard({
                       setCommentsShown(!commentsShown);
                     }}
                     className={cn(
-                      "-my-1 inline-flex min-h-6 items-center gap-1 rounded px-1 py-1 text-xs font-medium text-[#475467] hover:bg-slate-50",
+                      "-my-1 inline-flex min-h-6 items-center gap-1 rounded px-1 py-1 text-xs font-medium text-[#475467] hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800",
                       FOCUS,
                     )}
                   >
@@ -312,9 +319,9 @@ export function SectionCard({
               </div>
               <div id={commentsId}>
                 {commentCount === 0 && (
-                  <p className="text-xs text-[#667085]">
+                  <p className="text-xs text-[#667085] dark:text-slate-400">
                     No comments yet. Highlight text in the lesson, or add a
-                    transgression as a comment.
+                    point as a comment.
                   </p>
                 )}
                 {commentsShown && children}

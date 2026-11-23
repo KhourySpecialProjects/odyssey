@@ -6,6 +6,8 @@ those scores agree with the client's. The prompt itself lives in
 the same code: one request per lesson, then an Overall request that also gets
 each lesson's scores and reasons.
 
+Production may run custom prompt text (version `+hash`), edited at `/admin/scorecard-prompts`; the eval uses the code defaults (ODY-916 adds the saved text), so check that page before changing a default.
+
 Allowed models: `claude-sonnet-5-5` (default) and `claude-haiku-5-5`, set in
 `lib/ai-review/models.ts`. Effort defaults to `high`.
 

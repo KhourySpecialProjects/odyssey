@@ -542,6 +542,7 @@ export interface ApiAiScoringRunAiScoringRun
         number
       >;
     progress: Schema.Attribute.JSON;
+    prompt: Schema.Attribute.JSON;
     promptVersion: Schema.Attribute.String &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 50;
@@ -564,7 +565,7 @@ export interface ApiAiScoringSettingAiScoringSetting
   extends Struct.SingleTypeSchema {
   collectionName: 'ai_scoring_settings';
   info: {
-    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815)";
+    description: "Score with AI's monthly cap, per-run ceiling and model prices (ODY-815), and the editable grading prompt text (ODY-898; empty means the code default)";
     displayName: 'AI Scoring Settings';
     pluralName: 'ai-scoring-settings';
     singularName: 'ai-scoring-setting';
@@ -576,6 +577,14 @@ export interface ApiAiScoringSettingAiScoringSetting
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    instructions: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 6000;
+      }>;
+    lessonScope: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 1500;
+      }>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -590,6 +599,10 @@ export interface ApiAiScoringSettingAiScoringSetting
         },
         number
       >;
+    overallScope: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 1500;
+      }>;
     perRunCapUsd: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -599,6 +612,43 @@ export interface ApiAiScoringSettingAiScoringSetting
         number
       >;
     prices: Schema.Attribute.Component<'ai-scoring.model-price', true>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiAnnouncementReadAnnouncementRead
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'announcement_reads';
+  info: {
+    description: 'One row per user per announcement they marked read (ODY-786)';
+    displayName: 'Announcement Read';
+    pluralName: 'announcement-reads';
+    singularName: 'announcement-read';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    announcement: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::announcement.announcement'
+    >;
+    authorized_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::announcement-read.announcement-read'
+    > &
+      Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -647,6 +697,19 @@ export interface ApiAnnouncementAnnouncement
     playlist: Schema.Attribute.Relation<'manyToOne', 'api::playlist.playlist'>;
     publishedAt: Schema.Attribute.DateTime;
     readAt: Schema.Attribute.DateTime;
+    reads: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::announcement-read.announcement-read'
+    >;
+    reminderCount: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    reminderMutedUntil: Schema.Attribute.DateTime;
+    reminderSnoozedUntil: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<
       [
         'playlist',
@@ -657,6 +720,7 @@ export interface ApiAnnouncementAnnouncement
         'kudos',
         'review_feedback',
         'review_published',
+        'reminder',
       ]
     > &
       Schema.Attribute.Required;
@@ -779,11 +843,14 @@ export interface ApiAuthorizedUserAuthorizedUser
     lastName: Schema.Attribute.String;
     linkedin: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
+    mentorPersonalization: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::authorized-user.authorized-user'
     > &
       Schema.Attribute.Private;
+    onboardedAt: Schema.Attribute.DateTime;
     playlists: Schema.Attribute.Relation<
       'manyToMany',
       'api::playlist.playlist'
@@ -809,48 +876,48 @@ export interface ApiAuthorizedUserAuthorizedUser
     >;
     timeZone: Schema.Attribute.Enumeration<
       [
-        'America/New_York  ',
-        'America/Chicago  ',
-        'America/Denver  ',
-        'America/Phoenix  ',
-        'America/Los_Angeles  ',
-        'America/Anchorage  ',
-        'America/Honolulu  ',
-        'America/Bogota  ',
-        'America/Lima  ',
-        'America/Caracas  ',
-        'America/Santiago  ',
-        'America/Argentina/Buenos_Aires  ',
-        'America/Sao_Paulo  ',
-        'Europe/London  ',
-        'Europe/Berlin  ',
-        'Europe/Paris  ',
-        'Europe/Madrid  ',
-        'Europe/Rome  ',
-        'Europe/Athens  ',
-        'Europe/Istanbul  ',
-        'Europe/Moscow  ',
-        'Asia/Dubai  ',
-        'Asia/Kolkata  ',
-        'Asia/Shanghai  ',
-        'Asia/Tokyo  ',
-        'Asia/Seoul  ',
-        'Asia/Bangkok  ',
-        'Asia/Singapore  ',
-        'Asia/Jakarta  ',
-        'Asia/Hong_Kong  ',
-        'Australia/Sydney  ',
-        'Australia/Melbourne  ',
-        'Australia/Brisbane  ',
-        'Pacific/Auckland  ',
-        'Pacific/Fiji  ',
-        'Africa/Cairo  ',
-        'Africa/Johannesburg  ',
-        'Africa/Lagos  ',
-        'Africa/Nairobi  ',
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Phoenix',
+        'America/Los_Angeles',
+        'America/Anchorage',
+        'Pacific/Honolulu',
+        'America/Bogota',
+        'America/Lima',
+        'America/Caracas',
+        'America/Santiago',
+        'America/Argentina/Buenos_Aires',
+        'America/Sao_Paulo',
+        'Europe/London',
+        'Europe/Berlin',
+        'Europe/Paris',
+        'Europe/Madrid',
+        'Europe/Rome',
+        'Europe/Athens',
+        'Europe/Istanbul',
+        'Europe/Moscow',
+        'Asia/Dubai',
+        'Asia/Kolkata',
+        'Asia/Shanghai',
+        'Asia/Tokyo',
+        'Asia/Seoul',
+        'Asia/Bangkok',
+        'Asia/Singapore',
+        'Asia/Jakarta',
+        'Asia/Hong_Kong',
+        'Australia/Sydney',
+        'Australia/Melbourne',
+        'Australia/Brisbane',
+        'Pacific/Auckland',
+        'Pacific/Fiji',
+        'Africa/Cairo',
+        'Africa/Johannesburg',
+        'Africa/Lagos',
+        'Africa/Nairobi',
       ]
     > &
-      Schema.Attribute.DefaultTo<'America/New_York  '>;
+      Schema.Attribute.DefaultTo<'America/New_York'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1176,6 +1243,7 @@ export interface ApiEnrollmentEnrollment extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<false>;
     isFirstTime: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    lastProgressDate: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1395,6 +1463,51 @@ export interface ApiHighlightHighlight extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiLearnerProfileLearnerProfile
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'learner_profiles';
+  info: {
+    description: "One student's onboarding quiz answers, read only by the recommender and Settings. Student data: keep out of logs, PostHog and Slack (ODY-953)";
+    displayName: 'Learner Profile';
+    pluralName: 'learner-profiles';
+    singularName: 'learner-profile';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    focusAreas: Schema.Attribute.JSON;
+    goal: Schema.Attribute.Enumeration<['class', 'career', 'self', 'browsing']>;
+    interestNote: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    interests: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::learner-profile.learner-profile'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   collectionName: 'lessons';
   info: {
@@ -1467,10 +1580,238 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMentorCachedReplyMentorCachedReply
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_cached_replies';
+  info: {
+    description: 'One shared Mentor reply (a lesson summary or a quiz explanation) per version: no student data (ODY-967)';
+    displayName: 'Mentor Cached Reply';
+    pluralName: 'mentor-cached-replies';
+    singularName: 'mentor-cached-reply';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    dropletId: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 120;
+      }>;
+    lessonId: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-cached-reply.mentor-cached-reply'
+    > &
+      Schema.Attribute.Private;
+    model: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    promptVersion: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    scope: Schema.Attribute.Enumeration<['lesson', 'hint']> &
+      Schema.Attribute.Required;
+    slot: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 60;
+      }>;
+    text: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMentorChatMentorChat extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_chats';
+  info: {
+    description: 'One saved Mentor conversation of one student, deleted after 30 days. Never shown to instructors (ODY-937)';
+    displayName: 'Mentor Chat';
+    pluralName: 'mentor-chats';
+    singularName: 'mentor-chat';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorizedUser: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    kind: Schema.Attribute.Enumeration<['lesson', 'explain']> &
+      Schema.Attribute.Required;
+    lastMessageAt: Schema.Attribute.DateTime;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-chat.mentor-chat'
+    > &
+      Schema.Attribute.Private;
+    messages: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-message.mentor-message'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 80;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMentorFeedbackMentorFeedback
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_feedbacks';
+  info: {
+    description: 'One row per rated Mentor answer. Text is stored only when the student shares it (ODY-890)';
+    displayName: 'Mentor Feedback';
+    pluralName: 'mentor-feedbacks';
+    singularName: 'mentor-feedback';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    answerKey: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
+    answerText: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
+    citations: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    kind: Schema.Attribute.Enumeration<['lesson', 'explain', 'quiz-hint']> &
+      Schema.Attribute.Required;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-feedback.mentor-feedback'
+    > &
+      Schema.Attribute.Private;
+    promptVersion: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    questionId: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    questionText: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 2000;
+      }>;
+    rating: Schema.Attribute.Enumeration<['up', 'down']> &
+      Schema.Attribute.Required;
+    shared: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
+export interface ApiMentorMessageMentorMessage
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'mentor_messages';
+  info: {
+    description: 'One question or answer in a saved Mentor chat (ODY-937)';
+    displayName: 'Mentor Message';
+    pluralName: 'mentor-messages';
+    singularName: 'mentor-message';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    chat: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::mentor-chat.mentor-chat'
+    >;
+    citations: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::mentor-message.mentor-message'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    role: Schema.Attribute.Enumeration<['user', 'assistant']> &
+      Schema.Attribute.Required;
+    text: Schema.Attribute.Text &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20000;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
   collectionName: 'mentor_settings';
   info: {
-    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884)";
+    description: "Mentor's on/off switch, pilot groups, monthly cap and daily limit. Empty pilotGroups means everyone, when enabled (ODY-884). storeSharedAnswers stays off until ODY-883 approves storing student text (ODY-890). personalize lets Mentor add the student's own learning history to answers, when the student allows it (ODY-934)";
     displayName: 'Mentor Settings';
     pluralName: 'mentor-settings';
     singularName: 'mentor-setting';
@@ -1499,6 +1840,7 @@ export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
         },
         number
       >;
+    personalize: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     perUserDailyLimit: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -1509,6 +1851,8 @@ export interface ApiMentorSettingMentorSetting extends Struct.SingleTypeSchema {
       >;
     pilotGroups: Schema.Attribute.Relation<'manyToMany', 'api::group.group'>;
     publishedAt: Schema.Attribute.DateTime;
+    storeSharedAnswers: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1783,6 +2127,45 @@ export interface ApiPlaylistPlaylist extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiRecommendationDismissalRecommendationDismissal
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'recommendation_dismissals';
+  info: {
+    description: "A droplet a student said isn't for them; never recommended to them again. Student data: keep out of logs, PostHog and Slack (ODY-954)";
+    displayName: 'Recommendation Dismissal';
+    pluralName: 'recommendation-dismissals';
+    singularName: 'recommendation-dismissal';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 70;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::recommendation-dismissal.recommendation-dismissal'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiReportReport extends Struct.CollectionTypeSchema {
   collectionName: 'reports';
   info: {
@@ -1945,6 +2328,10 @@ export interface ApiReviewScoreReviewScore extends Struct.CollectionTypeSchema {
   };
   attributes: {
     aiFindings: Schema.Attribute.JSON;
+    aiPromptVersion: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
     aiRationale: Schema.Attribute.Text;
     aiValue: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
@@ -2050,6 +2437,46 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiStreakDayStreakDay extends Struct.CollectionTypeSchema {
+  collectionName: 'streak_days';
+  info: {
+    description: 'A day a learner finished at least one new lesson, or revived (ODY-920), in their own time zone (ODY-918)';
+    displayName: 'Streak Day';
+    pluralName: 'streak-days';
+    singularName: 'streak-day';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.Date & Schema.Attribute.Required;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 40;
+      }>;
+    lessonIds: Schema.Attribute.JSON & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::streak-day.streak-day'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    revived: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -2785,6 +3212,7 @@ declare module '@strapi/strapi' {
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::ai-scoring-run.ai-scoring-run': ApiAiScoringRunAiScoringRun;
       'api::ai-scoring-setting.ai-scoring-setting': ApiAiScoringSettingAiScoringSetting;
+      'api::announcement-read.announcement-read': ApiAnnouncementReadAnnouncementRead;
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
@@ -2798,18 +3226,25 @@ declare module '@strapi/strapi' {
       'api::gallery.gallery': ApiGalleryGallery;
       'api::group.group': ApiGroupGroup;
       'api::highlight.highlight': ApiHighlightHighlight;
+      'api::learner-profile.learner-profile': ApiLearnerProfileLearnerProfile;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::mentor-cached-reply.mentor-cached-reply': ApiMentorCachedReplyMentorCachedReply;
+      'api::mentor-chat.mentor-chat': ApiMentorChatMentorChat;
+      'api::mentor-feedback.mentor-feedback': ApiMentorFeedbackMentorFeedback;
+      'api::mentor-message.mentor-message': ApiMentorMessageMentorMessage;
       'api::mentor-setting.mentor-setting': ApiMentorSettingMentorSetting;
       'api::mentor-usage.mentor-usage': ApiMentorUsageMentorUsage;
       'api::note.note': ApiNoteNote;
       'api::overview-scan-dismissal.overview-scan-dismissal': ApiOverviewScanDismissalOverviewScanDismissal;
       'api::overview-scan.overview-scan': ApiOverviewScanOverviewScan;
       'api::playlist.playlist': ApiPlaylistPlaylist;
+      'api::recommendation-dismissal.recommendation-dismissal': ApiRecommendationDismissalRecommendationDismissal;
       'api::report.report': ApiReportReport;
       'api::review-comment.review-comment': ApiReviewCommentReviewComment;
       'api::review-criterion.review-criterion': ApiReviewCriterionReviewCriterion;
       'api::review-score.review-score': ApiReviewScoreReviewScore;
       'api::review.review': ApiReviewReview;
+      'api::streak-day.streak-day': ApiStreakDayStreakDay;
       'api::tag.tag': ApiTagTag;
       'api::voyage-enrollment.voyage-enrollment': ApiVoyageEnrollmentVoyageEnrollment;
       'api::voyage-node-completion.voyage-node-completion': ApiVoyageNodeCompletionVoyageNodeCompletion;

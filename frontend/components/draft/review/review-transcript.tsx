@@ -145,7 +145,7 @@ export function ReviewTranscript({
   const helpId = useId();
 
   const footer = (
-    <footer className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-700">
+    <footer className="shrink-0 border-t border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
       <p id={helpId} className="sr-only">
         {help}
       </p>
@@ -175,18 +175,15 @@ export function ReviewTranscript({
 
   if (!panel) {
     return (
-      <section
-        aria-label="Reviewer Transcript"
-        className="flex h-full min-h-0 flex-col"
-      >
+      <section aria-label="Scorecard" className="flex h-full min-h-0 flex-col">
         <div className="flex-1 p-4">
-          <h2 className="text-base font-semibold text-slate-900">
-            Reviewer Transcript
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            Scorecard
           </h2>
-          <p className="mt-0.5 truncate text-sm font-medium text-[#344054]">
+          <p className="mt-0.5 truncate text-sm font-medium text-[#344054] dark:text-slate-200">
             {droplet.name}
           </p>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             The scores couldn&apos;t be loaded. You can still send feedback.
           </p>
         </div>
@@ -205,10 +202,12 @@ export function ReviewTranscript({
     <div className="mt-3">
       <label
         htmlFor={noteId}
-        className="block text-sm font-medium text-[#344054]"
+        className="block text-sm font-medium text-[#344054] dark:text-slate-200"
       >
         Summary note{" "}
-        <span className="font-normal text-[#667085]">(optional)</span>
+        <span className="font-normal text-[#667085] dark:text-slate-400">
+          (optional)
+        </span>
       </label>
       <textarea
         id={noteId}
@@ -217,9 +216,9 @@ export function ReviewTranscript({
         rows={2}
         placeholder="Anything the creator should know about the droplet as a whole"
         onChange={(e) => setNote(e.target.value)}
-        className="mt-1 w-full resize-y rounded-md border border-slate-300 p-2 text-sm text-slate-900 placeholder:text-[#667085] focus:border-[#2D7597] focus:ring-1 focus:ring-[#2D7597] focus:outline-none"
+        className="mt-1 w-full resize-y rounded-md border border-slate-300 p-2 text-sm text-slate-900 placeholder:text-[#667085] focus:border-[#2D7597] focus:ring-1 focus:ring-[#2D7597] focus:outline-none dark:border-[#33425c] dark:bg-[#0b1220] dark:text-slate-100 dark:placeholder:text-slate-500"
       />
-      <p className="mt-1 text-[11px] text-slate-500">
+      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
         Kept in this browser. It pre-fills Send feedback.
       </p>
     </div>

@@ -6,6 +6,7 @@ import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/
 import { Input } from "../ui/input";
 import { IconCornerDownLeft } from "@tabler/icons-react";
 import { updateDropletLearningObjective } from "@/lib/requests/droplet";
+import { splitPastedObjectives } from "@/lib/learning-objectives";
 
 export function LearningObjectivesInput({
   dropletId,
@@ -79,6 +80,19 @@ export function LearningObjectivesInput({
                 name="objective"
                 value={newObjective}
                 onChange={(e) => setNewObjective(e.target.value)}
+                onPaste={(e) => {
+                  const text = e.clipboardData.getData("text");
+                  if (!/[\r\n]/.test(text)) return; // single line: normal paste
+                  e.preventDefault();
+                  // Anything already typed stays in the input; the pasted lines
+                  // become objectives of their own.
+                  const added = splitPastedObjectives(text).filter(
+                    (obj) => !learningObjectives.includes(obj),
+                  );
+                  if (added.length > 0) {
+                    setLearningObjectives([...learningObjectives, ...added]);
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

@@ -17,6 +17,9 @@ frontend/providers/PHProvider.tsx
 
 # When this worktree's agent last checked Slack and Linear (/coord)
 .claude/coord-last-check
+# The manager agent's requests and phases, and the Watcher's seen list (/manager)
+.claude/manager-state.json
+.claude/manager-seen.txt
 
 # Playwright MCP logs
 .playwright-mcp/
@@ -43,6 +46,9 @@ docker-compose.playwright.yml
 
 # claude worktrees
 .claude/worktrees/
+
+# question window: local questions and answers (docs/agent/question-window.md)
+.claude/grill/
 
 # Strapi auto-generated docs (regenerated on schema changes)
 backend/src/extensions/documentation/documentation/

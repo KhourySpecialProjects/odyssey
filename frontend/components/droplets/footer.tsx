@@ -14,6 +14,10 @@ import {
   useViewedLessonsStore,
 } from "@/stores/viewed-lessons-store";
 import { toast } from "sonner";
+import {
+  refreshStreakAfterLesson,
+  StreakLessonBanner,
+} from "@/components/streaks/streak-lesson-banner";
 
 type PaginationProps = {
   link: string;
@@ -74,9 +78,13 @@ export default function DropletFooter({
   // The recap page shows the droplet as completed based on this save, so
   // wait for it before going there. Throwing keeps the user on the lesson.
   const saveBeforeRecap = async () => {
-    if ((await saveLessonViewed()) === "failed") {
+    const outcome = await saveLessonViewed();
+    if (outcome === "failed") {
       throw new Error("Lesson progress wasn't saved");
     }
+    // The recap page has no banner, so the streak is told in a toast
+    if (outcome === "changed")
+      void refreshStreakAfterLesson({ announce: true });
   };
 
   // Lesson to lesson: navigate first and save in the background, then
@@ -87,7 +95,11 @@ export default function DropletFooter({
   const saveInBackground = async () => {
     const lessonId = currentLessonId;
     const outcome = await saveLessonViewed();
-    if (outcome === "changed") router.refresh();
+    if (outcome === "changed") {
+      router.refresh();
+      // The next lesson's banner is off screen, so the streak is told in a toast
+      void refreshStreakAfterLesson({ announce: true });
+    }
     if (outcome === "failed") {
       // Usually shown after moving on, so name the lesson it's about
       const lessonName = droplet.lessons?.find((l) => l.id === lessonId)?.name;
@@ -107,16 +119,19 @@ export default function DropletFooter({
       // the droplet's completion (isComplete + completionDate).
       // A rejected call (network drop, redeployed action) is a failure too;
       // left uncaught it would reach the lesson's error boundary
-      const { success } = await updateViewedLessons(
+      const result = await updateViewedLessons(
         enrollmentId,
         currentLessonId,
         allDropletLessonIds,
       ).catch(() => ({ success: false as const }));
       // No router.refresh(): the action's revalidateTag already re-renders
       // the route, and a refresh here would be a second full server render.
-      if (!success) {
+      if (!result.success) {
         console.error("Failed to mark lesson as complete");
         toast.error("Failed to mark lesson as complete");
+      } else if (!result.alreadyViewed) {
+        // The banner below lights in place, so no toast
+        void refreshStreakAfterLesson({ announce: false });
       }
     });
   };
@@ -251,15 +266,26 @@ export default function DropletFooter({
               canProceed={canProceed}
               onClick={nextIsRecap ? saveBeforeRecap : saveInBackground}
               awaitOnClick={nextIsRecap}
+              label={nextIsRecap ? undefined : `Next: ${next.name}`}
             >
-              Next
-              <IconArrowRight className="h-4 w-4" />
+              {nextIsRecap ? (
+                <span>Finish → Recap</span>
+              ) : (
+                <>
+                  <span className="shrink-0">Next</span>
+                  <span className="max-w-[12rem] truncate">: {next.name}</span>
+                </>
+              )}
+              <IconArrowRight className="h-4 w-4 shrink-0" />
             </PaginationLinkWrapper>
           ) : (
             <div className="flex-1"></div>
           )}
         </div>
       </div>
+      {isOnLesson && enrollmentId && (
+        <StreakLessonBanner lessonCompleted={isCompleted} />
+      )}
     </div>
   );
 }
@@ -271,6 +297,7 @@ const PaginationLinkWrapper = ({
   canProceed,
   onClick,
   awaitOnClick = false,
+  label,
 }: {
   link: string;
   className?: string;
@@ -278,6 +305,8 @@ const PaginationLinkWrapper = ({
   canProceed: boolean;
   onClick?: () => Promise<void>;
   awaitOnClick?: boolean;
+  /** Full accessible name and tooltip, for a label that gets truncated */
+  label?: string;
 }) => {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -310,6 +339,8 @@ const PaginationLinkWrapper = ({
     <button
       onClick={handleClick}
       disabled={isSaving}
+      title={label}
+      aria-label={label}
       className={cn(
         "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
         className,

@@ -51,7 +51,7 @@ function describeRun(run: AiRunStatus): string {
 /**
  * Score with AI (ODY-814): starts a run on the reviewer's review and polls
  * until it ends, then refreshes so the suggestions load. The suggestions
- * themselves show in the Transcript panel (ODY-805).
+ * themselves show in the Scorecard panel (ODY-805).
  */
 export function ScoreWithAiButton({ dropletId }: { dropletId: number }) {
   const router = useRouter();

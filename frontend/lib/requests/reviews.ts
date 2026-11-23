@@ -31,6 +31,7 @@ import {
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { loadDropletForWrite } from "@/lib/auth/review-freeze";
 import { isReviewerFor } from "@/lib/review-roles";
+import { fetchActiveCriteria } from "@/lib/review-criteria";
 import {
   attachThreads,
   rootId,
@@ -1362,7 +1363,7 @@ export type PanelRunData = PanelRun & {
   error?: string | null;
 };
 
-/** What the Reviewer Transcript panel reads: no comments (the shared context has them). */
+/** What the Scorecard panel reads: no comments (the shared context has them). */
 export type ReviewPanelData = {
   review: { id: number; round: number; state: ReviewState } | null;
   criteria: PanelCriterion[];
@@ -1447,23 +1448,9 @@ export async function getReviewPanel(
 
       const [review, criteria] = await Promise.all([
         findReviewByKey(`${droplet.id}:${user.id}:${round}`),
-        fetchAPI<PanelCriterion[] | null>("/review-criteria", {
-          urlParams: {
-            filters: { active: { $eq: true } },
-            fields: [
-              "name",
-              "order",
-              "active",
-              "lessonDescription",
-              "overallDescription",
-            ],
-            sort: ["order:asc"],
-            pagination: { pageSize: 100 },
-          },
-          cache: "no-store",
-        }),
+        fetchActiveCriteria(),
       ]);
-      const base = { criteria: criteria ?? [] };
+      const base = { criteria };
       if (!review) {
         const empty = { ...base, review: null, scores: [], latestRun: null };
         return { ok: true, error: null, data: { ...empty, positions: {} } };

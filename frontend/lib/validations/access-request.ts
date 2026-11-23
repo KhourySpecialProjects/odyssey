@@ -20,10 +20,15 @@ const COLLEGE_VALUES: [CollegeValues, ...CollegeValues[]] = [
   ...COLLEGES.slice(1).map((p) => p.value),
 ];
 
+const nameField = z
+  .string()
+  .min(2, { error: "Enter at least 2 characters" })
+  .max(50, { error: "Use 50 characters or fewer" });
+
 export const accessRequestSchema = z.object({
-  givenName: z.string().min(2).max(50),
-  familyName: z.string().min(2).max(50),
-  email: z.string().email(),
-  affiliation: z.enum(AFFILIATION_VALUES),
-  college: z.enum(COLLEGE_VALUES),
+  givenName: nameField,
+  familyName: nameField,
+  email: z.string().email({ error: "Enter a valid email address" }),
+  affiliation: z.enum(AFFILIATION_VALUES, { error: "Select your affiliation" }),
+  college: z.enum(COLLEGE_VALUES, { error: "Select your college" }),
 });

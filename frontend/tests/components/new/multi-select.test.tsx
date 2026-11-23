@@ -262,7 +262,7 @@ describe("MultiSelect", () => {
       });
     });
 
-    it("Add Tag button className changes based on label", async () => {
+    it("has no Add Tag for other labels", async () => {
       const user = userEvent.setup();
       render(
         <MultiSelect
@@ -273,19 +273,66 @@ describe("MultiSelect", () => {
         />,
       );
 
-      const button = screen.getByTestId("multi-select-trigger");
-      await user.click(button);
+      await user.click(screen.getByTestId("multi-select-trigger"));
+      await screen.findByPlaceholderText("Prerequisites");
+
+      expect(screen.queryByText("Add Tag")).not.toBeInTheDocument();
+    });
+
+    // ODY-869: it used to sit in the list's group, which hides with no match
+    it("keeps Add Tag when the search matches no tag, and starts from the search", async () => {
+      const user = userEvent.setup();
+      render(
+        <MultiSelect
+          label="Tags"
+          items={mockItems}
+          selected={[]}
+          setSelected={mockSetSelected}
+        />,
+      );
+
+      await user.click(screen.getByTestId("multi-select-trigger"));
+      await user.type(await screen.findByPlaceholderText("Tags"), "Rust");
+
+      expect(await screen.findByText("No matches")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /add tag/i }));
+
+      expect(
+        await screen.findByPlaceholderText("Enter new tag name"),
+      ).toHaveValue("Rust");
+    });
+
+    it("lists a new tag and selects it", async () => {
+      const user = userEvent.setup();
+      mockedCreateNewTag.mockResolvedValue({
+        success: true,
+        data: { id: 9, name: "Rust (lang)", slug: "rust-lang", droplets: [] },
+      });
+      render(
+        <MultiSelect
+          label="Tags"
+          items={mockItems}
+          selected={[]}
+          setSelected={mockSetSelected}
+        />,
+      );
+
+      await user.click(screen.getByTestId("multi-select-trigger"));
+      await user.click(await screen.findByText("Add Tag"));
+      await user.type(
+        await screen.findByPlaceholderText("Enter new tag name"),
+        "Rust (lang)",
+      );
+      await user.click(screen.getByRole("button", { name: /save/i }));
 
       await waitFor(() => {
-        expect(
-          screen.getByPlaceholderText("Prerequisites"),
-        ).toBeInTheDocument();
+        expect(mockSetSelected).toHaveBeenCalledWith([
+          expect.objectContaining({ id: 9 }),
+        ]);
       });
-
-      // The Add Tag button exists in DOM for all labels
-      // but has different className based on label
-      const addTagElement = screen.getByText("Add Tag");
-      expect(addTagElement).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /rust \(lang\)/i }),
+      ).toBeInTheDocument();
     });
 
     it("opens dialog when Add Tag is clicked", async () => {
@@ -414,6 +461,8 @@ describe("MultiSelect", () => {
           "Tag already exists",
         );
       });
+      // The toast gives createNewTag's reason, not always "already exists"
+      expect(mockedToast.error).toHaveBeenCalledWith("Tag already exists");
 
       consoleErrorSpy.mockRestore();
     });

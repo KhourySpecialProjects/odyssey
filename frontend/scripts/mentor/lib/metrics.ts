@@ -4,7 +4,7 @@ import type { MentorModel, MentorSetup } from "@/lib/mentor/prompt";
 import type { MentorKind } from "@/lib/mentor/types";
 import { dollars } from "@/scripts/ai-review/lib/run";
 import { fenced, table } from "./cases";
-import { QUIZ_KINDS, type CaseKind, type EvalCase } from "./files";
+import { CASE_KINDS, QUIZ_KINDS, type CaseKind, type EvalCase } from "./files";
 import type { AnswerMode, Grade, Judged, Question, Status } from "./grade";
 
 // What Mentor's eval (ODY-885) found, as numbers and as report.md.
@@ -25,6 +25,8 @@ export type ResultRow = Key & {
   format: EvalCase["format"];
   fixture: string;
   lessonId: number;
+  /** The learner profile's name, "inline", or null; missing on rows written before ODY-941 */
+  learner?: string | null;
   seq: number;
   model: MentorModel | null;
   servedModel: string | null;
@@ -62,6 +64,8 @@ export type RunMeta = {
   judgeVersion: string;
   judge: MentorSetup;
   casesSha: string;
+  /** What the cases' learner blocks say (ODY-941); null with none, missing on older runs */
+  learnersSha?: string | null;
   fixtures: { slug: string; takenAt: string }[];
   setups: string[];
   reps: number;
@@ -402,6 +406,32 @@ export function reportMarkdown(
           projected(rs.flatMap((r) => r.judge?.costUsd ?? [])),
       ),
   });
+  const profiles = CASE_KINDS.flatMap((kind) =>
+    [
+      ...new Set(
+        rows.filter((r) => r.kind === kind).map((r) => r.learner ?? "none"),
+      ),
+    ].map((learner) => [kind, learner] as const),
+  );
+  const byKindAndProfile = table(
+    ["Kind", "Profile", ...summaries.map((s) => s.setup)],
+    profiles.map(([kind, learner]) => [
+      kind,
+      learner,
+      ...summaries.map((s) => {
+        const mine = rows.filter(
+          (r) =>
+            r.setup === s.setup &&
+            r.kind === kind &&
+            (r.learner ?? "none") === learner,
+        );
+        if (!mine.length) return "–";
+        const checked = mine.some((r) => r.grade.leak !== null);
+        const leaks = mine.filter((r) => r.grade.leak).length;
+        return `${rateCell(rate(mine))}${checked ? `, leaks ${leaks}` : ""}`;
+      }),
+    ]),
+  );
   const byHand = [
     ...rows.flatMap((r) => {
       const fails = r.grade.pass === false;
@@ -429,6 +459,7 @@ export function reportMarkdown(
 
   const sections: Record<string, string | false> = {
     Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations.\n\n${thresholds}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
+    "By kind and profile": `Pass rates by kind and learner profile; new kinds have no threshold yet.\n\n${byKindAndProfile}`,
     "More quality": quality,
     Length: `Words with refs removed, in replies that ended normally.\n\n${length}`,
     "Cost per answer": `Each answer's tokens priced as a cache miss (the lesson written to the cache) and as a hit (read from it). "Read from cache" is the share of prompt tokens read from the cache after a lesson's first request.${uncached.length ? `\n\n**Nothing was read from the cache for ${uncached.map((s) => s.setup).join(", ")}: something invalidates it, or the prefix is too short to cache.**` : ""}\n\n${cost}`,

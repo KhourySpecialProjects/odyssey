@@ -25,11 +25,16 @@ const check = (id: string, group: Check["group"], ruleIds = ["a"]): Check => ({
   scope: "s",
   rules: ruleIds.map(rule),
 });
-const flag = (partId: string, blockId: string | null = null): Flag => ({
+const flag = (
+  partId: string,
+  blockId: string | null = null,
+  words?: string[],
+): Flag => ({
   partId,
   blockId,
   message: "msg",
   severity: "warn",
+  ...(words && { words }),
 });
 const ruleResult = (
   id: string,
@@ -209,7 +214,31 @@ describe("buildScanView", () => {
   });
 
   it.each([
-    ["a lesson", flag("12", "b1"), "Lesson 2 · Second", "/draft/d/drop/second"],
+    // A lesson link names its block and any words to highlight (ODY-913)
+    [
+      "a lesson",
+      flag("12", "b1"),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second?block=b1",
+    ],
+    [
+      "a lesson's spelling",
+      flag("12", "b1", ["recieve", "don’t"]),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second?block=b1&words=recieve%2Cdon%E2%80%99t",
+    ],
+    [
+      "a lesson name's spelling",
+      flag("12", null, ["Teh"]),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second?block=title&words=Teh",
+    ],
+    [
+      "a whole-lesson flag",
+      flag("12"),
+      "Lesson 2 · Second",
+      "/draft/d/drop/second",
+    ],
     [
       "a mapped section",
       flag("droplet", "tags"),

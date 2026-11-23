@@ -58,6 +58,7 @@ const row = (
       asksBack: true,
       leak,
       pass,
+      verdict: null,
       checkByHand: [],
     },
     judge: null,
@@ -235,15 +236,25 @@ describe("reportMarkdown", () => {
   });
 
   it("names the judge, the choice, what to check by hand, and Brady's agreement", () => {
-    const report = reportMarkdown([...setupRows(18), leak], [unjudged], meta, [
-      {
-        setup: "haiku-low",
-        caseId: "leaky",
-        rep: 1,
-        writer: "claude-haiku-5-5",
-        labels: { gives_answer: "yes", rules_out: null },
-      },
-    ]);
+    const personalized = row({
+      caseId: "pers",
+      kind: "personalized",
+      learner: "finished-prereq",
+    });
+    const report = reportMarkdown(
+      [...setupRows(18), leak, personalized],
+      [unjudged],
+      meta,
+      [
+        {
+          setup: "haiku-low",
+          caseId: "leaky",
+          rep: 1,
+          writer: "claude-haiku-5-5",
+          labels: { gives_answer: "yes", rules_out: null },
+        },
+      ],
+    );
     for (const text of [
       "Judge: claude-sonnet-5-5 at medium, also a model under test. Code decides citations",
       "| haiku-low | 1 (1 / 0) [1] | 100% (18/18) [100%] | 100% (1/1) [100%] | 100% (1/1) [100%] | 100% (18/18) | 1 judge_error | no: 1 open errors |",
@@ -253,6 +264,9 @@ describe("reportMarkdown", () => {
       "### haiku-low, unjudged, rep 1: not judged (the judge stopped: refusal)",
       "A reply the judge refused.",
       "| claude-haiku-5-5, gives_answer | 1 | 100% |",
+      "## By kind and profile",
+      "| personalized | finished-prereq | 100% (1/1) |",
+      "| wrong-pick | none | – (0/0), leaks 0 |",
       "## Projected full run",
     ])
       expect(report).toContain(text);

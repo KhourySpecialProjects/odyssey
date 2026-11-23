@@ -120,4 +120,68 @@ describe('REST', () => {
     expect(res.status).not.toBe(200);
     expect(Number((await stored()).monthlyCapUsd)).toBe(25);
   });
+
+  describe('POST /ai-scoring-setting/prompt', () => {
+    const save = (body) =>
+      rest()
+        .post('/api/ai-scoring-setting/prompt')
+        .set({ Authorization: `Bearer ${token}` })
+        .send(body);
+    const parts = (over = {}) => ({
+      data: { instructions: 'I', lessonScope: 'L', overallScope: 'O', ...over },
+    });
+
+    it('saves three trimmed texts, and GET shows them', async () => {
+      const res = await save(
+        parts({ instructions: '  Be fair.  ', lessonScope: ' Lesson ', overallScope: 'Overall' }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        instructions: 'Be fair.',
+        lessonScope: 'Lesson',
+        overallScope: 'Overall',
+      });
+      const get = await rest()
+        .get('/api/ai-scoring-setting')
+        .set({ Authorization: `Bearer ${token}` });
+      expect(get.body.data).toMatchObject({ instructions: 'Be fair.' });
+    });
+
+    it('clears a part with null', async () => {
+      await save(parts());
+      const res = await save(parts({ lessonScope: null }));
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.lessonScope).toBeNull();
+      expect((await stored()).lessonScope).toBeNull();
+    });
+
+    it.each([
+      ['blank', parts({ lessonScope: '' })],
+      ['whitespace only', parts({ lessonScope: '   ' })],
+      ['over the limit', parts({ instructions: 'x'.repeat(6001) })],
+      ['a scope over the limit', parts({ overallScope: 'x'.repeat(1501) })],
+      ['a missing key', { data: { instructions: 'I', lessonScope: 'L' } }],
+      ['an extra key', parts({ monthlyCapUsd: 1000 })],
+      ['no data', {}],
+    ])('refuses %s and leaves the row unchanged', async (_name, body) => {
+      await save(parts({ instructions: 'Kept' }));
+      const res = await save(body);
+
+      expect(res.status).toBe(400);
+      expect((await stored()).instructions).toBe('Kept');
+      expect(Number((await stored()).monthlyCapUsd)).toBe(25);
+    });
+
+    it('seeds the row when it is missing, then saves', async () => {
+      await settings().delete({ documentId: (await stored()).documentId });
+
+      const res = await save(parts({ instructions: 'Fresh' }));
+
+      expect(res.status).toBe(200);
+      expect(await rows()).toBe(1);
+      expect((await stored()).instructions).toBe('Fresh');
+    });
+  });
 });

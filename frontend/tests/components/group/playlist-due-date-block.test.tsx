@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { expectSingleCloseButton } from "@/testing/helpers/dialog";
 import { PlaylistDueDateBlock } from "@/components/group/playlist-due-date-block";
 import { assignPlaylistDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import { GroupSemester } from "@/types";
@@ -701,6 +702,51 @@ describe("PlaylistDueDateBlock", () => {
         expect(saveButton).toBeDisabled();
         expect(deleteButton).toBeDisabled();
       });
+    });
+  });
+
+  describe("Remove dialog close button", () => {
+    const openRemoveDialog = async () => {
+      (getGroupDueDate as jest.Mock).mockResolvedValue({
+        dueDate: "2024-03-20T15:00:00.000Z",
+      });
+
+      render(
+        <PlaylistDueDateBlock
+          existingGroup={mockGroup}
+          currentPlaylist={mockPlaylist}
+        />,
+      );
+      const deleteButton = await waitFor(() => {
+        const button = screen
+          .getAllByRole("button")
+          .find((btn) => btn.getAttribute("name")?.includes("Delete"));
+        expect(button).toBeDefined();
+        return button!;
+      });
+      await waitFor(() => expect(deleteButton).not.toBeDisabled());
+      fireEvent.click(deleteButton);
+      return screen.findByRole("dialog");
+    };
+
+    it("renders exactly one close button", async () => {
+      expectSingleCloseButton(await openRemoveDialog());
+    });
+
+    it.each([
+      [
+        "the Close button",
+        () => fireEvent.click(screen.getByRole("button", { name: "Close" })),
+      ],
+      [
+        "Escape",
+        () => fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" }),
+      ],
+    ])("closes without removing when closed with %s", async (_name, close) => {
+      await openRemoveDialog();
+      close();
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(assignPlaylistDueDate).not.toHaveBeenCalled();
     });
   });
 

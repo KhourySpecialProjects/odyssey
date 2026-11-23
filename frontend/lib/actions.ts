@@ -5,13 +5,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { accessRequestSchema } from "./validations/access-request";
 import { reportSchema } from "./validations/report";
-import type { CreationRequest, TimeZone } from "@/types";
+import type { CreationRequest } from "@/types";
+import { isTimeZone } from "./time-zones";
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 import { writeFile, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -55,7 +55,7 @@ export async function uploadImage(formData: FormData) {
   }
   try {
     const file = formData.get("image") as File;
-    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const fileName = `${crypto.randomUUID()}-${encodeURIComponent(file.name)}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (isLocal) {
@@ -185,6 +185,10 @@ export async function setTimeZone(zone: string) {
     return { ok: false, error: auth.error };
   }
   const { user } = auth;
+  // The timeZone enum rejects anything else, and Intl throws on it (ODY-627).
+  if (!isTimeZone(zone)) {
+    return { success: false, error: "invalid_time_zone" };
+  }
 
   try {
     const response = await fetch(
@@ -201,7 +205,7 @@ export async function setTimeZone(zone: string) {
         },
         body: JSON.stringify({
           data: {
-            timeZone: zone as TimeZone,
+            timeZone: zone,
           },
         }),
       },
@@ -917,7 +921,7 @@ export async function saveNotebookContent(
         : existingUrl;
       returnUrl = existingUrl;
     } else {
-      const fileName = `${uuidv4()}.ipynb`;
+      const fileName = `${crypto.randomUUID()}.ipynb`;
       s3Key = `${rootPath}/notebooks/${fileName}`;
       returnUrl = `${bucketUrl}/${s3Key}`;
     }
@@ -1032,7 +1036,7 @@ export async function uploadDataset(formData: FormData) {
   }
 
   try {
-    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const fileName = `${crypto.randomUUID()}-${encodeURIComponent(file.name)}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (isLocal) {

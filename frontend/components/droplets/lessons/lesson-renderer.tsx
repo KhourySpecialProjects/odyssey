@@ -35,7 +35,6 @@ import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
 import { toast } from "sonner";
 import { Highlight, HighlightColor } from "@/types";
-import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import {
   createHighlight,
@@ -49,7 +48,10 @@ import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
 import { HighlightDropdown } from "./highlight-dropdown";
 import { lessonGate } from "@/lib/lesson-gate";
-import { useOwnedPanel } from "@/stores/lesson-panel-store";
+import {
+  useLessonPanelStore,
+  useOwnedPanel,
+} from "@/stores/lesson-panel-store";
 import { HighlightHintBanner } from "./highlight-hint-banner";
 import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
 import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
@@ -117,6 +119,8 @@ export function LessonRenderer({
   // create/delete (the wrapper is keyed by lesson, so this resets per lesson).
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
   const panel = useOwnedPanel(lesson.id);
+  const mentorAvailable = useLessonPanelStore((s) => s.mentorAvailable);
+  const explain = useLessonPanelStore((s) => s.explain);
   // A new highlight is shown under a temporary (negative) id until it's saved
   const nextTempId = useRef(-1);
   const lessonContentRef = useRef<HTMLDivElement>(null);
@@ -175,6 +179,17 @@ export function LessonRenderer({
     .forEach((b: Block) => {
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
+
+  const dropletLessons = droplet.lessons ?? [];
+  const lessonIndex = dropletLessons.findIndex((l) => l.id === lesson.id);
+  const lessonPosition =
+    lessonIndex === -1
+      ? null
+      : {
+          current: lessonIndex + 1,
+          total: dropletLessons.length,
+          label: `Lesson ${lessonIndex + 1} of ${dropletLessons.length}`,
+        };
 
   const { gate, previous: previousLesson } = lessonGate({
     lessonId: lesson.id,
@@ -459,6 +474,28 @@ export function LessonRenderer({
           panel={panel}
         />
       )}
+      {lessonPosition && (
+        <div className="mb-3">
+          <p className="mb-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">
+            {lessonPosition.label}
+          </p>
+          <div
+            role="progressbar"
+            aria-label={lessonPosition.label}
+            aria-valuemin={0}
+            aria-valuemax={lessonPosition.total}
+            aria-valuenow={lessonPosition.current}
+            className="h-1 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+          >
+            <div
+              className="h-full rounded-full bg-[#2D7597] transition-[width] motion-reduce:transition-none"
+              style={{
+                width: `${(lessonPosition.current / lessonPosition.total) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
       <h1 className="text-[2.5rem] font-bold text-slate-900 dark:text-white">
         {lesson.name}
       </h1>
@@ -490,6 +527,7 @@ export function LessonRenderer({
             onRecolorHighlight={handleRecolorHighlight}
             onDeleteHighlight={handleDeleteHighlight}
             onNote={handleCreateNote}
+            onExplain={mentorAvailable ? explain : undefined}
             onMoveHighlight={
               movingId !== null ? handleMoveHighlight : undefined
             }

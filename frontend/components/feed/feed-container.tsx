@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useLayoutEffect, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
 import { IconUserPlus } from "@tabler/icons-react";
 import { AuthorizedUser } from "@/types";
 import { FriendRequestFeedBlock } from "../friends/friend-request-feed-block";
@@ -15,18 +14,24 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { getInitials } from "@/lib/utils";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 
 export function FeedContainer({
   authUser,
+  unreadCount,
   children,
 }: {
   authUser: AuthorizedUser;
+  unreadCount: number;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isFeedTab = pathname === "/activity";
   const [headerHeight, setHeaderHeight] = useState(69);
   const leftRef = useRef<HTMLElement>(null);
+
+  useEffect(
+    () => useFeedUnreadStore.getState().setServerCount(unreadCount),
+    [unreadCount],
+  );
 
   useLayoutEffect(() => {
     const update = () => {
@@ -76,7 +81,7 @@ export function FeedContainer({
         className="fixed left-0 z-40 hidden w-[260px] border-r border-[#D0D5DD] bg-[#FCFCFD] md:block dark:border-slate-700 dark:bg-slate-900"
         style={{ top: headerHeight }}
       >
-        <FeedLeftNav />
+        <FeedLeftNav userId={authUser.id} unreadCount={unreadCount} />
       </nav>
 
       {/* Content row: center + right column */}
@@ -85,16 +90,10 @@ export function FeedContainer({
         style={{ "--header-h": `${headerHeight}px` } as React.CSSProperties}
       >
         {/* Center */}
+        {/* The page scrolls as a whole, so the feed gets room below the strip (ODY-959) */}
         <div
           className="min-w-0 flex-1"
-          style={
-            isFeedTab
-              ? {
-                  height: `calc(100vh - ${headerHeight}px)`,
-                  overflow: "hidden",
-                }
-              : { minHeight: `calc(100vh - ${headerHeight}px)` }
-          }
+          style={{ minHeight: `calc(100vh - ${headerHeight}px)` }}
         >
           {children}
         </div>

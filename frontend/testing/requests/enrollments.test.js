@@ -29,6 +29,8 @@ const {
 const mockEnrollments = require("../mocks/enrollmentsMock");
 const { makeEmptyResponse } = require("../../lib/testing/mock-helpers");
 const { CACHE_TAGS } = require("../../lib/cache-tags");
+const { recordStreakDay } = require("../../lib/streak-days");
+const { clearReminderOnProgress } = require("../../lib/reminders");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -53,6 +55,22 @@ jest.mock("../../lib/requests/authorized-user", () => ({
 
 jest.mock("../../lib/requests/droplet", () => ({
   updateDropletAverageRating: jest.fn(),
+}));
+
+// Tested in testing/lib/streak-days.test.ts; here only whether it's called
+jest.mock("../../lib/streak-days", () => ({
+  recordStreakDay: jest.fn(async () => true),
+}));
+
+// Tested in testing/lib/reminders.test.ts; here only whether it's called
+jest.mock("../../lib/reminders", () => ({
+  clearReminderOnProgress: jest.fn(async () => true),
+}));
+
+// Voyage steps have their own tests (enrollment-voyage-steps.test.ts); keep
+// them from using up the fetchAPI responses queued here.
+jest.mock("../../lib/requests/voyage-enrollment", () => ({
+  checkAndCompleteVoyageNode: jest.fn(),
 }));
 
 jest.mock("next/cache", () => ({
@@ -1225,7 +1243,46 @@ describe("Enrollment Tests", () => {
 
     beforeEach(() => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      getAuthorizedUserByEmail.mockResolvedValue({
+        id: 1,
+        timeZone: "America/Chicago",
+      });
+    });
+
+    it("lights the learner's streak on a lesson's first view, in their time zone", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+      await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@test.com", {
+        fields: ["id", "email", "timeZone"],
+      });
+      expect(recordStreakDay).toHaveBeenCalledWith(
+        { id: 1, timeZone: "America/Chicago" },
+        3,
+      );
+    });
+
+    it("clears the droplet's reminder on a first view, and still succeeds if nothing was cleared", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment()]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+      clearReminderOnProgress.mockResolvedValueOnce(false);
+
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(clearReminderOnProgress).toHaveBeenCalledWith({ id: 1 }, 9);
+      expect(result).toEqual({ success: true, alreadyViewed: false });
+    });
+
+    it("skips the reminder clear for an enrollment with no droplet", async () => {
+      fetchAPI.mockResolvedValueOnce([enrollment({ droplet: null })]);
+      global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(result).toMatchObject({ success: true });
+      expect(clearReminderOnProgress).not.toHaveBeenCalled();
     });
 
     it("adds the lesson with a relation connect instead of rewriting the list", async () => {
@@ -1244,8 +1301,25 @@ describe("Enrollment Tests", () => {
       expect(init.method).toBe("PUT");
       expect(bodyOf(global.fetch.mock.calls[0])).toEqual({
         viewedLessons: { connect: ["docL3"] },
+        lastProgressDate: expect.any(String),
       });
       expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
+    });
+
+    it("sets lastProgressDate to the time of a lesson's first view", async () => {
+      jest.useFakeTimers({ now: new Date("2026-11-12T15:30:00.000Z") });
+      try {
+        fetchAPI.mockResolvedValueOnce([enrollment()]);
+        global.fetch.mockResolvedValueOnce(stored([1, 2, 3]));
+
+        await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+        expect(bodyOf(global.fetch.mock.calls[0]).lastProgressDate).toBe(
+          "2026-11-12T15:30:00.000Z",
+        );
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it("uses the fetched documentIds without any lookup", async () => {
@@ -1278,6 +1352,7 @@ describe("Enrollment Tests", () => {
 
       expect(bodyOf(global.fetch.mock.calls[0])).toEqual({
         viewedLessons: { connect: ["docResolved3"] },
+        lastProgressDate: expect.any(String),
       });
     });
 
@@ -1360,8 +1435,10 @@ describe("Enrollment Tests", () => {
       const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
 
       expect(result).toEqual({ success: true, alreadyViewed: true });
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled(); // so lastProgressDate stays
       expect(revalidateTag).not.toHaveBeenCalled();
+      expect(recordStreakDay).not.toHaveBeenCalled();
+      expect(clearReminderOnProgress).not.toHaveBeenCalled();
     });
 
     it("marks complete when every lesson was already viewed but completion wasn't recorded", async () => {

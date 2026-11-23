@@ -12,7 +12,7 @@ describe("ReviewPanelDock without resize", () => {
     );
 
     const aside = screen.getByRole("complementary", {
-      name: "Reviewer Transcript",
+      name: "Scorecard",
     });
     expect(aside.style.getPropertyValue("--panel-w")).toBe("");
     expect(screen.queryByRole("separator")).not.toBeInTheDocument();

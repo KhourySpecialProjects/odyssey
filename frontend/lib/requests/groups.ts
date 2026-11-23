@@ -20,6 +20,7 @@ import {
 } from "@/lib/strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
 import { SetGroupArchivedForMeSchema } from "@/lib/validations/group";
+import { fetchAllPages } from "@/lib/strapi-pagination";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -1088,6 +1089,8 @@ export async function getGroupDueDate(item: Droplet | Playlist, group: Group) {
                 playlist: { id: { $eq: item.id } },
               }),
         },
+        // Only the first row is read; without this Strapi sends 25 (ODY-720).
+        pagination: { pageSize: 1 },
       },
     });
 
@@ -1098,68 +1101,73 @@ export async function getGroupDueDate(item: Droplet | Playlist, group: Group) {
   }
 }
 
+/**
+ * The earliest due date the group page still shows: two days before today's
+ * UTC midnight. A tile shows "Late!" until the day after the date in the
+ * viewer's time zone, and the extra day covers UTC-12 to UTC+14. The value
+ * changes once a day, so the cached request is reused until then.
+ */
+function recentDueDateCutoff(now = new Date()): string {
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 2),
+  ).toISOString();
+}
+
+const DUE_DATE_ITEM_POPULATE = {
+  droplet: {
+    fields: ["id", "name", "slug"],
+  },
+  playlist: {
+    fields: ["id", "name", "slug"],
+  },
+};
+
+/**
+ * A group's due dates from two days ago on, oldest first, from every page
+ * (ODY-626). There is one row per member per item, so a class passes a page
+ * quickly, and older rows used to push the upcoming ones off the page. The
+ * group page only shows upcoming dates and the day-after "Late!" badge.
+ */
 export async function getGroupDueDates(
   group: Group,
   {
     sort = ["dueDate:asc"],
-    pagination = { pageSize: 250, page: 1 },
     fields,
-  }: StrapiRequestParams = {},
+  }: Pick<StrapiRequestParams, "sort" | "fields"> = {},
 ): Promise<DueDate[]> {
-  const path = `/due-dates`;
-  const urlParams = {
-    sort,
-    filters: {
-      $and: [{ group: { id: { $eq: group.id } } }],
-    },
-    populate: {
-      droplet: {
-        fields: ["id", "name", "slug"],
+  return fetchAllPages<DueDate>("/due-dates", {
+    urlParams: {
+      sort,
+      filters: {
+        $and: [
+          { group: { id: { $eq: group.id } } },
+          { dueDate: { $gte: recentDueDateCutoff() } },
+        ],
       },
-      playlist: {
-        fields: ["id", "name", "slug"],
-      },
+      populate: DUE_DATE_ITEM_POPULATE,
+      fields: [...(fields || []), "dueDate"],
     },
-    fields: [...(fields || []), "dueDate"],
-    pagination,
-  };
-
-  return await fetchAPI<DueDate[]>(path, {
-    urlParams,
     next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
   });
 }
 
+/** All of a user's due dates, oldest first, from every page (ODY-626). */
 export async function getUserDueDates(
   authorizedUserId: number,
   {
     sort = ["dueDate:asc"],
-    filters,
-    pagination = { pageSize: 250, page: 1 },
-    populate,
     fields,
-  }: StrapiRequestParams = {},
+  }: Pick<StrapiRequestParams, "sort" | "fields"> = {},
 ): Promise<DueDate[]> {
-  const path = `/due-dates`;
-  const urlParams = {
-    sort,
-    filters: {
-      $and: [{ authorized_user: { id: { $eq: authorizedUserId } } }],
-    },
-    populate: {
-      droplet: {
-        fields: ["id", "name", "slug"],
+  return fetchAllPages<DueDate>("/due-dates", {
+    urlParams: {
+      sort,
+      filters: {
+        $and: [{ authorized_user: { id: { $eq: authorizedUserId } } }],
       },
-      playlist: {
-        fields: ["id", "name", "slug"],
-      },
+      populate: DUE_DATE_ITEM_POPULATE,
+      fields: [...(fields || []), "dueDate"],
     },
-    fields: [...(fields || []), "dueDate"],
-    pagination,
-  };
-
-  return await fetchAPI<DueDate[]>(path, {
-    urlParams,
     next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
   });
 }

@@ -5,6 +5,7 @@ import type { DropletSnapshot } from "@/lib/ai-review/types";
 import { blockNoteBlocksOf } from "@/lib/blocknote/convert-blocks";
 import { mentorInputSchema } from "@/lib/validations/mentor";
 import { readJson } from "@/scripts/ai-review/lib/files";
+import type { LearnerContext } from "./learner";
 
 export { readJson, runDirName, writeJson } from "@/scripts/ai-review/lib/files";
 
@@ -15,8 +16,11 @@ export const MENTOR_DIR = path.resolve(process.cwd(), "scripts/mentor");
 export const FIXTURES_DIR = path.join(MENTOR_DIR, "fixtures");
 export const RUNS_DIR = path.join(MENTOR_DIR, "runs");
 export const CASES_FILE = path.join(MENTOR_DIR, "cases.jsonl");
+/** Named learner profiles (ODY-941), each a `<name>.json` */
+export const LEARNERS_DIR = path.join(FIXTURES_DIR, "learners");
 
-export const CASE_KINDS = [
+/** The kinds v1 was measured with (ODY-885); their questions and grading stay as they are */
+export const V1_KINDS = [
   "covered",
   "uncovered",
   "wrong-pick",
@@ -24,8 +28,74 @@ export const CASE_KINDS = [
   "off-topic",
   "injection",
 ] as const;
+/** Plus v2's (ODY-941), for ODY-938 (personalized), 936 (Quiz me) and 940 (review) */
+export const CASE_KINDS = [
+  ...V1_KINDS,
+  "personalized",
+  "invented-history",
+  "quiz-ask",
+  "quiz-grade",
+  "review",
+] as const;
 export type CaseKind = (typeof CASE_KINDS)[number];
 export const QUIZ_KINDS: CaseKind[] = ["wrong-pick", "extraction"];
+/** Mentor asks the quiz question: leaks are flagged, but kept out of v1's leak threshold */
+export const ASKING_KINDS: CaseKind[] = ["quiz-ask", "review"];
+/** What a personalized answer should do with the learner */
+export const SHOULDS = ["build-on", "primer", "level"] as const;
+/** A quiz-grade case's gold verdict; off-topic means the reply shouldn't grade at all */
+export const VERDICTS = [
+  "correct",
+  "partly",
+  "not-quite",
+  "off-topic",
+] as const;
+export type Verdict = (typeof VERDICTS)[number];
+
+/** No < or >, so a profile can't open or close a tag of the prompt */
+const plain = z
+  .string()
+  .min(1)
+  .regex(/^[^<>]+$/, "no < or >");
+
+/** A learner profile: ODY-934's LearnerContext, plus a note for cases.md that's never sent */
+export const learnerSchema = z
+  .object({
+    finished: z
+      .array(
+        z
+          .object({
+            name: plain,
+            tags: z.array(plain),
+            difficulty: plain.nullable(),
+            month: z.string().regex(/^\d{4}-\d{2}$/, "YYYY-MM"),
+          })
+          .strict(),
+      )
+      .max(15)
+      .refine(
+        (rows) => rows.every((r, i) => !i || r.month <= rows[i - 1].month),
+        "newest first",
+      ),
+    inProgress: z
+      .array(
+        z
+          .object({
+            name: plain,
+            viewed: z.number().int().min(0),
+            total: z.number().int().min(1),
+          })
+          .strict(),
+      )
+      .max(5),
+    prerequisites: z.array(
+      z.object({ name: plain, finished: z.boolean() }).strict(),
+    ),
+    viewedLessons: z.array(plain),
+    about: plain.optional(),
+  })
+  .strict() satisfies z.ZodType<LearnerContext & { about?: string }>;
+export type LearnerProfile = z.infer<typeof learnerSchema>;
 
 /** One line of cases.jsonl, its fields as the README describes them */
 export const caseSchema = z
@@ -40,13 +110,25 @@ export const caseSchema = z
     questionId: z.number().int().optional(),
     canary: z.string().min(1).optional(),
     forbidden: z.string().min(1).optional(),
+    /** Personalized: what the answer should do with the learner */
+    should: z.enum(SHOULDS).optional(),
+    /** Quiz-grade: the verdict the student's answer earns */
+    verdict: z.enum(VERDICTS).optional(),
+    /** A hand-written reply that should pass, for --answers oracle where a template can't write one */
+    oracle: z.string().min(1).optional(),
+    /** A profile's name in fixtures/learners, or a profile written out */
+    learner: z
+      .union([z.string().regex(/^[a-z0-9-]+$/), learnerSchema])
+      .optional(),
     tags: z.array(z.string()).default([]),
     note: z.string().optional(),
   })
   .strict();
-/** A case, with its lesson's format from the fixture */
+/** A case, with its lesson's format from the fixture and its learner's profile */
 export type EvalCase = z.infer<typeof caseSchema> & {
   format: "classic" | "blocknote";
+  /** Null with no learner, or a name with no profile (prepareCase reports that) */
+  profile: LearnerProfile | null;
 };
 
 /** Droplet snapshots by slug */
@@ -75,8 +157,34 @@ const parseLine = (line: string) => {
   }
 };
 
-/** The cases in file order, with their lesson's format. Throws on any bad line, naming each. */
-export function loadCases(fixtures: Fixtures, file = CASES_FILE): EvalCase[] {
+/** Every `<name>.json` profile; none when there's no directory. Throws on a bad file, naming each. */
+export function loadLearners(dir = LEARNERS_DIR): Map<string, LearnerProfile> {
+  if (!fs.existsSync(dir)) return new Map();
+  const bad: string[] = [];
+  const profiles = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .flatMap((f) => {
+      const parsed = learnerSchema.safeParse(readJson(path.join(dir, f)));
+      if (parsed.success)
+        return [[f.replace(/\.json$/, ""), parsed.data] as const];
+      const issues = parsed.error.issues.map(
+        (issue) => `${issue.path.join(".")}: ${issue.message}`,
+      );
+      bad.push(`${f}: ${issues.join("; ")}`);
+      return [];
+    });
+  if (bad.length) throw new Error(`${dir}:\n${bad.join("\n")}`);
+  return new Map(profiles);
+}
+
+/** The cases in file order, with their lesson's format and learner profile. Throws on any bad line, naming each. */
+export function loadCases(
+  fixtures: Fixtures,
+  file = CASES_FILE,
+  learners = loadLearners(),
+): EvalCase[] {
   const bad: string[] = [];
   const cases = fs
     .readFileSync(file, "utf8")
@@ -98,7 +206,11 @@ export function loadCases(fixtures: Fixtures, file = CASES_FILE): EvalCase[] {
       ?.lessons.find((l) => l.id === c.lessonId);
     const tags = c.tags.filter((t) => t !== "classic" && t !== "blocknote");
     const blockNote = lesson && blockNoteBlocksOf(lesson);
-    return { ...c, tags, format: blockNote ? "blocknote" : "classic" };
+    const profile =
+      typeof c.learner === "string"
+        ? learners.get(c.learner) ?? null
+        : c.learner ?? null;
+    return { ...c, tags, format: blockNote ? "blocknote" : "classic", profile };
   });
 }
 

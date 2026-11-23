@@ -1,7 +1,6 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
-import { v4 as uuidv4 } from "uuid";
 import type { ImportSection } from "./types";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkRateLimit, formatRateLimitError } from "./rate-limiter";
@@ -113,7 +112,7 @@ ${text}`;
       const sourceInfo = deriveSourceInfo(content, fileType, start, end);
 
       return {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         title: lesson.title,
         markdownContent: content,
         sourceInfo,

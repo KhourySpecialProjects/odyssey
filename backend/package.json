@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@_sh/strapi-plugin-ckeditor": "8.0.0",
-    "@aws-sdk/client-s3": "^3.1161.0",
-    "@strapi/plugin-users-permissions": "5.56.0",
-    "@strapi/provider-upload-aws-s3": "5.60.0",
-    "@strapi/strapi": "5.56.0",
+    "@aws-sdk/client-s3": "^3.1170.0",
+    "@strapi/plugin-users-permissions": "5.62.0",
+    "@strapi/provider-upload-aws-s3": "5.62.0",
+    "@strapi/strapi": "5.62.0",
     "ckeditor5": "48.4.0",
     "pg": "^8.11.5",
     "react": "^18.0.0",
@@ -62,6 +62,6 @@
   "devDependencies": {
     "better-sqlite3": "12.9.0",
     "jest": "^30.5.2",
-    "supertest": "^7.3.1"
+    "supertest": "^7.3.2"
   }
 }

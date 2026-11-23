@@ -101,7 +101,7 @@ describe("footer", () => {
       pathname = path;
       render(<ReviewTranscript droplet={droplet} panel={data} />);
 
-      const link = screen.getByRole("link", { name: "Final Overview Scan" });
+      const link = screen.getByRole("link", { name: "Pre-publish checks" });
       expect(link).toHaveAttribute("href", "/draft/d/intro/scan");
       expect(link.getAttribute("aria-current")).toBe(current);
       const after = (el: HTMLElement) =>

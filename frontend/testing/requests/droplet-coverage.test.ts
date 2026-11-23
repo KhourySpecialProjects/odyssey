@@ -504,19 +504,66 @@ describe("droplet-coverage — createNewTag", () => {
     expect(revalidateTag).toHaveBeenCalledWith("tags");
   });
 
-  it("returns { success: false } when fetch is not ok (lines 423-424)", async () => {
+  it("sends the trimmed name and the placeholder slug, which Strapi replaces (ODY-869)", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ data: { id: 6, attributes: { name: "CLI (x)" } } }),
+    } as Response);
+
+    await createNewTag("  CLI (x) ");
+    expect(JSON.parse(fetchMock.mock.calls[0][1]!.body as string)).toEqual({
+      data: { name: "CLI (x)", slug: "pending~slug" },
+    });
+  });
+
+  it("doesn't call Strapi for a blank name", async () => {
+    const result = await createNewTag("   ");
+    expect(result).toEqual({ success: false, error: "Enter a tag name" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // Only a taken name says "already exists"; other rejections say so (ODY-869)
+  it.each([
+    [
+      "the name is taken",
+      {
+        errors: [{ path: ["name"], message: "This attribute must be unique" }],
+      },
+      'A tag named "BadTag" already exists',
+    ],
+    [
+      "the slug is rejected",
+      { errors: [{ path: ["slug"], message: "slug must match" }] },
+      'Couldn\'t create the tag "BadTag". Please try again.',
+    ],
+    [
+      "the error names no field",
+      {},
+      'Couldn\'t create the tag "BadTag". Please try again.',
+    ],
+  ])("when %s, returns its message", async (_case, details, error) => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      text: () => Promise.resolve("Internal Server Error"),
-      json: () => Promise.resolve({}),
+      json: () => Promise.resolve({ error: { message: "x", details } }),
+    } as Response);
+
+    const result = await createNewTag("BadTag");
+    expect(result).toEqual({ success: false, error });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("returns the generic message when the body isn't JSON", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.reject(new SyntaxError("Unexpected token <")),
     } as Response);
 
     const result = await createNewTag("BadTag");
     expect(result).toEqual({
       success: false,
-      error: "Failed to add new tag",
+      error: 'Couldn\'t create the tag "BadTag". Please try again.',
     });
-    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("returns { success: false } when fetch throws", async () => {
@@ -598,6 +645,41 @@ describe("droplet-coverage — createDroplet", () => {
       error: "Validation error (name)",
       data: null,
     });
+  });
+
+  // These used to throw reading details.errors[0], hiding the cause (ODY-868)
+  it.each([
+    [
+      "an error that names no field",
+      () => Promise.resolve({ error: { message: "Forbidden", details: {} } }),
+      "Forbidden",
+    ],
+    [
+      "a body that isn't JSON",
+      () => Promise.reject(new SyntaxError("Unexpected token <")),
+      "HTTP 403",
+    ],
+  ])("returns Strapi's reason for %s", async (_case, json, error) => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    getGetCurrentUser().mockResolvedValue({ email: "author@test.com" });
+    getGetAuthorizedUserByEmail().mockResolvedValue({ id: 1 });
+    getMockedFetchAPI().mockResolvedValueOnce([]);
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      json,
+    } as unknown as Response);
+
+    const result = await createDroplet({
+      name: "Jaylen's Droplet",
+      focusArea: "technical",
+      type: "knowledge",
+      tagIds: [],
+      learningObjectives: ["Objective 1"],
+      difficulty: "beginner",
+    });
+
+    expect(result).toEqual({ ok: false, error, data: null });
   });
 
   it("successfully creates a droplet", async () => {

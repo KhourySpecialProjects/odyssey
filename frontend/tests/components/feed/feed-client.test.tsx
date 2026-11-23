@@ -5,15 +5,39 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
-import { fetchAnnouncements, markAnnouncementRead } from "@/lib/requests/feed";
+import {
+  fetchAnnouncements,
+  getUnreadAnnouncementCount,
+  markAnnouncementRead,
+  markAnnouncementUnread,
+} from "@/lib/requests/feed";
+import {
+  checkMyReminder,
+  muteReminder,
+  snoozeReminder,
+  undoReminder,
+} from "@/lib/requests/reminders";
+import { useFeedUnreadStore } from "@/stores/feed-unread-store";
 import { toast } from "sonner";
+import { useStreakStore } from "@/stores/streak-store";
+import { makeReminderAnnouncement } from "@/testing/mocks/reminderMock";
+import { makeStreak } from "@/testing/mocks/streakMock";
 
 jest.mock("@/lib/requests/feed", () => ({
   fetchAnnouncements: jest.fn(),
+  getUnreadAnnouncementCount: jest.fn(),
   markAnnouncementRead: jest.fn(),
   markAnnouncementUnread: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/reminders", () => ({
+  checkMyReminder: jest.fn(),
+  snoozeReminder: jest.fn(),
+  muteReminder: jest.fn(),
+  undoReminder: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -25,6 +49,14 @@ describe("FeedClient", () => {
     jest.clearAllMocks();
     (fetchAnnouncements as jest.Mock).mockReset();
     (fetchAnnouncements as jest.Mock).mockResolvedValue(mockPage([]));
+    (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(0);
+    (checkMyReminder as jest.Mock).mockReset();
+    (checkMyReminder as jest.Mock).mockResolvedValue({
+      ok: true,
+      error: null,
+      data: { raised: false },
+    });
+    useFeedUnreadStore.setState({ serverCount: null, feedCount: null });
     jest.useRealTimers();
     jest.spyOn(console, "error").mockRestore();
   });
@@ -346,6 +378,20 @@ describe("FeedClient", () => {
       expect(fetchAnnouncements).not.toHaveBeenCalled();
     });
 
+    it("shows the learner's streak card even with no announcements", async () => {
+      useStreakStore.setState({
+        streak: makeStreak({ current: 24, litToday: true }),
+      });
+      render(<FeedClient selectedRoles={[]} authUser={mockAuthUser} />);
+
+      expect(screen.getByText(/unlocked Spilling Sack!/)).toBeInTheDocument();
+      expect(
+        screen.queryByText("No unread announcements"),
+      ).not.toBeInTheDocument();
+      useStreakStore.setState({ streak: null });
+      localStorage.clear();
+    });
+
     it("mark read removes the item right away and quietly re-syncs the page", async () => {
       (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
         success: true,
@@ -466,6 +512,31 @@ describe("FeedClient", () => {
       expect(screen.getByText("Announcement 0")).toBeInTheDocument();
     });
 
+    it("shows the server's error message in the toast", async () => {
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+        error: "Announcement not found",
+      });
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage(generateMockAnnouncements(25), 3),
+      );
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={initialFeed()}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Announcement not found"),
+      );
+    });
+
     it("moves back a page when a refresh finds the current page emptied", async () => {
       (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
         success: true,
@@ -534,6 +605,526 @@ describe("FeedClient", () => {
     });
   });
 
+  describe("unread badge count", () => {
+    const seededFeed = () => ({
+      roles: ["droplet"] as AnnouncementType[],
+      page: mockPage(generateMockAnnouncements(2), 1),
+    });
+    const renderFeed = () =>
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={seededFeed()}
+        />,
+      );
+    const feedCount = () => useFeedUnreadStore.getState().feedCount;
+
+    beforeEach(() => useFeedUnreadStore.setState({ serverCount: 5 }));
+
+    it("counts the selected filters, and goes back to the layout's count on unmount", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      const { unmount } = renderFeed();
+
+      await waitFor(() => expect(feedCount()).toBe(2));
+      expect(getUnreadAnnouncementCount).toHaveBeenCalledWith(["droplet"]);
+      unmount();
+      expect(feedCount()).toBeNull();
+    });
+
+    it("leaves the badge alone when a mark read fails after unmount", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      let finish: (r: { success: boolean }) => void = () => {};
+      (markAnnouncementRead as jest.Mock).mockReturnValueOnce(
+        new Promise((resolve) => (finish = resolve)),
+      );
+      const { unmount } = renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+      unmount();
+      await act(async () => finish({ success: false }));
+
+      expect(feedCount()).toBeNull();
+    });
+
+    it("drops by one on mark read, and puts it back when that fails", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: false,
+      });
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      // Hold the post-action recount so the optimistic value is visible
+      (getUnreadAnnouncementCount as jest.Mock).mockReturnValue(
+        new Promise(() => {}),
+      );
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+      expect(feedCount()).toBe(1);
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      expect(feedCount()).toBe(2);
+    });
+
+    const recount = getUnreadAnnouncementCount as jest.Mock;
+    const markReadClick = () =>
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark as read" })[0],
+      );
+
+    it("drops by one on mark read, then the recount's value wins", async () => {
+      recount.mockResolvedValue(2);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      recount.mockResolvedValue(9);
+
+      markReadClick();
+      expect(feedCount()).toBe(1);
+      await waitFor(() => expect(feedCount()).toBe(9));
+    });
+
+    it("leaves the count alone when the recount fails (null)", async () => {
+      recount.mockResolvedValue(2);
+      renderFeed();
+      await waitFor(() => expect(feedCount()).toBe(2));
+      recount.mockResolvedValue(null);
+      (markAnnouncementRead as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+
+      markReadClick();
+      await waitFor(() => expect(recount).toHaveBeenCalledTimes(2));
+      await act(async () => {});
+      expect(feedCount()).toBe(1);
+    });
+
+    it("adds one on mark unread from the Read tab, from the filtered count", async () => {
+      recount.mockResolvedValue(3);
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage(generateMockAnnouncements(2, 100)),
+      );
+      (markAnnouncementUnread as jest.Mock).mockResolvedValueOnce({
+        success: true,
+      });
+      renderFeed();
+      // Switch tabs before the filtered count lands: it must still arrive
+      fireEvent.click(screen.getByRole("button", { name: "Read" }));
+      await waitFor(() => expect(feedCount()).toBe(3));
+      recount.mockReturnValue(new Promise(() => {}));
+
+      fireEvent.click(
+        (await screen.findAllByRole("button", { name: "Mark as unread" }))[0],
+      );
+      expect(feedCount()).toBe(4);
+    });
+
+    it("counts a global broadcast, and rolls back when marking fails", async () => {
+      (getUnreadAnnouncementCount as jest.Mock).mockResolvedValue(2);
+      let fail!: (r: { success: boolean }) => void;
+      (markAnnouncementRead as jest.Mock).mockReturnValueOnce(
+        new Promise((resolve) => (fail = resolve)),
+      );
+      const broadcast = {
+        ...generateMockAnnouncements(1)[0],
+        type: "system" as AnnouncementType,
+      };
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage([broadcast], 1),
+          }}
+        />,
+      );
+      await waitFor(() => expect(feedCount()).toBe(2));
+
+      fireEvent.click(screen.getByRole("button", { name: "Mark as read" }));
+      expect(feedCount()).toBe(1);
+      await act(async () => fail({ success: false }));
+      expect(feedCount()).toBe(2);
+    });
+  });
+
+  describe("reminder check (ODY-931)", () => {
+    const renderLoaded = async (refresh?: Promise<unknown>) => {
+      (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
+        mockPage(generateMockAnnouncements(2)),
+      );
+      if (refresh)
+        (fetchAnnouncements as jest.Mock).mockReturnValueOnce(refresh);
+      const view = render(
+        <FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />,
+      );
+      expect(await screen.findByText("Announcement 0")).toBeInTheDocument();
+      return view;
+    };
+
+    it("checks once per mount, when not pending", async () => {
+      await renderLoaded();
+      await waitFor(() => expect(checkMyReminder).toHaveBeenCalledTimes(1));
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+    });
+
+    it("refetches silently and recounts the badge when a reminder is raised", async () => {
+      (checkMyReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { raised: true },
+      });
+      // The refetch never resolves, so the old list must stay on screen
+      await renderLoaded(new Promise(() => {}));
+
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(2));
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it("on a seeded page, refetches silently once and recounts the badge", async () => {
+      (checkMyReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { raised: true },
+      });
+      // The refetch never resolves, so the seeded list must stay on screen
+      (fetchAnnouncements as jest.Mock).mockReturnValueOnce(
+        new Promise(() => {}),
+      );
+      render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage(generateMockAnnouncements(2), 1),
+          }}
+        />,
+      );
+
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it.each([
+      ["nothing raised", () => Promise.resolve({ data: { raised: false } })],
+      ["a failed check", () => Promise.resolve({ ok: false, data: null })],
+      ["a rejected check", () => Promise.reject(new Error("down"))],
+    ])("changes nothing on %s", async (_, result) => {
+      (checkMyReminder as jest.Mock).mockImplementation(result);
+      await renderLoaded();
+      await waitFor(() => expect(checkMyReminder).toHaveBeenCalledTimes(1));
+      await act(async () => {});
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
+      expect(getUnreadAnnouncementCount).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("Remind me later (ODY-932)", () => {
+    const deferred = <T,>() => {
+      let resolve!: (value: T) => void;
+      const promise = new Promise<T>((r) => (resolve = r));
+      return { promise, resolve };
+    };
+    const reminderCard = (id = 7) => makeReminderAnnouncement({ id });
+    const feedCount = () => useFeedUnreadStore.getState().feedCount;
+    const recount = getUnreadAnnouncementCount as jest.Mock;
+    const toastCall = () => (toast.success as jest.Mock).mock.calls[0];
+    const textOf = (node: React.ReactNode) =>
+      renderToStaticMarkup(<>{node}</>)
+        .replace(/<[^>]+>/g, "")
+        .replace(/&#x27;/g, "'");
+
+    const renderFeed = async (tab: "unread" | "read" | string[] = "unread") => {
+      const ids = Array.isArray(tab) ? [7, 8] : [7];
+      if (Array.isArray(tab)) tab = "unread";
+      useFeedUnreadStore.setState({ serverCount: 5 });
+      recount.mockResolvedValue(1);
+      const view = render(
+        <FeedClient
+          selectedRoles={["droplet"]}
+          authUser={mockAuthUser}
+          initialFeed={{
+            roles: ["droplet"],
+            page: mockPage(ids.map((id) => reminderCard(id))),
+          }}
+        />,
+      );
+      await waitFor(() => expect(feedCount()).toBe(1));
+      if (tab === "read") {
+        (fetchAnnouncements as jest.Mock).mockResolvedValue(
+          mockPage([reminderCard()]),
+        );
+        fireEvent.click(screen.getByRole("button", { name: /^Read/ }));
+        await screen.findByText("Git");
+      }
+      // Hold the recount so the optimistic value stays visible
+      recount.mockReturnValue(new Promise(() => {}));
+      return view;
+    };
+    const choose = async (name: string) => {
+      fireEvent.keyDown(
+        screen.getAllByRole("button", { name: "Remind me later" })[0],
+        { key: "Enter" },
+      );
+      fireEvent.click(await screen.findByRole("menuitem", { name }));
+      await act(async () => {});
+    };
+
+    it("snoozes: removes the card and drops the badge before the server answers, then toasts the date with Undo", async () => {
+      const server = deferred<unknown>();
+      (snoozeReminder as jest.Mock).mockReturnValue(server.promise);
+      await renderFeed();
+
+      await choose("In 3 days");
+
+      expect(screen.queryByText("Git")).not.toBeInTheDocument();
+      expect(feedCount()).toBe(0);
+      expect(toast.success).not.toHaveBeenCalled();
+      await act(async () => {
+        server.resolve({
+          ok: true,
+          error: null,
+          data: { until: "2026-11-16T05:00:00.000Z", dateLabel: "Mon, Nov 16" },
+        });
+      });
+      await waitFor(() => expect(toast.success).toHaveBeenCalled());
+      expect(snoozeReminder).toHaveBeenCalledWith(7, "in_3_days");
+      const [node, opts] = toastCall();
+      expect(textOf(node)).toBe(
+        "Got it. We'll remind you about Git on Mon, Nov 16.",
+      );
+      expect(opts.action.label).toBe("Undo");
+    });
+
+    it("stops: removes the card, drops the badge, mutes and toasts 30 days with Undo", async () => {
+      (muteReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: null,
+      });
+      await renderFeed();
+
+      await choose("Stop reminding me");
+
+      expect(screen.queryByText("Git")).not.toBeInTheDocument();
+      expect(feedCount()).toBe(0);
+      await waitFor(() => expect(toast.success).toHaveBeenCalled());
+      expect(muteReminder).toHaveBeenCalledWith(7);
+      const [node, opts] = toastCall();
+      expect(textOf(node)).toBe(
+        "Got it. We won't remind you about Git for 30 days.",
+      );
+      expect(opts.action.label).toBe("Undo");
+    });
+
+    it("Undo calls undoReminder, puts the badge back and refetches silently", async () => {
+      (snoozeReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { until: "x", dateLabel: "Mon, Nov 16" },
+      });
+      (undoReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: null,
+      });
+      await renderFeed();
+      await choose("Tomorrow");
+      await waitFor(() => expect(toast.success).toHaveBeenCalled());
+      await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalled());
+      (fetchAnnouncements as jest.Mock).mockReturnValue(new Promise(() => {}));
+      const callsBefore = (fetchAnnouncements as jest.Mock).mock.calls.length;
+
+      await act(async () => {
+        await toastCall()[1].action.onClick();
+      });
+
+      expect(undoReminder).toHaveBeenCalledWith(7);
+      expect(feedCount()).toBe(1);
+      expect(fetchAnnouncements).toHaveBeenCalledTimes(callsBefore + 1);
+      expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+    });
+
+    it("does not touch the badge when Undo finishes after the feed unmounted", async () => {
+      (snoozeReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { until: "x", dateLabel: "Mon, Nov 16" },
+      });
+      const server = deferred<unknown>();
+      (undoReminder as jest.Mock).mockReturnValue(server.promise);
+      const view = await renderFeed();
+      await choose("Tomorrow");
+      await waitFor(() => expect(toast.success).toHaveBeenCalled());
+      let undo: Promise<void> = Promise.resolve();
+      act(() => {
+        undo = toastCall()[1].action.onClick();
+      });
+      view.unmount();
+      useFeedUnreadStore.setState({ feedCount: null });
+
+      await act(async () => {
+        server.resolve({ ok: true, error: null, data: null });
+        await undo;
+      });
+
+      expect(feedCount()).toBeNull();
+    });
+
+    it.each([
+      ["resolves ok: false", () => Promise.resolve({ ok: false, error: "x" })],
+      ["rejects", () => Promise.reject(new Error("network down"))],
+    ])(
+      "rolls the badge back, toasts an error and restores the card when the action %s",
+      async (_name, outcome) => {
+        (snoozeReminder as jest.Mock).mockImplementation(outcome);
+        await renderFeed();
+
+        await choose("Tomorrow");
+
+        await waitFor(() =>
+          expect(toast.error).toHaveBeenCalledWith(
+            "Couldn't update this reminder",
+          ),
+        );
+        expect(feedCount()).toBe(1);
+        expect(toast.success).not.toHaveBeenCalled();
+        await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalled());
+        await waitFor(() =>
+          expect(
+            screen.queryByTestId("loading-spinner"),
+          ).not.toBeInTheDocument(),
+        );
+      },
+    );
+
+    it.each([
+      ["resolves ok: false", () => Promise.resolve({ ok: false, error: "x" })],
+      ["rejects", () => Promise.reject(new Error("network down"))],
+    ])(
+      "keeps the card on screen when the action %s and the refetch rejects",
+      async (_name, outcome) => {
+        (snoozeReminder as jest.Mock).mockImplementation(outcome);
+        await renderFeed();
+        (fetchAnnouncements as jest.Mock).mockRejectedValue(new Error("down"));
+
+        await choose("Tomorrow");
+
+        await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalled());
+        await act(async () => {});
+        expect(screen.getByText("Git")).toBeInTheDocument();
+      },
+    );
+
+    it("leaves the badge alone when the action fails after unmount", async () => {
+      const server = deferred<unknown>();
+      (snoozeReminder as jest.Mock).mockReturnValue(server.promise);
+      const view = await renderFeed();
+      await choose("Tomorrow");
+      view.unmount();
+      useFeedUnreadStore.setState({ feedCount: null });
+
+      await act(async () => {
+        server.resolve({ ok: false, error: "x" });
+      });
+
+      expect(feedCount()).toBeNull();
+    });
+
+    it.each([
+      ["resolves ok: false", () => Promise.resolve({ ok: false, error: "x" })],
+      ["rejects", () => Promise.reject(new Error("network down"))],
+    ])(
+      "toasts an error, keeps the badge down and still refetches when Undo %s",
+      async (_name, outcome) => {
+        (snoozeReminder as jest.Mock).mockResolvedValue({
+          ok: true,
+          error: null,
+          data: { until: "x", dateLabel: "Mon, Nov 16" },
+        });
+        (undoReminder as jest.Mock).mockImplementation(outcome);
+        await renderFeed();
+        await choose("Tomorrow");
+        await waitFor(() => expect(toast.success).toHaveBeenCalled());
+        await waitFor(() => expect(fetchAnnouncements).toHaveBeenCalled());
+        const callsBefore = (fetchAnnouncements as jest.Mock).mock.calls.length;
+
+        await act(async () => {
+          await toastCall()[1].action.onClick();
+        });
+
+        expect(toast.error).toHaveBeenCalledWith("Couldn't undo");
+        expect(feedCount()).toBe(0);
+        expect(fetchAnnouncements).toHaveBeenCalledTimes(callsBefore + 1);
+      },
+    );
+
+    it("moves focus to the next card's first control after a selection", async () => {
+      (snoozeReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { until: "x", dateLabel: "Mon, Nov 16" },
+      });
+      await renderFeed(["a", "b"]);
+      (fetchAnnouncements as jest.Mock).mockResolvedValue(
+        mockPage([reminderCard(8)]),
+      );
+
+      await choose("Tomorrow");
+
+      await waitFor(() =>
+        expect(
+          screen.getAllByRole("button", { name: "Mark as read" }),
+        ).toHaveLength(1),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Mark as read" }),
+        ).toHaveFocus(),
+      );
+    });
+
+    it("moves focus to the list when no card is left", async () => {
+      (snoozeReminder as jest.Mock).mockResolvedValue({
+        ok: true,
+        error: null,
+        data: { until: "x", dateLabel: "Mon, Nov 16" },
+      });
+      const view = await renderFeed();
+
+      await choose("Tomorrow");
+
+      await waitFor(() =>
+        expect(view.container.querySelector("[tabindex='-1']")).toHaveFocus(),
+      );
+    });
+
+    it("shows no Remind me later button on the Read tab", async () => {
+      await renderFeed("read");
+
+      expect(
+        screen.queryByRole("button", { name: "Remind me later" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it("does not fetch while pending (Suspense fallback)", async () => {
     render(
       <FeedClient
@@ -546,5 +1137,6 @@ describe("FeedClient", () => {
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
     await act(async () => {});
     expect(fetchAnnouncements).not.toHaveBeenCalled();
+    expect(checkMyReminder).not.toHaveBeenCalled();
   });
 });

@@ -27,7 +27,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const FOCUS =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A]";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1F5E7A] dark:focus-visible:outline-sky-400";
 
 /**
  * The panel fixed to the right edge: open, or a 48 px rail; a drawer below 1280
@@ -128,9 +128,7 @@ export function ReviewPanelDock({
       <aside
         ref={aside}
         id={asideId}
-        aria-label={
-          rail ? "Reviewer Transcript (collapsed)" : "Reviewer Transcript"
-        }
+        aria-label={rail ? "Scorecard (collapsed)" : "Scorecard"}
         {...(modal ? { role: "dialog", "aria-modal": true } : {})}
         onKeyDown={onKeyDown}
         className={cn(
@@ -152,10 +150,10 @@ export function ReviewPanelDock({
             <button
               ref={openButton}
               type="button"
-              aria-label="Open Reviewer Transcript"
+              aria-label="Open Scorecard"
               onClick={open}
               className={cn(
-                "rounded-lg p-2 text-slate-700 hover:bg-slate-100",
+                "rounded-lg p-2 text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10",
                 FOCUS,
               )}
             >
@@ -163,7 +161,7 @@ export function ReviewPanelDock({
             </button>
             <span
               aria-hidden
-              className="flex flex-col items-center text-xs font-semibold text-[#1F5E7A]"
+              className="flex flex-col items-center text-xs font-semibold text-[#1F5E7A] dark:text-sky-300"
             >
               <IconMessage className="h-4 w-4" />
               {total}
@@ -176,10 +174,10 @@ export function ReviewPanelDock({
           <button
             ref={collapseButton}
             type="button"
-            aria-label="Collapse Reviewer Transcript"
+            aria-label="Collapse Scorecard"
             onClick={collapse}
             className={cn(
-              "absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100",
+              "absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10",
               FOCUS,
             )}
           >
@@ -192,7 +190,7 @@ export function ReviewPanelDock({
             min={resize.min}
             max={resize.max}
             controls={asideId}
-            label="Reviewer Transcript"
+            label="Scorecard"
             onResize={resize.setWidth}
             onReset={resize.reset}
             onDragChange={resize.setDragging}

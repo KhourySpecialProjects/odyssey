@@ -3,7 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { citationsFor } from "./context";
 import type { MentorErrorCode, MentorEvent } from "./events";
 import { openSse, type SseStream } from "./sse";
-import type { LessonContext } from "./types";
+import type { Citation, LessonContext } from "./types";
 import type { MentorTokenUsage } from "./usage";
 
 // Streams one Mentor answer from Claude to the browser (ODY-886). It uses the
@@ -25,11 +25,25 @@ export type MentorAnswer = {
   /** The event stream for the route to return */
   response: Response;
   /**
-   * What the answer used, once it has ended. Null if Claude never started.
+   * What the answer used, once it has ended. Null if Claude never started,
+   * or for a saved reply (ODY-967).
    * An answer cut short counts at least the characters that streamed, at
    * about 4 to a token, because its last usage report never came.
    */
   usage: Promise<MentorTokenUsage | null>;
+  /** The answer if it finished with a done event; else null (ODY-937) */
+  completed: Promise<MentorCompleted | null>;
+};
+
+/** A finished answer (ODY-937), and how Claude ended it (ODY-967) */
+export type MentorCompleted = {
+  /** The answer text, refs kept */
+  text: string;
+  citations: Citation[];
+  /** Claude's last stop reason: "max_tokens" means it was truncated */
+  stopReason: Anthropic.StopReason | null;
+  /** ODY-972's give-away check: passed, or replaced by a fallback. Unset until 972 lands. */
+  check?: "passed" | "replaced";
 };
 
 const failure = (code: MentorErrorCode): MentorEvent => ({
@@ -135,7 +149,7 @@ export async function streamMentorAnswer({
   const open = (sse = openSse({ onCancel: () => stop("student") }));
   // Text that arrived while the stream opened
   if (answer) open.send({ type: "text", text: answer });
-  const usage = (async () => {
+  const outcome = (async () => {
     let end: MentorEvent | null = null;
     let finished = false;
     try {
@@ -155,7 +169,21 @@ export async function streamMentorAnswer({
     }
     if (end) open.send(end);
     open.close();
-    return usedTokens(message, finished ? 0 : answer.length + thinkingChars);
+    return {
+      usage: usedTokens(message, finished ? 0 : answer.length + thinkingChars),
+      completed:
+        end?.type === "done"
+          ? {
+              text: answer,
+              citations: end.citations,
+              stopReason: message?.stop_reason ?? null,
+            }
+          : null,
+    };
   })();
-  return { response: open.response, usage };
+  return {
+    response: open.response,
+    usage: outcome.then((o) => o.usage),
+    completed: outcome.then((o) => o.completed),
+  };
 }

@@ -1,7 +1,9 @@
 "use client";
 
-// Placeholder until ODY-883 approves the text; bump the version to show it again
-export const MENTOR_NOTICE_VERSION = 1;
+import Link from "next/link";
+
+// Bump the version to show the notice to everyone again (v2: personalization, ODY-935)
+export const MENTOR_NOTICE_VERSION = 2;
 const KEY = `mentor-notice-v${MENTOR_NOTICE_VERSION}`;
 
 export function noticeAccepted(): boolean {
@@ -21,7 +23,8 @@ export function acceptNotice() {
 }
 
 const POINTS = [
-  "Mentor sends your question and this lesson to an AI model.",
+  "Mentor sends your question and this lesson to an AI model. If personalization is on, it also sends the droplets you've finished and are working on, whether you've finished this droplet's prerequisites, and which of its lessons you've viewed.",
+  "It never sends your name, email or grades from instructors.",
   "Don't include personal information.",
   "Mentor can be wrong: check what it says against the lesson.",
   "In check-ins, Mentor gives hints, not answers.",
@@ -43,6 +46,13 @@ export function MentorNotice({
         {POINTS.map((p) => (
           <li key={p}>{p}</li>
         ))}
+        <li>
+          You can turn personalization off in{" "}
+          <Link href="/settings" className="font-medium underline">
+            Settings
+          </Link>
+          .
+        </li>
       </ul>
       <button
         ref={buttonRef}

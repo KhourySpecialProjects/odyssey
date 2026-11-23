@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai-review/run-routes";
 import * as findings from "@/lib/ai-review/findings";
 import { runAiScoring, type ScoringRun } from "@/lib/ai-review/score-run";
+import { DEFAULT_PROMPT } from "@/lib/ai-review/system-prompt";
 import { mockCriteria, mockSnapshot } from "@/testing/mocks/aiReviewMock";
 
 jest.mock("next/cache", () => ({ revalidateTag: jest.fn() }));
@@ -29,6 +30,7 @@ const run: ScoringRun = {
   criteria: mockCriteria,
   model: "claude-sonnet-5-5",
   effort: "high",
+  prompt: DEFAULT_PROMPT,
 };
 
 const scoresJson = (score: number, why = "ok") =>
@@ -117,6 +119,27 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe("runAiScoring", () => {
+  it("sends the run's pinned prompt in every lesson request and the Overall", async () => {
+    const prompt = {
+      instructions: "CUSTOM-I",
+      lessonScope: "CUSTOM-L",
+      overallScope: "CUSTOM-O",
+    };
+    const { client, stream } = fakeClient([
+      message({}),
+      message({}),
+      message({}),
+    ]);
+
+    await runAiScoring({ ...run, prompt }, { client, sleep });
+
+    const systems = stream.mock.calls.map(([p]) => String(p.system));
+    expect(systems).toHaveLength(3);
+    for (const s of systems) expect(s).toMatch(/^CUSTOM-I/);
+    expect(systems.slice(0, 2).every((s) => s.includes("CUSTOM-L"))).toBe(true);
+    expect(systems[2]).toContain("CUSTOM-O");
+  });
+
   it("saves a suggestion for every criterion on every lesson, plus the Overall Score", async () => {
     const { client, stream } = fakeClient([
       message({ text: scoresJson(4, "lesson 1") }),

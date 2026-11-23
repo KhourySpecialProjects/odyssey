@@ -88,7 +88,7 @@ Authentication uses NextAuth with two providers: Azure AD (Northeastern SSO) and
 2. `signIn` callback (`lib/auth/options.ts`) checks the user's email exists in the `authorized-users` Strapi collection. If not found, sign-in is rejected.
 3. `jwt` callback fetches the user's roles from Strapi and their NUID from Microsoft Graph API (Azure AD users only). These are embedded in the JWT, along with the Strapi user id (ODY-555). Later `jwt` calls re-check that id every 5 minutes (data-cached lookup by email) and drop it if the account no longer exists.
 4. `session` callback populates the NextAuth session object with roles, user ID, NUID, and profile data from the JWT.
-5. Middleware (`frontend/middleware.ts`) only checks that a session token exists for `/admin`, `/d`, `/activity`. Role gating happens in `app/(general)/admin/layout.tsx` (SysAdmin via `getCurrentUser`) and in each Server Action via `requireRole`.
+5. Middleware (`frontend/middleware.ts`) only checks that a session token exists for `/admin`, `/d`, `/activity`, `/g`. Signed-out visitors go to `/auth/login?callbackUrl=…`; the login page and middleware pass on only a same-origin callbackUrl (`safeCallbackPath` in `lib/auth/callback-url.ts`, ODY-628). Role gating happens in `app/(general)/admin/layout.tsx` (SysAdmin via `getCurrentUser`) and in each Server Action via `requireRole`.
 
 **Role hierarchy** (defined in `lib/globals.ts`):
 
@@ -178,7 +178,7 @@ A reviewer of a droplet in review (System Admin or Content Editor, never an auth
 
   A live region says where the caret is. Block bars are pointer-only.
 
-### Reviewer Transcript panel (ODY-805)
+### Scorecard panel (ODY-805; formerly Reviewer Transcript)
 
 The same reviewer sees the panel on every page of the draft (`review/review-panel.tsx`, wired by `review-transcript.tsx`). Plan: `docs/plans/ODY-805.md`.
 
@@ -218,17 +218,17 @@ After Send feedback, a droplet's authors see the sent comments beside the text t
   - **Edit:** the editors. Switching back runs `settleDropletUpdates()` and then `router.refresh()`.
   - **The strip:** shows the summary note, and how many comments are on lessons.
 - **Carried comments.** Submit copies each unresolved comment into the next round with `carriedFrom` pointing at the comment as first written. The reviewer's card reads "Pending · carried from round 1" with the original's date, and the strip and tags count the carried and addressed comments (`carriedRound`, `carriedNotes` and `carriedMeta` in `lib/review-comments.ts`).
-- **Not here:** a read-only Transcript panel for authors (confirmed scores, the summary note and a comment list that jumps to each comment's text). ODY-805's panel is reviewer-only; `DraftLayoutShell` mounts no panel for an author.
+- **Not here:** a read-only Scorecard for authors (ODY-857): confirmed scores, the summary note and a comment list that jumps to each comment's text. ODY-805's panel is reviewer-only; `DraftLayoutShell` mounts no panel for an author.
 
-## Final Overview Scan (ODY-787)
+## Pre-publish checks (ODY-787; formerly Final Overview Scan)
 
 23 rule-based checks (49 rules) of a draft droplet, run on demand and saved, with no AI. The checks, the safe fetcher and how a scan runs are in `data-fetching.md` ("Fetching user-supplied URLs"); who may run one is in `server-action-auth.md` ("Overview scan").
 
 - **Route.** `/draft/d/[slug]/scan` (`app/(editing)/draft/d/[slug]/scan/page.tsx`) renders inside the draft layout, so the layout's gate applies: anyone who isn't an author, a System Admin or a Content Editor gets the 404. It sits beside `[lessonSlug]`, so the lesson lifecycle reserves the slugs `scan`, `recap` and `present` (#1209): a lesson named "Scan" gets `scan-lesson`.
 - **Data.** The page reads `getLatestOverviewScan` (cached under `CACHE_TAGS.overviewScan(id)`, which `runOverviewScan` revalidates) and a fresh read of the droplet's and lessons' `updatedAt`. `CHECKS` stays on the server; `buildScanView` (`lib/overview-scan/view.ts`) turns checks, the saved scan and the lessons into the `ScanView` the client page draws.
-- **View model.** Rows are a check's status, its rules and their flags. A lesson flag links to `/draft/d/<slug>/<lessonSlug>` ("Go to lesson", labelled `Lesson N · <name>`); a droplet-page flag links to `/draft/d/<slug>#scan-<section>` (`scanSectionId`, the ids on the draft droplet page). A flag on a deleted lesson has no link. `checksChanged` is set when the saved `rulesVersion` differs or a check or rule is missing; `editedSince` when the droplet's or any lesson's `updatedAt` is after `ranAt`, or a flagged lesson is gone.
-- **Components** (`components/draft/overview-scan/`). `overview-scan-page.tsx` holds the header (Last scanned, the pills, Run checks / Run again with `aria-disabled` while running, the two notes, a `role="alert"` for errors and an `sr-only` `role="status"` that reads "Checks finished: …"), the three columns and the footer ("Rules version … · 49 rules"). `check-row.tsx` is one accordion row, named "<Title>, <status word>, N flags"; `status-circle.tsx` draws the circle beside the word (`STATUS_WORDS`); `focus.ts` is the shared focus ring.
-- **Entry points.** The sidebar's "Final Overview Scan" link shows when `canScan(roles, isAuthor)` (`lib/overview-scan/access.ts`, the same rule the action uses) and hides with `hideReviewActions`. While a reviewer has the Transcript open, `review/scan-link.tsx` in the panel replaces it.
+- **View model.** Rows are a check's status, its rules and their flags. A lesson flag links to `/draft/d/<slug>/<lessonSlug>` ("Go to lesson", labelled `Lesson N · <name>`), with `?block=<blockId>` and, for a spelling flag, `&words=a,b` (ODY-913; `?block=title` for the lesson name). `hooks/use-scan-target.ts` in the lesson renderer reads them on mount: it scrolls to the BlockNote block (`blockContainer[data-id]`), the Classic block (`data-block-id` in `block_list_client.tsx`) or the `h1[data-lesson-title]`, flashes it with a Web Animation, and highlights the words with the CSS Custom Highlight API (`::highlight(scan-spelling)`), so the editor's DOM never changes. The highlight repaints as the author types, and the params are removed once the block is shown or after 8 s. A droplet-page flag links to `/draft/d/<slug>#scan-<section>` (`scanSectionId`, the ids on the draft droplet page). A flag on a deleted lesson has no link. `checksChanged` is set when the saved `rulesVersion` differs or a check or rule is missing; `editedSince` when the droplet's or any lesson's `updatedAt` is after `ranAt`, or a flagged lesson is gone.
+- **Components** (`components/draft/overview-scan/`). `overview-scan-page.tsx` holds the header (Last run, the pills, Run checks / Run again with `aria-disabled` while running, the two notes, a `role="alert"` for errors and an `sr-only` `role="status"` that reads "Checks finished: …"), the three columns and the footer ("Rules version … · 49 rules"). `check-row.tsx` is one accordion row, named "<Title>, <status word>, N flags"; `status-circle.tsx` draws the circle beside the word (`STATUS_WORDS`); `focus.ts` is the shared focus ring.
+- **Entry points.** The sidebar's "Pre-publish checks" link shows when `canScan(roles, isAuthor)` (`lib/overview-scan/access.ts`, the same rule the action uses) and hides with `hideReviewActions`. While a reviewer has the Scorecard open, `review/scan-link.tsx` in the panel replaces it.
 - **Tests.** `testing/lib/overview-scan/seeded-droplets.test.ts` runs the real snapshot, all 23 checks and the safe fetcher (faked network) on the seeded droplets in `testing/mocks/overview-scan-droplets.ts`: one that passes everything, one with a problem per check, and one whose relative image can't be checked. ODY-796 ran the same droplets end to end in a browser against a local stack.
 - **Known limits.** `editedSince` also shows after someone only opens a lesson (lock heartbeats bump `updatedAt`) and misses an unflagged lesson being deleted (ODY-878). Lesson flags open the lesson but don't scroll to the block (ODY-879).
 

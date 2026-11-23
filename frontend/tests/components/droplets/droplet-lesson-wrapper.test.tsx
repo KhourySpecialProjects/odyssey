@@ -338,6 +338,19 @@ describe("DropletLessonWrapper", () => {
         expect(available()).toBe(true);
       });
 
+      it("drops ?mentorChat from the URL when Mentor is unavailable", () => {
+        window.history.replaceState(
+          null,
+          "",
+          "/d/x/y?mentorChat=chatAAAA1111&a=1",
+        );
+        render(<DropletLessonWrapper {...props} mentor={false} />);
+
+        expect(window.location.search).toBe("?a=1");
+        expect(useLessonPanelStore.getState().panel).not.toBe("mentor");
+        window.history.replaceState(null, "", "/");
+      });
+
       it("closes an open sheet when Mentor stops being available", () => {
         const { rerender } = render(<DropletLessonWrapper {...props} mentor />);
         act(() => useLessonPanelStore.getState().openMentor());

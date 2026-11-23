@@ -232,12 +232,12 @@ export function OverviewScanPage({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-[26px] leading-[31px] font-bold text-[#0f172a]">
-              Final Overview Scan
+              Pre-publish checks
             </h1>
             <p className="text-sm text-[#475569]">
               {ranAt ? (
                 <>
-                  {dropletName} · Last scanned{" "}
+                  {dropletName} · Last run{" "}
                   <time dateTime={ranAt} suppressHydrationWarning>
                     {time}
                   </time>
@@ -288,18 +288,19 @@ export function OverviewScanPage({
         </div>
         {view.editedSince && (
           <p className={NOTE}>
-            Edited since the last scan. Run checks again to see current results.
+            Edited since the checks last ran. Run them again to see current
+            results.
           </p>
         )}
         {view.checksChanged && (
           <p className={NOTE}>
-            The checks changed since this scan. Run checks again to see every
+            The checks changed since this run. Run them again to see every
             result.
           </p>
         )}
         {loadError && (
           <p className="text-[13px] text-red-700">
-            Couldn&apos;t load the last scan.
+            Couldn&apos;t load the last results.
           </p>
         )}
         {dismissalsError ? (

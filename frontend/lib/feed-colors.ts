@@ -76,6 +76,14 @@ export const FEED_COLORS: Record<AnnouncementType, FeedColor> = {
     card: "border-teal-500 bg-teal-500/5 dark:border-teal-700 dark:bg-teal-500/10",
     accent: "text-teal-700 dark:text-teal-300",
   },
+  reminder: {
+    pillActive:
+      "border-[#2D7597] bg-white text-[#2D7597] dark:border-[#7CC0E0] dark:bg-slate-900 dark:text-[#7CC0E0]",
+    pillInactive:
+      "border-slate-200 bg-white text-[#2D7597] hover:border-[#2D7597]/60 dark:border-slate-700 dark:bg-slate-900 dark:text-[#7CC0E0]",
+    card: "border-[#2D7597]/50 bg-[#2D7597]/5 dark:border-[#7CC0E0]/50 dark:bg-[#2D7597]/10",
+    accent: "text-[#2D7597] dark:text-[#7CC0E0]",
+  },
 };
 
 export function feedColorFor(type: AnnouncementType | AnnouncementTypeTitle) {

@@ -3,26 +3,33 @@ import { fetchAPI } from "@/lib/utils";
 
 type MentorSetting = {
   enabled?: boolean | null;
+  personalize?: boolean | null;
   pilotGroups?: { id: number }[] | null;
 };
 
-const CLOSED = { enabled: false, pilotGroupIds: [] as number[] };
+const CLOSED = {
+  enabled: false,
+  personalize: false,
+  pilotGroupIds: [] as number[],
+};
 
-/** Mentor's on/off switch and pilot group ids; closed on any failure. */
+/** Mentor's switches and pilot group ids; closed on any failure. */
 export async function getMentorSetting(): Promise<{
   enabled: boolean;
+  personalize: boolean;
   pilotGroupIds: number[];
 }> {
   try {
     const setting = await fetchAPI<MentorSetting | null>("/mentor-setting", {
       urlParams: {
-        fields: ["enabled"],
+        fields: ["enabled", "personalize"],
         populate: { pilotGroups: { fields: ["id"] } },
       },
       next: { tags: [CACHE_TAGS.mentorSetting], revalidate: 60 },
     });
     return {
       enabled: setting?.enabled === true,
+      personalize: setting?.personalize === true,
       pilotGroupIds: (setting?.pilotGroups ?? []).map((g) => g.id),
     };
   } catch {

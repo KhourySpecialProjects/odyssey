@@ -11,6 +11,7 @@ without flooding the conversation with noise.
 ## Mode: $ARGUMENTS
 
 If no mode specified or "full", run all checks. If "quick", skip builds.
+If "agent", run `bash scripts/ci-local.sh --agent` (adds backend Jest, prints one `checks:` summary line) and report that line.
 
 ## Checks (run in order)
 

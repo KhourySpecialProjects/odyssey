@@ -2,6 +2,7 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
+import { ReminderCard, type RemindLaterChoice } from "./reminder-card";
 import {
   Droplet,
   Handshake,
@@ -13,11 +14,13 @@ import {
   RotateCcw,
   MessageSquareText,
   BadgeCheck,
+  Bell,
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
 import { feedColorFor } from "@/lib/feed-colors";
 import { cn } from "@/lib/utils";
+import { userTimeZone } from "@/lib/time-zones";
 
 interface ParsedContent {
   userName?: string | null;
@@ -31,11 +34,13 @@ export function FeedBlock({
   authUser,
   onMarkRead,
   onMarkUnread,
+  onRemindLater,
 }: {
   announcement: Announcement;
   authUser: AuthorizedUser;
   onMarkRead?: (id: number) => void | Promise<void>;
   onMarkUnread?: (id: number) => void | Promise<void>;
+  onRemindLater?: (id: number, choice: RemindLaterChoice) => void;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [playlistPopupOpen, setPlaylistPopupOpen] = useState(false);
@@ -75,6 +80,10 @@ export function FeedBlock({
       icon: <BadgeCheck size={18} />,
       label: "Review published",
     },
+    reminder: {
+      icon: <Bell size={18} />,
+      label: "Reminder",
+    },
   };
 
   const config = announcementConfig[announcement.type];
@@ -111,7 +120,8 @@ export function FeedBlock({
         day: "numeric",
         hour: "numeric",
         minute: "numeric",
-        timeZone: "EST",
+        // An IANA zone, so daylight saving time applies (ODY-138)
+        timeZone: userTimeZone(authUser.timeZone),
       }).format(date);
     } catch (error) {
       console.error("Error formatting date:", error);
@@ -372,6 +382,18 @@ export function FeedBlock({
       </div>
     );
   };
+
+  if (announcement.type === "reminder" && announcement.droplet) {
+    return (
+      <ReminderCard
+        announcement={announcement}
+        timestamp={formatDate(announcement.firstCreated)}
+        onMarkRead={onMarkRead}
+        onMarkUnread={onMarkUnread}
+        onRemindLater={onRemindLater}
+      />
+    );
+  }
 
   return (
     <>

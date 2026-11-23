@@ -1796,6 +1796,8 @@ describe("Groups Tests", () => {
             group: { id: { $eq: 1 } },
             droplet: { id: { $eq: 101 } },
           },
+          // Only the first row is read (ODY-720).
+          pagination: { pageSize: 1 },
         },
       });
 
@@ -1847,6 +1849,7 @@ describe("Groups Tests", () => {
             group: { id: { $eq: 1 } },
             playlist: { id: { $eq: 201 } },
           },
+          pagination: { pageSize: 1 },
         },
       });
 
@@ -1882,17 +1885,25 @@ describe("Groups Tests", () => {
   });
 
   describe("getGroupDueDates", () => {
-    it("should fetch all due dates for a group with default parameters", async () => {
+    beforeEach(() => {
+      jest.useFakeTimers({ now: new Date("2026-11-09T15:30:00Z") });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("should fetch the group's recent and upcoming due dates with default parameters", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockDueDates = [
         {
           id: 201,
-          dueDate: "2023-12-25",
+          dueDate: "2026-11-10",
           droplet: { id: 101, name: "Droplet 1", slug: "droplet-1" },
         },
         {
           id: 202,
-          dueDate: "2023-12-26",
+          dueDate: "2026-11-11",
           playlist: { id: 201, name: "Playlist 1", slug: "playlist-1" },
         },
       ];
@@ -1901,11 +1912,17 @@ describe("Groups Tests", () => {
 
       const result = await getGroupDueDates(mockGroup);
 
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
       expect(fetchAPI).toHaveBeenCalledWith("/due-dates", {
         urlParams: {
           sort: ["dueDate:asc"],
           filters: {
-            $and: [{ group: { id: { $eq: 1 } } }],
+            $and: [
+              { group: { id: { $eq: 1 } } },
+              // Two days before today's UTC midnight: a tile still shows
+              // "Late!" the day after a due date, in any time zone.
+              { dueDate: { $gte: "2026-11-07T00:00:00.000Z" } },
+            ],
           },
           populate: {
             droplet: {
@@ -1917,14 +1934,61 @@ describe("Groups Tests", () => {
           },
           fields: ["dueDate"],
           pagination: {
-            pageSize: 250,
             page: 1,
+            pageSize: 1000,
           },
         },
         next: { tags: ["due-dates"], revalidate: 900 },
       });
 
       expect(result).toEqual(mockDueDates);
+    });
+
+    // ODY-626: one row per student per item, so a class passes 250 rows fast.
+    it("returns the upcoming dates past the 250th row by reading every page", async () => {
+      const mockGroup = { id: 1, groupName: "Test Group" };
+      const pastRows = Array.from({ length: 1000 }, (_, i) => ({
+        id: i + 1,
+        dueDate: "2026-11-08T12:00:00.000Z",
+        droplet: { id: 101, name: "Week 9", slug: "week-9" },
+      }));
+      const upcomingRows = Array.from({ length: 300 }, (_, i) => ({
+        id: 1001 + i,
+        dueDate: "2026-11-20T12:00:00.000Z",
+        droplet: { id: 102, name: "Week 11", slug: "week-11" },
+      }));
+      fetchAPI
+        .mockResolvedValueOnce(pastRows)
+        .mockResolvedValueOnce(upcomingRows);
+
+      const result = await getGroupDueDates(mockGroup);
+
+      expect(result).toHaveLength(1300);
+      expect(result.at(-1)).toEqual(upcomingRows.at(-1));
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        "/due-dates",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            pagination: { page: 2, pageSize: 1000 },
+          }),
+        }),
+      );
+    });
+
+    it("keeps the same cutoff all day, so the cached request is reused", async () => {
+      const mockGroup = { id: 1, groupName: "Test Group" };
+      fetchAPI.mockResolvedValue([]);
+
+      await getGroupDueDates(mockGroup);
+      jest.setSystemTime(new Date("2026-11-09T23:59:00Z"));
+      await getGroupDueDates(mockGroup);
+
+      const [first, second] = fetchAPI.mock.calls.map(
+        ([, config]) => config.urlParams.filters,
+      );
+      expect(second).toEqual(first);
     });
 
     it("should apply custom sorting parameters", async () => {
@@ -1940,24 +2004,6 @@ describe("Groups Tests", () => {
         expect.objectContaining({
           urlParams: expect.objectContaining({
             sort: customSort,
-          }),
-        }),
-      );
-    });
-
-    it("should apply custom pagination parameters", async () => {
-      const mockGroup = { id: 1, groupName: "Test Group" };
-      const customPagination = { pageSize: 10, page: 2 };
-
-      fetchAPI.mockResolvedValueOnce([]);
-
-      await getGroupDueDates(mockGroup, { pagination: customPagination });
-
-      expect(fetchAPI).toHaveBeenCalledWith(
-        "/due-dates",
-        expect.objectContaining({
-          urlParams: expect.objectContaining({
-            pagination: customPagination,
           }),
         }),
       );
@@ -2037,8 +2083,8 @@ describe("Groups Tests", () => {
           },
           fields: ["dueDate"],
           pagination: {
-            pageSize: 250,
             page: 1,
+            pageSize: 1000,
           },
         },
         next: { tags: ["due-dates"], revalidate: 900 },
@@ -2065,22 +2111,19 @@ describe("Groups Tests", () => {
       );
     });
 
-    it("should apply custom pagination parameters", async () => {
+    it("reads every page, so a user's newest dates aren't cut off", async () => {
       const userId = 10;
-      const customPagination = { pageSize: 10, page: 2 };
+      const page = (from, count, dueDate) =>
+        Array.from({ length: count }, (_, i) => ({ id: from + i, dueDate }));
+      fetchAPI
+        .mockResolvedValueOnce(page(1, 1000, "2024-01-01"))
+        .mockResolvedValueOnce(page(1001, 5, "2026-12-01"));
 
-      fetchAPI.mockResolvedValueOnce([]);
+      const result = await getUserDueDates(userId);
 
-      await getUserDueDates(userId, { pagination: customPagination });
-
-      expect(fetchAPI).toHaveBeenCalledWith(
-        "/due-dates",
-        expect.objectContaining({
-          urlParams: expect.objectContaining({
-            pagination: customPagination,
-          }),
-        }),
-      );
+      expect(result).toHaveLength(1005);
+      expect(result.at(-1).dueDate).toBe("2026-12-01");
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
     });
 
     it("should apply custom field parameters", async () => {

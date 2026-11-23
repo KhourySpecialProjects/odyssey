@@ -1,0 +1,102 @@
+{
+  "title": "Example client update",
+  "slides": [
+    {
+      "layout": "title",
+      "title": "Odyssey Update",
+      "subtitle": "Progress since the last meeting",
+      "presenters": ["Presenter 1", "Presenter 2", "Presenter 3"],
+      "date": "Meeting date (confirm before use)",
+      "notes": "Welcome everyone. Placeholder content only."
+    },
+    {
+      "layout": "agenda",
+      "items": ["Review progress", "Feature walkthrough", "Design questions"]
+    },
+    {
+      "layout": "timeline",
+      "title": "Timeline",
+      "steps": [
+        {
+          "date": "Today",
+          "label": "Where we are",
+          "items": ["Placeholder item one", "Placeholder item two"]
+        },
+        {
+          "date": "Date A",
+          "label": "Next sprint",
+          "items": ["Placeholder item", "Another placeholder item"]
+        },
+        {
+          "date": "Date B",
+          "label": "Midpoint",
+          "items": ["Placeholder item"]
+        },
+        {
+          "date": "Date C",
+          "label": "Final polish",
+          "items": ["Placeholder item", "Placeholder item"]
+        }
+      ]
+    },
+    {
+      "layout": "feature-what",
+      "title": "Example Feature",
+      "what": "One or two plain sentences on what the feature is and the problem it solves.",
+      "users": {
+        "learner": "What a learner sees or does with it.",
+        "creator": "What a creator does with it.",
+        "reviewer": "What a reviewer does with it."
+      },
+      "why": "What changed since the last meeting, and why it matters for the project goals.",
+      "goals": ["Goal one", "Goal two"],
+      "openQuestions": ["A question we want the client to weigh in on"],
+      "imageAlt": "Hero screenshot of the feature",
+      "imageLabel": "Built"
+    },
+    {
+      "layout": "feature-steps",
+      "title": "Example Feature",
+      "steps": [
+        {
+          "line": "Step one, in one short line.",
+          "imageAlt": "Screenshot of step one",
+          "label": "Figma design"
+        },
+        {
+          "line": "Step two, in one short line.",
+          "imageAlt": "Screenshot of step two",
+          "label": "Built"
+        },
+        {
+          "line": "Step three, in one short line.",
+          "imageAlt": "Screenshot of step three",
+          "label": "Built"
+        }
+      ]
+    },
+    {
+      "layout": "screenshot",
+      "title": "Example Screen",
+      "imageAlt": "One large screenshot",
+      "caption": "A short caption for the screen.",
+      "label": "Figma design"
+    },
+    {
+      "layout": "design-questions",
+      "questions": [
+        "First design question for the client?",
+        "Second design question for the client?"
+      ]
+    },
+    { "layout": "questions" },
+    { "layout": "appendix", "title": "Appendix" },
+    {
+      "layout": "appendix",
+      "title": "Extra screens",
+      "imageAlt": "Backup screenshot",
+      "caption": "Backup material.",
+      "label": "Built"
+    }
+  ]
+}

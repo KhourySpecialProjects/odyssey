@@ -15,7 +15,6 @@ export const CLIENT_QUERY_ACTIONS: Record<string, `ODY-${number}`> = {
   "lib/requests/droplet.ts#getDroplets": "ODY-511",
   "lib/requests/enrollment.ts#getEnrollmentsByAuthorizedUser": "ODY-511",
   "lib/requests/groups.ts#getGroupByID": "ODY-511",
-  "lib/requests/highlights.ts#getHighlights": "ODY-511",
   "lib/requests/notes.ts#getNotesByAuthorizedUserAndLesson": "ODY-511",
   "lib/requests/playlist.ts#getPlaylists": "ODY-511",
 };

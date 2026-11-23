@@ -26,18 +26,59 @@ const REVIEW_COMMENT_UID = 'api::review-comment.review-comment';
 const REVIEW_SCORE_UID = 'api::review-score.review-score';
 const ANNOUNCEMENT_UID = 'api::announcement.announcement';
 const AI_SCORING_RUN_UID = 'api::ai-scoring-run.ai-scoring-run';
+const ANNOUNCEMENT_READ_UID = 'api::announcement-read.announcement-read';
 const OVERVIEW_SCAN_UID = 'api::overview-scan.overview-scan';
 const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-dismissal';
 
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
+const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
+const MENTOR_CHAT_UID = 'api::mentor-chat.mentor-chat';
+const MENTOR_CACHED_REPLY_UID = 'api::mentor-cached-reply.mentor-cached-reply';
+const MENTOR_MESSAGE_UID = 'api::mentor-message.mentor-message';
+const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
+const TAG_UID = 'api::tag.tag';
+const LEARNER_PROFILE_UID = 'api::learner-profile.learner-profile';
+const RECOMMENDATION_DISMISSAL_UID = 'api::recommendation-dismissal.recommendation-dismissal';
+
+const learnerProfileData = (overrides = {}) => ({
+  key: String(Date.now() % 1e9) + String(++counter),
+  goal: 'career',
+  focusAreas: ['technical'],
+  interestNote: null,
+  ...overrides,
+});
 
 const mentorUsageData = (overrides = {}) => ({
   kind: 'lesson',
   model: 'claude-sonnet-5-5',
   inputTokens: 0,
   outputTokens: 0,
+  ...overrides,
+});
+
+/** A valid lesson summary row; the key's hash is 64 hex characters */
+const cachedReplyData = (overrides = {}) => {
+  const hash = `${String(++counter).padStart(8, '0')}${'ab'.repeat(28)}`;
+  return {
+    key: `lesson:1:${hash}`,
+    slot: 'lesson:1',
+    scope: 'lesson',
+    dropletId: 1,
+    lessonId: 1,
+    promptVersion: 'v1',
+    model: 'claude-sonnet-5-5',
+    text: 'A summary.',
+    ...overrides,
+  };
+};
+
+const mentorFeedbackData = (overrides = {}) => ({
+  answerKey: unique('answer'),
+  kind: 'lesson',
+  rating: 'up',
+  shared: false,
   ...overrides,
 });
 
@@ -173,12 +214,24 @@ module.exports = {
   REVIEW_SCORE_UID,
   AI_SCORING_RUN_UID,
   ANNOUNCEMENT_UID,
+  ANNOUNCEMENT_READ_UID,
   OVERVIEW_SCAN_UID,
   OVERVIEW_SCAN_DISMISSAL_UID,
   MENTOR_USAGE_UID,
   MENTOR_SETTING_UID,
+  STREAK_DAY_UID,
+  MENTOR_FEEDBACK_UID,
+  MENTOR_CHAT_UID,
+  MENTOR_CACHED_REPLY_UID,
+  MENTOR_MESSAGE_UID,
   GROUP_UID,
+  TAG_UID,
+  RECOMMENDATION_DISMISSAL_UID,
+  LEARNER_PROFILE_UID,
+  learnerProfileData,
   mentorUsageData,
+  mentorFeedbackData,
+  cachedReplyData,
   groupData,
   overviewScanData,
   dismissalData,

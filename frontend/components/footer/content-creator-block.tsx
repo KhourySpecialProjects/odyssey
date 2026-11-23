@@ -2,7 +2,8 @@
 
 import { AuthorizedUser } from "@/types";
 import Link from "next/link";
-import { Github, LinkIcon, Linkedin } from "lucide-react";
+import { LinkIcon } from "lucide-react";
+import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 import { useState } from "react";
 
 export function ContentCreatorBlock({
@@ -47,14 +48,14 @@ export function ContentCreatorBlock({
               {contentCreator.linkedin && (
                 <Link href={contentCreator.linkedin} legacyBehavior>
                   <a target="_blank" rel="noopener noreferrer">
-                    <Linkedin className="dark:text-slate-300" />
+                    <IconBrandLinkedin className="dark:text-slate-300" />
                   </a>
                 </Link>
               )}
               {contentCreator.github && (
                 <Link href={contentCreator.github} legacyBehavior>
                   <a target="_blank" rel="noopener noreferrer">
-                    <Github className="dark:text-slate-300" />
+                    <IconBrandGithub className="dark:text-slate-300" />
                   </a>
                 </Link>
               )}
