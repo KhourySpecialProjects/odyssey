@@ -7,6 +7,8 @@ import DOMPurify from "isomorphic-dompurify";
  * - no `<style>`, filters, `<use>`, `<image>`, `<a>` or links of any kind;
  * - at most 50 KB.
  *
+ * The prompt-ready style guide and colour palette live in ./emblem-style.ts.
+ *
  * Emblems are untrusted model output. They are sanitized here and rendered only
  * as `<img src="data:image/svg+xml;...">`, which runs no scripts. An `<img>` also
  * never loads outside references (for example `fill="url(https://...)"`), so
