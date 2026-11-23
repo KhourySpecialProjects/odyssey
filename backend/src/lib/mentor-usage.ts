@@ -50,6 +50,10 @@ const refuse = (
  * outside the pilot groups (none set means everyone), this month's Mentor
  * spend at the cap (a cap of $0 refuses everyone), then the user's answers
  * today at the daily limit.
+ *
+ * Keep this order: the frontend's `checkMentorAccess` (ODY-967) serves saved
+ * replies over the cap and the limit, so it treats a cap or limit refusal as
+ * proof that the switch and the pilot already passed.
  */
 export async function checkMentorAllowance(
   userId: number,

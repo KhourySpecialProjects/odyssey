@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mentor_cached_replies",
+  "info": {
+    "singularName": "mentor-cached-reply",
+    "pluralName": "mentor-cached-replies",
+    "displayName": "Mentor Cached Reply",
+    "description": "One shared Mentor reply (a lesson summary or a quiz explanation) per version: no student data (ODY-967)"
+  },
+  "options": { "draftAndPublish": false },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "mentor_cached_replies_key_uq",
+      "columns": ["key"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "key": { "type": "string", "required": true, "maxLength": 120 },
+    "slot": { "type": "string", "required": true, "maxLength": 60 },
+    "scope": {
+      "type": "enumeration",
+      "enum": ["lesson", "hint"],
+      "required": true
+    },
+    "dropletId": { "type": "integer", "required": true, "min": 1 },
+    "lessonId": { "type": "integer", "required": true, "min": 1 },
+    "promptVersion": { "type": "string", "required": true, "maxLength": 40 },
+    "model": { "type": "string", "required": true, "maxLength": 100 },
+    "text": { "type": "text", "required": true, "maxLength": 20000 }
+  }
+}
