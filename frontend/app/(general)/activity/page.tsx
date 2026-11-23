@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { RecentMentorChats } from "@/components/feed/recent-mentor-chats";
 import { FeedCenterContent } from "@/components/feed/feed-center-content";
 import {
   parseFilters,
@@ -72,6 +73,9 @@ export default async function FeedPage({ searchParams }: Props) {
         }
       >
         <RecommendedForYou userId={authUser.id} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <RecentMentorChats />
       </Suspense>
       <div className="min-h-0 flex-1">
         <Suspense fallback={<FeedCenterContent authUser={authUser} pending />}>

@@ -19,8 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   chatTitle,
+  continueHref,
   relativeTime,
-} from "@/components/droplets/lessons/mentor/mentor-chat-list";
+  startedIn,
+} from "@/lib/mentor/chat-row";
 import { displayAnswer } from "@/lib/mentor/answer-text";
 import {
   deleteAllMentorChats,
@@ -45,15 +47,6 @@ type Opened = { id: string } & (
   | { status: "ready"; messages: MentorChatMessage[] }
 );
 type Pending = { kind: "one"; chat: MentorChatSummary } | { kind: "all" };
-
-const startedIn = (c: MentorChatSummary) =>
-  [c.lesson?.name, c.droplet?.name].filter(Boolean).join(" · ");
-
-/** The start lesson's real route, with the chat for the Mentor panel to open */
-const continueHref = (c: MentorChatSummary) =>
-  c.kind === "lesson" && c.droplet?.slug && c.lesson?.slug
-    ? `/d/${c.droplet.slug}/${c.lesson.slug}?mentorChat=${c.documentId}`
-    : null;
 
 /** Activity > Mentor chats: search, read, continue and delete saved chats (ODY-937). */
 export function MentorChatsPage() {
