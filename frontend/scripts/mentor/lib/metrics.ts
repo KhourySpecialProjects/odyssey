@@ -446,12 +446,16 @@ export function reportMarkdown(
       (m) => `${m} with a learner has no rows for ${s.setup}: not met.`,
     ),
   );
-  // A --kind run drops kinds, so every empty line would say the same
-  const learnerNotes = meta.kinds?.length
-    ? emptyLearner.length
-      ? ["A --kind run can't meet v1's thresholds."]
-      : []
-    : emptyLearner;
+  // A --kind run that drops threshold kinds would print the same empty line per metric
+  const dropsThresholdKind = METRICS.some((m) =>
+    THRESHOLDS[m].kinds.some((k) => !meta.kinds?.includes(k)),
+  );
+  const learnerNotes =
+    meta.kinds?.length && dropsThresholdKind
+      ? emptyLearner.length
+        ? ["A --kind run can't meet v1's thresholds."]
+        : []
+      : emptyLearner;
   const byKey = new Map(rows.map((r) => [keyOf(r), r]));
   const dismissedReason = new Map(handChecks.map((h) => [h.key, h.reason]));
   const dismissals = handChecks.map((h) => {
@@ -619,7 +623,8 @@ export function reportMarkdown(
       ];
       if (!why.some(Boolean)) return [];
       const reason = dismissedReason.get(keyOf(r));
-      if (reason) why.push(`dismissed: ${reason}`);
+      if (reason && hasLearner(r) && TWIN_KINDS.includes(r.kind))
+        why.push(`dismissed: ${reason}`);
       const judged = Object.entries(r.judge?.answers ?? {}).map(
         ([q, a]) => `- ${q}: ${a!.answer}${a!.quote ? `, "${a!.quote}"` : ""}`,
       );

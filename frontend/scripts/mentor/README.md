@@ -251,6 +251,8 @@ over every setup's pooled reps:
 A twin's `pass` is its base kind's, so "with a learner" compares like with
 like; the history checks never change it. A bar with no rows (for example, a
 `--kind` run with no personalized cases) counts as met, and the report says so.
+A `--kind` run that leaves out threshold kinds gets one line about the
+with-learner thresholds instead of one per metric.
 With 13 personalized cases over 2 reps the rate moves about ±20% by chance, so
 don't read a 5-point change as real.
 
@@ -350,7 +352,9 @@ add `hand-checks.json` to the run folder:
 `[{ "key": "haiku-low|covered-01+broad-history|1", "reason": "it quotes the lesson" }]`.
 A key is a row's `setup|caseId|rep`. The next report, which a free `--resume`
 rewrites, recounts both without those rows and lists each dismissal with its
-reason (and flags a key that matches no row).
+reason. It flags a key that matches no row, and one that matches a row the
+dismissal can't change ("not counted anyway"). Under "Check by hand", a twin
+row it clears shows "dismissed: <reason>".
 
 Each run writes `runs/<date>-mentor/`: `meta.json`, `results.jsonl` (one row
 per setup, case and rep, as it finishes), `errors.jsonl`, `report.md`, and for

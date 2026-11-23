@@ -189,7 +189,11 @@ describe("summarise", () => {
     ],
     [
       "a truncated row is left out of the rate, but blocks the choice",
-      [...setupRows(), row({ caseId: "cut", status: "truncated", pass: null })],
+      [
+        ...setupRows(),
+        ...twinRows(),
+        row({ caseId: "cut", status: "truncated", pass: null }),
+      ],
       [],
       0,
       {
@@ -211,7 +215,7 @@ describe("summarise", () => {
     ],
     [
       "an error is no fail, but leaves the setup incomplete",
-      setupRows(),
+      [...setupRows(), ...twinRows()],
       [error("lost")],
       0,
       {
@@ -313,7 +317,7 @@ describe("summarise", () => {
     ],
     [
       "rows missing without an error",
-      setupRows(),
+      [...setupRows(), ...twinRows()],
       [],
       2,
       { meetsAll: false, blockers: ["2 rows missing"] },
@@ -491,6 +495,16 @@ describe("reportMarkdown", () => {
     expect(report).not.toContain("with a learner has no rows");
   });
 
+  it("prints the per-metric lines for a --kind run that covers the threshold kinds, with twins off", () => {
+    const report = reportMarkdown(setupRows(18), [], {
+      ...meta,
+      kinds: ["covered", "uncovered", "off-topic", "injection"],
+      twins: "none",
+    });
+    expect(report).not.toContain("A --kind run can't meet");
+    expect(report).toContain("On topic with a learner has no rows");
+  });
+
   it("leaves a dismissed row out of the history counts, and lists it with its reason", () => {
     const rows = [
       ...setupRows(18),
@@ -502,7 +516,7 @@ describe("reportMarkdown", () => {
         },
       ),
       learned({ caseId: "b+b" }, { recitesHistory: true }),
-      learned({ caseId: "pers", kind: "personalized" }),
+      learned({ caseId: "pers", kind: "personalized", pass: false }),
     ];
     const handChecks = [
       { key: "haiku-low|a+b|1", reason: "it quotes the lesson" },
@@ -512,7 +526,7 @@ describe("reportMarkdown", () => {
     const report = reportMarkdown(rows, [], meta, [], handChecks);
 
     expect(report).toContain(
-      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | 0 [0] | 1 [1] |",
+      "| haiku-low | 0% (0/1) [0%] | – (0/0) [–] | 0 [0] | 1 [1] |",
     );
     expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
     expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
@@ -588,12 +602,13 @@ describe("loadHandChecks", () => {
   });
 
   it.each([
-    ["a missing reason", JSON.stringify([{ key: "x" }])],
-    ["an object, not a list", "{}"],
-  ])("throws on %s, naming the file", (_, text) => {
+    ["a missing reason", JSON.stringify([{ key: "x" }]), "0.reason: "],
+    ["an object, not a list", "{}", "(top level): "],
+    ["a syntax error", "[{", "JSON"],
+  ])("throws on %s, naming the file", (_, text, detail) => {
     write(text);
-    expect(() => loadHandChecks(dir)).toThrow(
-      `hand-checks.json: ${path.join(dir, "hand-checks.json")}: `,
-    );
+    const file = path.join(dir, "hand-checks.json");
+    expect(() => loadHandChecks(dir)).toThrow(`${file}: `);
+    expect(() => loadHandChecks(dir)).toThrow(detail);
   });
 });
