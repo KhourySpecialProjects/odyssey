@@ -69,12 +69,29 @@ describe("DropletBadge", () => {
     expect(container.querySelector("img")).toBeNull();
   });
 
-  it("never uses dangerouslySetInnerHTML", () => {
-    const dir = path.join(__dirname, "../../../components/badges");
-    for (const file of ["droplet-badge.tsx", "badge-ribbon.tsx"]) {
-      expect(readFileSync(path.join(dir, file), "utf8")).not.toContain(
-        "dangerouslySetInnerHTML",
-      );
-    }
+  it("holds only the <img> when given an emblem, never an inline svg", () => {
+    const { container } = render(
+      <DropletBadge title="T" emblemSvg={SAMPLE_BADGE_EMBLEMS[0]} size="md" />,
+    );
+    expect(container.querySelectorAll("img")).toHaveLength(1);
+    expect(container.querySelector("svg")).toBeNull();
+  });
+
+  it("keeps the same wide tile shape for any emblem, and a ribbon no wider than it", () => {
+    const { container } = render(
+      <DropletBadge
+        title="T"
+        emblemSvg={
+          '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="90"/></svg>'
+        }
+        size="md"
+      />,
+    );
+    const tile = container.querySelector("img")!.parentElement!.parentElement!;
+    expect(tile).toHaveClass("aspect-[5/2]", "overflow-hidden", "bg-black");
+    expect(screen.getByText("T").parentElement).toHaveClass(
+      "w-[84%]",
+      "bg-blue-700",
+    );
   });
 });

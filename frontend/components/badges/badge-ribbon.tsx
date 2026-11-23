@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 export type BadgeSize = "sm" | "md" | "lg";
 
 const RIBBON_SIZES: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-[10px] leading-tight",
-  md: "px-3 py-1 text-xs leading-tight",
-  lg: "px-4 py-1.5 text-base leading-snug",
+  sm: "px-1.5 pb-2 pt-0.5 text-[9px]",
+  md: "px-2.5 pb-3 pt-1 text-xs",
+  lg: "px-4 pb-5 pt-1.5 text-base",
 };
 
 interface BadgeRibbonProps {
@@ -13,15 +13,21 @@ interface BadgeRibbonProps {
   size: BadgeSize;
 }
 
-/** The grey ribbon under the tile. Hidden from screen readers: the badge's own label already carries the title. */
+/**
+ * The blue banner hanging under the tile (84% of its width, top flush against
+ * it) with a swallowtail bottom edge. Hidden from screen readers: the badge's
+ * own label already carries the title.
+ */
 export function BadgeRibbon({ title, size }: BadgeRibbonProps) {
   return (
     <div
       aria-hidden="true"
       title={title}
+      style={{
+        clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)",
+      }}
       className={cn(
-        "relative -mt-3 w-[110%] self-center rounded-md border border-slate-400 bg-slate-200 text-center font-semibold text-slate-800 shadow-md",
-        "dark:border-slate-500 dark:bg-slate-600 dark:text-slate-50",
+        "w-[84%] bg-blue-700 text-center leading-tight font-bold text-white",
         RIBBON_SIZES[size],
       )}
     >

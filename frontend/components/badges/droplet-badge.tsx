@@ -10,15 +10,9 @@ interface DropletBadgeProps {
 }
 
 const WIDTHS: Record<BadgeSize, string> = {
-  sm: "w-20",
-  md: "w-36",
-  lg: "w-64",
-};
-
-const TILE_PADDING: Record<BadgeSize, string> = {
-  sm: "p-2",
-  md: "p-4",
-  lg: "p-7",
+  sm: "w-24",
+  md: "w-40",
+  lg: "w-72",
 };
 
 function PlaceholderEmblem() {
@@ -26,7 +20,7 @@ function PlaceholderEmblem() {
     <svg
       data-testid="badge-placeholder"
       viewBox="0 0 24 24"
-      className="h-1/2 w-1/2 text-slate-500"
+      className="h-3/5 text-white/60"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
@@ -56,19 +50,16 @@ export function DropletBadge({
         className,
       )}
     >
-      <div
-        className={cn(
-          "flex aspect-square w-full items-center justify-center rounded-xl border border-slate-700 bg-slate-900 shadow-md",
-          "dark:border-slate-500 dark:bg-slate-950",
-          TILE_PADDING[size],
-        )}
-      >
-        {src ? (
-          // eslint-disable-next-line @next/next/no-img-element -- sanitized data URL
-          <img src={src} alt="" className="h-full w-full object-contain" />
-        ) : (
-          <PlaceholderEmblem />
-        )}
+      <div className="relative aspect-[5/2] w-full overflow-hidden rounded-[2px] bg-black dark:ring-1 dark:ring-white/15">
+        <div className="pointer-events-none absolute inset-[4%] border border-white/80" />
+        <div className="absolute inset-[4%] flex items-center justify-center p-[2%]">
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element -- sanitized data URL
+            <img src={src} alt="" className="h-full w-full object-contain" />
+          ) : (
+            <PlaceholderEmblem />
+          )}
+        </div>
       </div>
       <BadgeRibbon title={title} size={size} />
     </div>
