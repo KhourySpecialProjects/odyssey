@@ -155,8 +155,9 @@ export async function POST(request: Request): Promise<Response> {
       const { status, reason, message, retryAt } = allowance;
       return refuse(status, reason, message, retryAt);
     }
-    // A hit skips the live burst guard but still writes a chat row, so it has
-    // its own limit. Same refusal as checkMentorAllowance's burst guard.
+    // A hit skips the live burst guard. A summary hit still writes a chat row,
+    // so all hits share their own limit. Same refusal as checkMentorAllowance's
+    // burst guard.
     if (saved) {
       const limit = checkRateLimit(
         gate.user.email,

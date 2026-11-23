@@ -108,7 +108,9 @@ export function hintReply(
   }: ReplyVersions = {},
 ): CachedReply {
   checkLesson(context, ids);
-  // ODY-972 should hash its check version into this key
+  // When ODY-972 sets check: "passed", it must also hash its check version
+  // here ({ promptVersion, checkVersion, params }) so a stricter check gives
+  // new keys: a replay skips the check, which is safe only because of that.
   return build(
     "hint",
     `hint:${ids.lessonId}:${ask.question.questionId}:${ask.chosenOptionId}`,
@@ -126,7 +128,7 @@ export function hintReply(
  */
 export function unstorableReason(
   completed: MentorCompleted | null,
-  scope: CachedReplyRow["scope"] = "lesson",
+  scope: CachedReplyRow["scope"],
 ): string | null {
   if (!completed) return "not finished";
   if (scope === "hint" && completed.check !== "passed") {

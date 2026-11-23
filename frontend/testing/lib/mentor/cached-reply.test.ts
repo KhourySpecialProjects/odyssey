@@ -209,6 +209,26 @@ describe("hintReply", () => {
   });
 });
 
+describe("ids of 0", () => {
+  it("build a valid key and slot", () => {
+    const ask = hintAsk(412);
+    ask.question.questionId = 0;
+    ask.question.options[0].id = 0;
+    ask.chosenOptionId = 0;
+    const reply = hintOf(context, ask);
+    expect(reply.slot).toBe(`hint:${lesson.id}:0:0`);
+    expect(reply.key).toMatch(
+      new RegExp(`^hint:${lesson.id}:0:0:[0-9a-f]{64}$`),
+    );
+  });
+
+  it("gives another question with the same option id another slot", () => {
+    const other = hintAsk(412);
+    other.question.questionId = 42;
+    expect(hintOf(context, other).slot).not.toBe(hintOf().slot);
+  });
+});
+
 describe("another lesson's context", () => {
   it("makes both builders throw", () => {
     const wrong = { ...ids, lessonId: 999 };
@@ -235,7 +255,7 @@ describe("unstorableReason", () => {
     ],
     ["a long one", completed({ text: "x".repeat(20001) }), "too long"],
   ])("for %s", (_, input, reason) => {
-    expect(unstorableReason(input)).toBe(reason);
+    expect(unstorableReason(input, "lesson")).toBe(reason);
   });
 
   it.each<[MentorCompleted["check"], string | null]>([
