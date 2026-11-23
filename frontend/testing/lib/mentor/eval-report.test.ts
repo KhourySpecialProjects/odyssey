@@ -528,7 +528,7 @@ describe("reportMarkdown", () => {
     const report = reportMarkdown(rows, [], meta, [], [], handChecks);
 
     expect(report).toContain(
-      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 1 [1] |",
+      "| haiku-low | 0% (0/1) [0%] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 1 [1] |",
     );
     expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
     expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
