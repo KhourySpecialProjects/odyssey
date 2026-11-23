@@ -42,7 +42,7 @@ export function DraftTour({ run, setRun }: DraftTourProps) {
             title: "Welcome to the Lesson Editor",
             description:
               "Let's take a quick tour of the tools available while drafting a droplet. You can skip at any time.",
-            side: "over",
+            // No element, so driver.js centres this popover on screen
             align: "center",
           },
         },
