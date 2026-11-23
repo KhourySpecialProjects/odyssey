@@ -51,7 +51,7 @@ describe("DropletBadge", () => {
     const { container } = render(
       <DropletBadge title="T" emblemSvg={SAMPLE_BADGE_EMBLEMS[1]} size="md" />,
     );
-    expect(decodedSrc(container)).toContain('viewBox="0 0 220 100"');
+    expect(decodedSrc(container)).toContain('viewBox="0 0 100 100"');
     expect(screen.queryByTestId("badge-placeholder")).not.toBeInTheDocument();
   });
 
