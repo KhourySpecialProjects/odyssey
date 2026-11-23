@@ -34,8 +34,9 @@ import { mentorRequestSchema } from "@/lib/validations/mentor";
 // covered by the "use server" auth guard, so every check is here, in this
 // order: sign-in, the body, the droplet and lesson, the ask, then ODY-884's
 // allowance. None of them calls Claude. A saved summary (ODY-967) is looked
-// up after the ask, and on a hit only Mentor's switch and the pilot are checked. The browser sends ids only: the
-// lesson comes from Strapi, and quiz answers never reach the model.
+// up after the ask, and on a hit only Mentor's switch and the pilot are
+// checked. The browser sends ids only: the lesson comes from Strapi, and quiz
+// answers never reach the model.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -135,7 +136,10 @@ export async function POST(request: Request): Promise<Response> {
     const reply =
       input.kind === "lesson" &&
       isSummaryRequest(input.message, { hasHistory: !!input.history?.length })
-        ? summaryReply(context, input)
+        ? summaryReply(context, {
+            dropletId: input.dropletId,
+            lessonId: input.lessonId,
+          })
         : null;
     const saved = reply ? await findCachedReply(reply.key) : null;
     const allowance = saved

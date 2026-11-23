@@ -57,7 +57,7 @@ const CHAT_ONLY_FILLER = new Set(["it", "this"]);
 
 /**
  * True when the message asks for a summary of this lesson and nothing else.
- * The route passes `hasHistory: input.history.length > 0`: mid-chat, "summarize
+ * The route passes `hasHistory: !!input.history?.length`: mid-chat, "summarize
  * it" and "summarize this" go to Mentor live, but "summarize this lesson",
  * "summarise" and "quick summary" still match.
  */
