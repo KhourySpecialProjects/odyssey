@@ -133,8 +133,7 @@ profile has either throws). `--twins <name>` picks another such profile, and
 
 ### Pairs and the contrast judge (ODY-938)
 
-Each personalized question under 2 or more profiles needs every profile in a
-pair.
+Each personalized question under 2 or more profiles needs every profile in a pair.
 Both sides must be personalized, and pairs run one way only. On one case of the
 question (the A side), `pairs` lists `{ with: <other case's id>, expect }`:
 the other case asks the same question under another profile, and `expect` says

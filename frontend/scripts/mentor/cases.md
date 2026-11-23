@@ -2013,7 +2013,7 @@ Should: primer
 A reply that should pass:
 
 ```
-A quick primer first: this lesson picks how to summarize a variable by its type [p3], such as the median or rank for ordinal categories [p10] and the mode or frequency for nominal ones [p9]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
+A quick primer first: this lesson picks how to summarize a variable by its type [p3, p4], such as the median or rank for ordinal categories [p10] and the mode or frequency for nominal ones [p9]. I'd take Intro to Statistics too. Ordinal categories have a meaningful order [p10], while nominal ones have none [p9].
 ```
 
 Gold:

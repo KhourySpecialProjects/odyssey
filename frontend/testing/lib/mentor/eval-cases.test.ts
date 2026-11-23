@@ -288,7 +288,7 @@ describe("validateCases", () => {
       /1 of 3 profiles of this question are in no pair/,
     ],
     [
-      "a personalized question with no pair, once another has one",
+      "a question with no pair, next to a paired one",
       [
         caseById("personalized-01"),
         caseById("personalized-02"),
