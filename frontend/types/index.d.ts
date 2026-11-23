@@ -103,6 +103,7 @@ export type AuthorizedUser = {
   github: string;
   website: string;
   firstTime: boolean;
+  mentorPersonalization?: boolean; // self-only; missing counts as on (ODY-935)
   onboardedAt?: string | null; // set once by saveLearnerProfile (ODY-953)
   firstName: string;
   lastName: string;

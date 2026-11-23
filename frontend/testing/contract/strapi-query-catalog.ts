@@ -399,7 +399,13 @@ const MENTOR_SETTING_ROUTES = routes([
   [
     "GET",
     /^\/mentor-setting$/,
-    { data: ent(1, { enabled: true, pilotGroups: rel(ent(7)) }) },
+    {
+      data: ent(1, {
+        enabled: true,
+        personalize: true,
+        pilotGroups: rel(ent(7)),
+      }),
+    },
   ],
   ["GET", /^\/groups$/, list(ent(7))],
 ]);
@@ -468,6 +474,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "lesson-delete": "@/lib/requests/lesson-delete",
   "lesson-lock": "@/lib/requests/lesson-lock",
   lesson: "@/lib/requests/lesson",
+  "learner-enrollments": "@/lib/requests/learner-enrollments",
   "mentor-feedback": "@/lib/requests/mentor-feedback",
   "mentor-chats": "@/lib/requests/mentor-chats",
   "mentor-setting": "@/lib/requests/mentor-setting",
@@ -914,6 +921,9 @@ export const CAPTURED: Record<string, Call<never>[]> = {
   "ai-scoring": defineModule<typeof import("@/lib/requests/ai-scoring")>([
     call("getAiScoringRun", (m) => m.getAiScoringRun(1), AI_RUN_ROUTES),
   ]),
+  "learner-enrollments": defineModule<
+    typeof import("@/lib/requests/learner-enrollments")
+  >([call("getLearnerEnrollments", (m) => m.getLearnerEnrollments(1))]),
   "mentor-setting": defineModule<
     typeof import("@/lib/requests/mentor-setting")
   >([
@@ -1214,6 +1224,7 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "ai-scoring-prompt": {
     saveAiScoringPrompt: "custom ai-scoring-setting prompt route (ODY-898)",
   },
+  recommendations: { dismissRecommendation: WRITE },
   "overview-scan": {
     runOverviewScan: WRITE,
     dismissScanFlag: WRITE,

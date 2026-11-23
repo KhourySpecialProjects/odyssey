@@ -128,9 +128,7 @@ export function ReviewPanelDock({
       <aside
         ref={aside}
         id={asideId}
-        aria-label={
-          rail ? "Reviewer Transcript (collapsed)" : "Reviewer Transcript"
-        }
+        aria-label={rail ? "Scorecard (collapsed)" : "Scorecard"}
         {...(modal ? { role: "dialog", "aria-modal": true } : {})}
         onKeyDown={onKeyDown}
         className={cn(
@@ -152,7 +150,7 @@ export function ReviewPanelDock({
             <button
               ref={openButton}
               type="button"
-              aria-label="Open Reviewer Transcript"
+              aria-label="Open Scorecard"
               onClick={open}
               className={cn(
                 "rounded-lg p-2 text-slate-700 hover:bg-slate-100",
@@ -176,7 +174,7 @@ export function ReviewPanelDock({
           <button
             ref={collapseButton}
             type="button"
-            aria-label="Collapse Reviewer Transcript"
+            aria-label="Collapse Scorecard"
             onClick={collapse}
             className={cn(
               "absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-600 hover:bg-slate-100",
@@ -192,7 +190,7 @@ export function ReviewPanelDock({
             min={resize.min}
             max={resize.max}
             controls={asideId}
-            label="Reviewer Transcript"
+            label="Scorecard"
             onResize={resize.setWidth}
             onReset={resize.reset}
             onDragChange={resize.setDragging}

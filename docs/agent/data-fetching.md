@@ -156,6 +156,7 @@ All cache tags are defined in `frontend/lib/cache-tags.ts`. Two scoping levels:
 - `CACHE_TAGS.notes(userId)` → `"notes-{userId}"`
 - `CACHE_TAGS.highlights(userId)` → `"highlights-{userId}"`
 - `CACHE_TAGS.learnerProfile(userId)` → `"learner-profile-{userId}"`
+- `CACHE_TAGS.recommendations(userId)` → `"recommendations-{userId}"`
 
 Per-droplet: `CACHE_TAGS.review(dropletId)` → `"review-{dropletId}"` (read by `getReviewForDroplet` and `getMyReview`, invalidated by the `lib/requests/reviews.ts` writes).
 
@@ -265,6 +266,10 @@ A URL a creator typed (a lesson link, an image, a video, a dataset file) is requ
 ## Mentor usage
 
 The route that calls the model for Mentor (ODY-884) must call `checkMentorAllowance` before it and `recordMentorUsage` once after, both from `lib/mentor/usage.ts` (server only, not a `"use server"` file; the contract is in its types). Users with no staff role get the `student` tier in `lib/import/rate-limiter.ts`, which copies `creator-editor`'s limits for every action except `mentor`.
+
+## Recommendations (ODY-957)
+
+`getRecommendations` (`lib/recommendations/`) is server-only. It ranks in memory from one shared candidate read (tag `droplets`) plus per-student reads, so there is no result cache to invalidate. Freshness comes from the input tags: `enrollments(id)` (enroll, finish, archive), `voyageEnrollments(id)`, `voyages` and `playlists` (the voyage read carries both, since playlist nodes expand through the playlist), `learnerProfile(id)` (quiz save) and `recommendations(id)` (dismissals). A new enrollment write needs only its usual `enrollments(id)` revalidate. Exclusion ids are removed in memory and never go in a URL. Rule 3 (co-completion, ODY-962) reads the global `co-completion` tag with `revalidate: 3600` and no `revalidateTag` call. Once the hour is up, the next request still gets the cached counts while Next refreshes them in the background, and a failed refresh keeps the old counts, so they can be older than an hour. The student's own exclusions stay immediate.
 
 ## Common Mistakes
 

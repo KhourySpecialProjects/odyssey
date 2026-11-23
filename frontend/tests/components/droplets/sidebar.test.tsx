@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import Sidebar from "@/components/droplets/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -217,6 +223,61 @@ describe("Sidebar", () => {
 
       const homeLink = container.querySelector('a[href="/explore"]');
       expect(homeLink).toBeInTheDocument();
+    });
+
+    it("labels the back arrow for screen readers", () => {
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+        />,
+      );
+
+      expect(
+        screen.getByRole("link", { name: "Back to Explore" }),
+      ).toHaveAttribute("href", "/explore");
+    });
+
+    it("checks completed lessons and leaves the rest unmarked", () => {
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[1]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+          enrollmentId="e1"
+        />,
+      );
+
+      const lesson1 = screen.getByText("Lesson 1").closest("a")!;
+      const lesson2 = screen.getByText("Lesson 2").closest("a")!;
+      expect(within(lesson1).getByText("Completed")).toBeInTheDocument();
+      expect(within(lesson1).queryByTestId("lock-icon")).toBeNull();
+      expect(within(lesson2).queryByText("Completed")).toBeNull();
+    });
+
+    it("shows a lock, not a check, on a locked lesson", () => {
+      render(
+        <Sidebar
+          user={mockUser}
+          author={false}
+          droplet={mockDroplet}
+          completedLessonIds={[3]}
+          expanded={true}
+          setExpanded={mockSetExpanded}
+          enrollmentId="e1"
+        />,
+      );
+
+      const lesson3 = screen.getByText("Lesson 3").closest("a")!;
+      expect(within(lesson3).getByTestId("lock-icon")).toBeInTheDocument();
+      expect(within(lesson3).queryByText("Completed")).toBeNull();
     });
   });
 

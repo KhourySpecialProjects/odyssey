@@ -39,6 +39,7 @@ const STREAK_DAY_UID = 'api::streak-day.streak-day';
 const GROUP_UID = 'api::group.group';
 const TAG_UID = 'api::tag.tag';
 const LEARNER_PROFILE_UID = 'api::learner-profile.learner-profile';
+const RECOMMENDATION_DISMISSAL_UID = 'api::recommendation-dismissal.recommendation-dismissal';
 
 const learnerProfileData = (overrides = {}) => ({
   key: String(Date.now() % 1e9) + String(++counter),
@@ -207,6 +208,7 @@ module.exports = {
   MENTOR_MESSAGE_UID,
   GROUP_UID,
   TAG_UID,
+  RECOMMENDATION_DISMISSAL_UID,
   LEARNER_PROFILE_UID,
   learnerProfileData,
   mentorUsageData,

@@ -10,3 +10,4 @@ docker-compose.yml
 frontend/components/ui/blocknote/editor/custom-blocknote.css
 frontend/coverage
 frontend/playwright-report
+frontend/test-results

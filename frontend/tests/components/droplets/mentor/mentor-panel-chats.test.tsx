@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { toast } from "sonner";
 import { MentorPanel } from "@/components/droplets/lessons/mentor/mentor-panel";
+import { acceptNotice } from "@/components/droplets/lessons/mentor/mentor-notice";
 import { useLessonPanelStore } from "@/stores/lesson-panel-store";
 import {
   deleteMentorChat,
@@ -126,7 +127,7 @@ beforeEach(async () => {
   jest.clearAllMocks();
   jest.mocked(useMediaQuery).mockReturnValue(true);
   localStorage.clear();
-  localStorage.setItem("mentor-notice-v1", "1");
+  acceptNotice();
   useLessonPanelStore.getState().reset();
   global.fetch = fetchMock as unknown as typeof fetch;
   fetchMock.mockImplementation(async (_u, init) =>

@@ -113,8 +113,8 @@ export function Sidebar({
   expanded: boolean;
   setExpanded: (v: boolean) => void;
   onRestartTour: () => void;
-  /** The Reviewer Transcript panel has Publish and Send feedback, so only Preview stays here.
-   *  It also has its own Final Overview Scan button, so the sidebar's link hides too. */
+  /** The Scorecard panel has Publish and Send feedback, so only Preview stays here.
+   *  It also has its own Pre-publish checks link, so the sidebar's link hides too. */
   hideReviewActions?: boolean;
   /** Lowest score per lesson, for the dot beside its title */
   lessonDots?: Record<number, "ok" | "needs_work">;
@@ -806,7 +806,7 @@ export function Sidebar({
                 />
               </button>
             </div>
-            {/* The reviewer panel carries its own scan button */}
+            {/* The reviewer panel carries its own checks link */}
             {canScan(user.roles, isAuthor) && !hideReviewActions && (
               <Link
                 href={scanHref}
@@ -818,7 +818,7 @@ export function Sidebar({
                 )}
               >
                 <IconListCheck className="h-4 w-4" aria-hidden="true" />
-                Final Overview Scan
+                Pre-publish checks
               </Link>
             )}
             {/* Wraps so a long action label ("Submit for review", "Send

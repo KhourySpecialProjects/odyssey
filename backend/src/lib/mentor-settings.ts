@@ -21,6 +21,8 @@ export const MENTOR_SETTINGS_SEED = {
   monthlyCapUsd: 10,
   perUserDailyLimit: 30,
   storeSharedAnswers: false,
+  // Read by the frontend; null reads as off (ODY-934).
+  personalize: false,
 };
 
 type Row = Record<string, any>;

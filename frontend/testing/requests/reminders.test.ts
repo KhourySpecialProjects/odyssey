@@ -48,6 +48,10 @@ const row = (over: object = {}) => ({
   ...over,
 });
 const putBody = () => JSON.parse(fetchMock.mock.calls[0][1].body).data;
+/** Answers fetchAPI by path: the reminder row, then the caller's read rows */
+const serve = (reads: object[] = []) =>
+  mockedFetchAPI.mockImplementation((async (path: string) =>
+    path === "/announcement-reads" ? reads : [row()]) as never);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -57,7 +61,7 @@ beforeEach(() => {
   global.fetch = fetchMock as unknown as typeof fetch;
   fetchMock.mockResolvedValue(makeFetchResponse({ data: {} }));
   mockedRequireRole.mockResolvedValue(OWNER);
-  mockedFetchAPI.mockResolvedValue([row()] as never);
+  serve();
   mockedGetUser.mockResolvedValue({
     id: 7,
     timeZone: "America/Los_Angeles",
@@ -184,41 +188,89 @@ describe.each(ACTIONS)("%s", (name, run) => {
 });
 
 describe("what each action writes", () => {
+  const readRow = { id: 70, documentId: "r70" };
+
+  // Read state is the caller's announcement-reads row (ODY-786), never readAt
   it.each([
     [
       "snoozeReminder",
       () => snoozeReminder(5, "in_3_days"),
+      [],
       {
-        readAt: "2026-11-20T17:00:00.000Z",
         reminderSnoozedUntil: "2026-11-23T08:00:00.000Z",
         reminderMutedUntil: null,
       },
+      ["POST", /\/api\/announcement-reads$/],
     ],
     [
       "muteReminder",
       () => muteReminder(5),
+      [],
       {
-        readAt: "2026-11-20T17:00:00.000Z",
         reminderSnoozedUntil: null,
         reminderMutedUntil: "2026-12-20T08:00:00.000Z",
       },
+      ["POST", /\/api\/announcement-reads$/],
     ],
     [
       "undoReminder",
       () => undoReminder(5),
-      { readAt: null, reminderSnoozedUntil: null, reminderMutedUntil: null },
+      [readRow],
+      { reminderSnoozedUntil: null, reminderMutedUntil: null },
+      ["DELETE", /\/api\/announcement-reads\/r70$/],
     ],
-  ])("%s sends exactly its fields", async (_name, run, body) => {
+  ] as const)(
+    "%s sends its fields and sets the caller's read row",
+    async (_name, run, reads, fields, [method, readUrl]) => {
+      serve([...reads]);
+      await run();
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toMatch(/\/api\/announcements\/doc5$/);
+      expect(init.method).toBe("PUT");
+      expect(init.headers).toMatchObject({ "Strapi-Response-Format": "v4" });
+      expect(putBody()).toEqual({ ...fields, readAt: null });
+      const [url2, init2] = fetchMock.mock.calls[1];
+      expect(url2).toMatch(readUrl);
+      expect(init2.method).toBe(method);
+      if (method === "POST") {
+        expect(JSON.parse(init2.body).data).toEqual({
+          announcement: "doc5",
+          authorized_user: "doc7",
+        });
+      }
+      expect(mockedRevalidate).toHaveBeenCalledTimes(1);
+      expect(mockedRevalidate).toHaveBeenCalledWith(CACHE_TAGS.userFeed(7));
+    },
+  );
+
+  it.each([
+    [
+      "snooze keeps an existing read row",
+      () => snoozeReminder(5, "tomorrow"),
+      [readRow],
+    ],
+    ["undo with no read row deletes nothing", () => undoReminder(5), []],
+  ])("%s", async (_label, run, reads) => {
+    serve(reads);
     await run();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toMatch(/\/api\/announcements\/doc5$/);
-    expect(init.method).toBe("PUT");
-    expect(init.headers).toMatchObject({ "Strapi-Response-Format": "v4" });
-    expect(putBody()).toEqual(body);
-    expect(mockedRevalidate).toHaveBeenCalledTimes(1);
-    expect(mockedRevalidate).toHaveBeenCalledWith(CACHE_TAGS.userFeed(7));
+    expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
+  });
+
+  it("returns an error, with no revalidate, when the read row write fails", async () => {
+    fetchMock
+      .mockResolvedValueOnce(makeFetchResponse({ data: {} }))
+      .mockResolvedValueOnce(makeFetchResponse({}, 500));
+
+    expect(await snoozeReminder(5, "tomorrow")).toEqual({
+      ok: false,
+      error: "Couldn't update this reminder.",
+      data: null,
+    });
+    expect(mockedRevalidate).not.toHaveBeenCalled();
   });
 
   it("snooze returns the date in the learner's zone", async () => {

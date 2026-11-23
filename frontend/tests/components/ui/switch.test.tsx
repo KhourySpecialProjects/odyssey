@@ -28,3 +28,12 @@ describe("Switch", () => {
     expect(div).toHaveClass("peer-checked:bg-[#287697]");
   });
 });
+
+describe("Switch accessibility", () => {
+  it("is exposed as a switch with aria-checked-compatible state", () => {
+    const { getByRole, rerender } = render(<Switch checked readOnly />);
+    expect(getByRole("switch")).toBeChecked();
+    rerender(<Switch checked={false} readOnly />);
+    expect(getByRole("switch")).not.toBeChecked();
+  });
+});

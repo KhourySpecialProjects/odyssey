@@ -252,11 +252,14 @@ describe("runReminderCheck", () => {
 });
 
 describe("clearReminderOnProgress", () => {
-  const unread = { id: 4, documentId: "doc4" };
+  const reminder = { id: 4, documentId: "doc4" };
+  /** Feeds fetchAPI the reminder lookup, then the learner's read rows */
+  const lookup = (rows: object[], reads: object[] = []) =>
+    fetchApiMock.mockResolvedValueOnce(rows).mockResolvedValueOnce(reads);
 
-  it("reads the droplet's unread reminder fresh", async () => {
-    fetchApiMock.mockResolvedValueOnce([]);
-    await clearReminderOnProgress({ id: 7 }, 10, NOW);
+  it("reads the droplet's reminder fresh, read or not", async () => {
+    lookup([]);
+    await clearReminderOnProgress({ id: 7 }, 10);
 
     const opts = fetchApiMock.mock.calls[0][1];
     expect(opts.cache).toBe("no-store");
@@ -265,26 +268,34 @@ describe("clearReminderOnProgress", () => {
       type: { $eq: "reminder" },
       authorized_user: { id: { $eq: 7 } },
       droplet: { id: { $eq: 10 } },
-      readAt: { $null: true },
     });
   });
 
-  it("sets only readAt and revalidates the feed", async () => {
-    fetchApiMock.mockResolvedValueOnce([unread]);
+  it("adds the learner's read row and revalidates the feed", async () => {
+    lookup([reminder]);
     reply({ data: {} });
 
-    expect(await clearReminderOnProgress({ id: 7 }, 10, NOW)).toBe(true);
+    expect(await clearReminderOnProgress({ id: 7 }, 10)).toBe(true);
+    expect(fetchApiMock.mock.calls[1][0]).toBe("/announcement-reads");
+    expect(fetchApiMock.mock.calls[1][1].urlParams.filters).toEqual({
+      announcement: { id: { $eq: 4 } },
+      authorized_user: { id: { $eq: 7 } },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toMatch(/\/api\/announcements\/doc4$/);
-    expect(init.method).toBe("PUT");
-    expect(body()).toEqual({ readAt: NOW.toISOString() });
+    expect(url).toMatch(/\/api\/announcement-reads$/);
+    expect(init.method).toBe("POST");
+    expect(body()).toEqual({ announcement: "doc4", authorized_user: "doc7" });
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.userFeed(7));
   });
 
-  it("writes nothing when there is no unread reminder", async () => {
-    fetchApiMock.mockResolvedValueOnce([]);
+  it.each([
+    ["no reminder", [], []],
+    ["the reminder already read", [reminder], [{ id: 70, documentId: "r70" }]],
+  ])("writes nothing for %s", async (_label, rows, reads) => {
+    lookup(rows, reads);
 
-    expect(await clearReminderOnProgress({ id: 7 }, 10, NOW)).toBe(false);
+    expect(await clearReminderOnProgress({ id: 7 }, 10)).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(revalidateTag).not.toHaveBeenCalled();
   });
@@ -295,16 +306,16 @@ describe("clearReminderOnProgress", () => {
       () => fetchApiMock.mockRejectedValueOnce(new Error("x")),
     ],
     [
-      "the PUT fails",
+      "the POST fails",
       () => {
-        fetchApiMock.mockResolvedValueOnce([unread]);
+        lookup([reminder]);
         reply({}, false);
       },
     ],
   ])("returns false, not a throw, when %s", async (_label, arrange) => {
     arrange();
 
-    expect(await clearReminderOnProgress({ id: 7 }, 10, NOW)).toBe(false);
+    expect(await clearReminderOnProgress({ id: 7 }, 10)).toBe(false);
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

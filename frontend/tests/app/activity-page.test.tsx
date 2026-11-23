@@ -2,7 +2,9 @@ import { ReactElement } from "react";
 import FeedPage from "@/app/(general)/activity/page";
 import { RecentMentorChats } from "@/components/feed/recent-mentor-chats";
 import { FeedCenterContent } from "@/components/feed/feed-center-content";
+import { ActivityRecommendations } from "@/components/recommendations/activity-recommendations";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getRecommendations } from "@/lib/recommendations";
 import { getCachedUserSocial } from "@/lib/requests/cached";
 import { fetchAnnouncements } from "@/lib/requests/feed";
 
@@ -31,6 +33,14 @@ jest.mock("@/lib/requests/feed", () => ({
   fetchAnnouncements: jest.fn(),
 }));
 
+jest.mock("@/lib/recommendations", () => ({
+  getRecommendations: jest.fn(),
+}));
+
+jest.mock("@/components/recommendations/activity-recommendations", () => ({
+  ActivityRecommendations: jest.fn(() => null),
+}));
+
 const authUser = { id: 5, email: "a@b.edu", friendships: [] };
 const feedPage = {
   data: [{ id: 1, type: "droplet", content: "x", firstCreated: new Date() }],
@@ -38,24 +48,34 @@ const feedPage = {
 };
 
 type Props = Record<string, unknown>;
+type Slot = ReactElement<{
+  fallback: ReactElement<Props>;
+  children: ReactElement<Props>;
+}>;
 
-/** Renders the page, then the streamed child inside its <Suspense>. */
+const stream = async (slot: Slot) => {
+  const child = slot.props.children;
+  return (await (child.type as (props: Props) => Promise<ReactElement>)(
+    child.props,
+  )) as ReactElement<Props>;
+};
+
+/** Renders the page, then what streams into each <Suspense>: the strip and the feed. The recent chats card sits between them. */
 async function renderPage(search: Record<string, string | string[]> = {}) {
-  const shell = (await FeedPage({
+  const page = (await FeedPage({
     searchParams: Promise.resolve(search),
-  })) as ReactElement<{ children: ReactElement<Props>[] }>;
-  // The recent chats card, then the feed's own Suspense inside the filling box
-  const [chats, feedBox] = shell.props.children;
-  const page = (feedBox as ReactElement<{ children: ReactElement }>).props
-    .children as ReactElement<{
-    fallback: ReactElement<Props>;
-    children: ReactElement;
+  })) as ReactElement<{
+    children: [Slot, Slot, ReactElement<{ children: Slot }>];
   }>;
-  const seeded = page.props.children as ReactElement<Props>;
-  const streamed = (await (
-    seeded.type as (props: Props) => Promise<ReactElement<Props>>
-  )(seeded.props)) as ReactElement<Props>;
-  return { shell, chats, page, streamed };
+  const [stripSlot, chatsSlot, feedBox] = page.props.children;
+  const feedSlot = feedBox.props.children;
+  return {
+    shell: page,
+    chatsSlot,
+    feedSlot,
+    streamed: await stream(feedSlot),
+    strip: await stream(stripSlot),
+  };
 }
 
 describe("Activity feed page", () => {
@@ -67,10 +87,25 @@ describe("Activity feed page", () => {
     } as never);
     jest.mocked(getCachedUserSocial).mockResolvedValue(authUser as never);
     jest.mocked(fetchAnnouncements).mockResolvedValue(feedPage as never);
+    jest.mocked(getRecommendations).mockResolvedValue([]);
+  });
+
+  it("streams the student's picks into the strip above the feed", async () => {
+    const picks = [{ droplet: { id: 9 } }];
+    jest.mocked(getRecommendations).mockResolvedValue(picks as never);
+
+    const { strip } = await renderPage();
+
+    expect(getRecommendations).toHaveBeenCalledWith(5, {
+      surface: "activity",
+      limit: 12,
+    });
+    expect(strip.type).toBe(ActivityRecommendations);
+    expect(strip.props.initialPicks).toBe(picks);
   });
 
   it("server-renders page 1 of the unread feed as initial data", async () => {
-    const { page, streamed } = await renderPage();
+    const { feedSlot: page, streamed } = await renderPage();
 
     // Identity is resolved inside the action; no user is passed
     expect(fetchAnnouncements).toHaveBeenCalledTimes(1);
@@ -100,11 +135,11 @@ describe("Activity feed page", () => {
     expect(page.props.fallback.props).toEqual({ authUser, pending: true });
   });
 
-  it("renders the recent Mentor chats card above the feed", async () => {
-    const { shell, chats } = await renderPage();
+  it("renders the recent Mentor chats card between the picks and the feed", async () => {
+    const { shell, chatsSlot } = await renderPage();
 
     expect(shell.props).toMatchObject({ className: "flex h-full flex-col" });
-    expect((chats.props.children as ReactElement).type).toBe(RecentMentorChats);
+    expect(chatsSlot.props.children.type).toBe(RecentMentorChats);
   });
 
   it("fetches for the URL's filters", async () => {

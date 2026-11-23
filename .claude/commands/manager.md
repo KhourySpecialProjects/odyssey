@@ -89,8 +89,8 @@ the manager's model. Instead:
 
 1. **Understand it.** Work out what kind of request it is: a feature, a bug,
    a question, a status request or a chore. If the request is unclear in a
-   way that changes the work, reply with at most 3 numbered questions, keep
-   the phase `asking`, and stop.
+   way that changes the work, ask at most 4 questions with options (see
+   **Asking questions**), keep the phase `asking`, and stop.
 2. **Questions and status requests:** answer in the thread from the repo,
    Linear (`list_issues`, `get_issue`) and `/coord status`, then set `done`.
 3. **Features, bugs and chores:**
@@ -130,18 +130,54 @@ the manager's model. Instead:
    `docs/agent/agent-swarming.md`: a squad on Sonnet for most tickets, Haiku
    for trivial ones, a Plan routine on Opus first for big features.
 5. **Read results** with `list_runs` and `get_run_log`. A run ends with its
-   branch, commit SHA, check results and PR body. If nothing was pushed or
-   the checks failed, read why before rerunning. Rerun one step up the
-   ladder in `agent-swarming.md`, not the same brief again.
-6. **Review** with an Opus Review routine when the owner asks, or when the
-   route requires one (schema, auth, server actions). Fixes go to a new
-   squad run on the same branch.
+   branch, commit SHA, the `checks:` line and a review card with
+   `Reviews: n of 3 · last verdict ...`. If nothing was pushed or the
+   checks failed, read why before rerunning. Rerun one step up the ladder
+   in `agent-swarming.md`, not the same brief again.
+6. **Review.** The squad runs the review loop itself, with at most 3
+   reviews (see "Review loop" in `agent-swarming.md`). Then one fresh-session
+   gate. For 🟢 and 🟡, start the final Review routine after the squad
+   pushes. For 🔴 (schema, auth, server actions), start the Audit instead,
+   with no separate Review routine. Don't chain fix runs by hand.
+   - **Final review:** `verdict: ship` goes in the Review column and the
+     `[PR]` post as `Final review: ship`. `verdict: fix` gets
+     `[OPEN] … · NEEDS INPUT` with the blocking findings and no more fix
+     runs; the owner decides.
+   - **Needs human:** if a card has a `Needs human:` section (risk 🔴),
+     post `[OPEN] … · NEEDS INPUT` in the thread with the open findings,
+     start no more runs on that branch, and wait for the owner.
+   - **Fallback:** if a run log shows the `Agent` tool failed, chain a
+     Review routine and a fix squad run on the same branch. Count rounds
+     in state as `reviewRound` per branch, and stop at 3 with the same
+     Needs-human post.
 7. **Report** on the live canvas while runs are active, then one summary
    post when the batch is done (below). Set `done` when every ticket is
    pushed, held or dropped.
-8. **Stuck?** If a ticket needs a decision, ask in the thread with
-   `[OPEN] … · NEEDS INPUT`, and carry on with the tickets that don't
-   depend on it.
+8. **Stuck?** If a ticket needs a decision, ask with
+   `[OPEN] … · NEEDS INPUT` (see **Asking questions**), and carry on with
+   the tickets that don't depend on it.
+
+## Asking questions
+
+Ask in the question window when you're running on the owner's laptop. See
+`docs/agent/question-window.md`.
+
+1. Write `.claude/grill/questions.json`: at most 4 questions, each with 2–4
+   options drawn from this codebase. Put your recommendation first, marked
+   `recommended`, with a one-line trade-off in `description`. Use a new
+   `id` each time.
+2. Run `python3 .claude/scripts/grill_app.py` in the background. It opens
+   over Slack.
+3. Post a short `[OPEN] … · NEEDS INPUT` in the thread saying the questions
+   are in the window.
+4. The watcher prints `GRILL_ANSWERS <file>` when they submit. Read the
+   file, repeat their picks in the thread, then carry on. A file with
+   `"declined": true` means they cancelled: ask what they'd like instead.
+
+In a cloud session, or when the window can't open, reply in the thread with
+at most 3 numbered questions instead. Never add number reactions for them to
+click: the Slack tools post and react as the owner, so a reaction you add is
+already theirs.
 
 ## Starting a cloud routine
 
@@ -168,10 +204,27 @@ the manager's model. Instead:
     with no Co-Authored-By or other trailers. Take the name and email from
     the owner's local `git config user.name` and `user.email`. Cloud
     sessions otherwise commit as `Claude <noreply@anthropic.com>`.
-  - End with the branch, commit SHA, check results and a review card (below).
+  - Build, commit, then run `bash scripts/ci-local.sh --agent`. It must pass
+    before every review and before the push.
+  - Run the review loop in `.claude/scripts/loop-reviewer-brief.md`: a fresh
+    `reviewer` subagent (`subagent_type: "reviewer"`, `model: "opus"`,
+    effort `medium`) with the fixed prompt in that file, findings written to
+    `docs/reviews/ODY-<n>.md`, at most 3 reviews. After review 3 with open
+    findings, push anyway, set the card's risk to 🔴 and add `Needs human:`.
+    Paste that file into the brief; the squad never writes its own reviewer
+    prompt.
+  - End with the branch, commit SHA, the `checks:` line unchanged, and a
+    review card (below) with `Reviews: n of 3 · last verdict <ship|fix>`.
   - Also write the card to `review-cards/<branch-name-without-claude/>.md`
     on a `claude/review-cards-<batch>` branch, so
     `bash .claude/scripts/open-prs.sh` can open the PR with it as the body.
+- **The final Review routine's brief:** Opus. The Manager pastes in the
+  ticket text (and plan). The routine fetches and reads the diff from the
+  pushed branch (`git diff origin/develop...origin/claude/<branch>`), and uses
+  the fixed Reviewer prompt in `.claude/scripts/loop-reviewer-brief.md` with
+  round `final` and the branch's `docs/reviews/ODY-<n>.md` as previous
+  reviews. It pushes only `docs/reviews/ODY-<n>-final.md` on
+  `claude/ody-<n>-final-review`, with the exact push command rule above.
 - **The review card** is the PR body, and it does CodeRabbit's job (the free
   plan is too limited). It starts with three lines the script reads:
 
@@ -209,7 +262,7 @@ the manager's model. Instead:
     `"use server"` box (if no such file changed, or every changed export is
     guarded or allowlisted). The person opening the PR ticks the rest.
   - Risk: 🔴 for a schema, auth, a `"use server"` export, env or secrets, or
-    a data migration or deletion. These also get an Opus review before the
+    a data migration or deletion. These get the Audit before the
     owner sees them. 🟡 when a user sees or can do something different. 🟢
     for lint, copy, tests, types, or dead code.
 
@@ -242,6 +295,9 @@ the manager's model. Instead:
   as a paragraph above the list, and one checkbox. Canvases turn a checkbox
   into a plain bullet when it shares a list with a plain bullet. Add new cards
   when a batch finishes. Drop a ticket once its PR merges.
+- **Review column.** In the `Ticket overview` table, show
+  `Reviews n/3 · final ship|fix`, `Audit ship|fix` for 🔴, or `Needs human`
+  when a card has that section.
 - **One summary post per batch.** When a batch is done and the canvas is up
   to date, post once in the request's thread (with `reply_broadcast`): what
   the owner should look at, and the context other developers need

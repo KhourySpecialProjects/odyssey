@@ -31,7 +31,7 @@ type Props = {
   onDismiss: (findingId: string) => void;
 };
 
-/** One numbered transgression: quote, reason, Show in lesson, Add as comment and Not an issue */
+/** One numbered point: quote, reason, Show in lesson, Add as comment and Not an issue */
 export function FindingItem({
   finding,
   number,

@@ -572,7 +572,7 @@ export async function deleteEnrollment(
 }
 
 export async function createEnrollment(
-  droplet: Droplet,
+  droplet: Pick<Droplet, "id">,
   viewedLessons: Lesson[],
 ) {
   try {

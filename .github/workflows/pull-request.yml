@@ -31,7 +31,7 @@ jobs:
       - name: Check if PR to develop follows branch naming convention
         if: github.event.pull_request.base.ref == 'develop'
         run: |
-          if [[ ! "$PR_HEAD_REF" =~ ^(feature/|bug/|improvement/|dependabot/) ]]; then
-            echo "Pull request to develop must come from a branch beginning with 'feature/', 'bug/', 'improvement/', or 'dependabot/'."
+          if [[ ! "$PR_HEAD_REF" =~ ^(feature/|bug/|improvement/|dependabot/|claude/) ]]; then
+            echo "Pull request to develop must come from a branch beginning with 'feature/', 'bug/', 'improvement/', 'dependabot/', or 'claude/'."
             exit 1
           fi

@@ -66,7 +66,7 @@ describe("NotesContainer", () => {
 
   it("handles filter changes", () => {
     render(<NotesContainer {...mockProps} />);
-    const filterOptions = screen.getAllByRole("checkbox");
+    const filterOptions = screen.getAllByRole("switch");
     fireEvent.click(filterOptions[0]);
   });
   // ... existing code ...
@@ -80,7 +80,7 @@ describe("NotesContainer", () => {
   it("handles filter changes", () => {
     render(<NotesContainer {...mockProps} />);
 
-    const filterOptions = screen.getAllByRole("checkbox");
+    const filterOptions = screen.getAllByRole("switch");
     fireEvent.click(filterOptions[0]);
   });
 });

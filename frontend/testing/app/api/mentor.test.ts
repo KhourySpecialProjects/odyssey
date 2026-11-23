@@ -70,6 +70,8 @@ const sourceOf = (
 ): MentorSource => ({
   droplet: {
     ...mentorDroplet,
+    id: 5,
+    prerequisites: [],
     status: "published",
     isHidden: false,
     lessons: [{ id: l.id }],

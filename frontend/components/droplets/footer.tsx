@@ -266,9 +266,17 @@ export default function DropletFooter({
               canProceed={canProceed}
               onClick={nextIsRecap ? saveBeforeRecap : saveInBackground}
               awaitOnClick={nextIsRecap}
+              label={nextIsRecap ? undefined : `Next: ${next.name}`}
             >
-              Next
-              <IconArrowRight className="h-4 w-4" />
+              {nextIsRecap ? (
+                <span>Finish → Recap</span>
+              ) : (
+                <>
+                  <span className="shrink-0">Next</span>
+                  <span className="max-w-[12rem] truncate">: {next.name}</span>
+                </>
+              )}
+              <IconArrowRight className="h-4 w-4 shrink-0" />
             </PaginationLinkWrapper>
           ) : (
             <div className="flex-1"></div>
@@ -289,6 +297,7 @@ const PaginationLinkWrapper = ({
   canProceed,
   onClick,
   awaitOnClick = false,
+  label,
 }: {
   link: string;
   className?: string;
@@ -296,6 +305,8 @@ const PaginationLinkWrapper = ({
   canProceed: boolean;
   onClick?: () => Promise<void>;
   awaitOnClick?: boolean;
+  /** Full accessible name and tooltip, for a label that gets truncated */
+  label?: string;
 }) => {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -328,6 +339,8 @@ const PaginationLinkWrapper = ({
     <button
       onClick={handleClick}
       disabled={isSaving}
+      title={label}
+      aria-label={label}
       className={cn(
         "inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-[14px] text-[14px] font-medium text-[#344054] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
         className,

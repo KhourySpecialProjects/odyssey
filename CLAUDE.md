@@ -16,7 +16,7 @@ Frontend fetches from Strapi REST via `STRAPI_ACCESS_TOKEN`. Media on S3/CDN. Au
 
 ## Critical Version Constraints
 
-- **Strapi 5.56** — use the Context7 v5 docs for backend config and APIs.
+- **Strapi 5.62** — use the Context7 v5 docs for backend config and APIs.
 - **Document Service, never Entity Service** — `backend/tests/no-entity-service.test.js` fails on `entityService`.
 - **The frontend sends `Strapi-Response-Format: v4`**, so responses stay nested. Every raw `fetch()` spreads `STRAPI_RESPONSE_FORMAT_HEADER` (guard: `frontend/testing/lib/strapi-response-format-guard.test.ts`).
 - **`id` vs `documentId`** — numeric `id` for filters, comparisons and cache tags; `documentId` for single-entry URLs and relation writes (numeric ids 404). See `docs/agent/data-fetching.md`.
@@ -80,6 +80,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 | `docs/agent/learnings/`                  | Accumulated gotchas and discoveries from past sessions       |
 | `docs/agent/server-action-auth.md`       | Writing or changing any "use server" export                  |
 | `docs/agent/multi-agent-coordination.md` | Posting to or reading the team's Slack coordination DM       |
+| `docs/agent/question-window.md`          | Asking your developer to decide something, with options      |
 
 ## Skills
 
