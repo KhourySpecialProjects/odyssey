@@ -249,10 +249,25 @@ describe("runContrasts", () => {
     await runContrasts(fake, jobs(), dir);
 
     const written = readJsonl<ContrastRow>(path.join(dir, CONTRAST));
-    expect(written.map((r) => [r.rep, r.order, r.verdict]).sort()).toEqual([
-      [1, "AB", "yes"],
-      [2, "BA", "yes"],
+    expect(
+      written.map((r) => [r.rep, r.order, r.verdict, r.level]).sort(),
+    ).toEqual([
+      [1, "AB", "yes", false],
+      [2, "BA", "yes", false],
     ]);
+  });
+
+  it("marks a pair with a level case, so Pairs leaves it out", async () => {
+    create.mockResolvedValue(verdict("yes"));
+    const level = pairs.map((p) => ({
+      ...p,
+      b: { ...p.b, should: "level" as const },
+    }));
+    const rows = [...resultRows(), ...resultRows("haiku-low", 2)];
+    await runContrasts(fake, contrastJobs(level, rows, facts, false), dir);
+
+    const written = readJsonl<ContrastRow>(path.join(dir, CONTRAST));
+    expect(written.map((r) => r.level)).toEqual([true, true]);
   });
 
   it("skips what is already written, and leaves a failed call for a resume", async () => {

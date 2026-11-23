@@ -473,8 +473,8 @@ describe("reportMarkdown", () => {
       "With a learner:",
       "| haiku-low | 0 (0 / 0) [0] | 100% (1/1) [100%] |",
       "## Personalization",
-      "| Setup | Personalized | Invented history | Pairs | Contrast disagreed | History claims | Recited history |",
-      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 0 [0] |",
+      "| Setup | Personalized | Invented history | Pairs | Level pairs (not counted) | Contrast disagreed | History claims | Recited history |",
+      "| haiku-low | 100% (1/1) [100%] | – (0/0) [–] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 0 [0] |",
       "Invented history has no rows for haiku-low: counted as met.",
       "Honest not-covered with a learner has no rows for haiku-low: not met.",
       "On topic with a learner has no rows for haiku-low: not met.",
@@ -528,7 +528,7 @@ describe("reportMarkdown", () => {
     const report = reportMarkdown(rows, [], meta, [], [], handChecks);
 
     expect(report).toContain(
-      "| haiku-low | 0% (0/1) [0%] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 1 [1] |",
+      "| haiku-low | 0% (0/1) [0%] | – (0/0) [–] | – (0/0) [–] | – (0/0) [–] | 0 | 0 [0] | 1 [1] |",
     );
     expect(report).toContain("- `haiku-low|a+b|1`: it quotes the lesson\n");
     expect(report).toContain("- `haiku-low|gone|1`: typo (no such row)");
@@ -593,6 +593,25 @@ describe("reportMarkdown", () => {
       expect(s.pairs).toEqual({ pass: passed, n: 1 });
       expect(s.meetsAll).toBe(passed === 1);
     });
+
+    it.each([
+      ["a level pair", true, { pass: 0, n: 0 }, { pass: 0, n: 1 }, true],
+      [
+        "a build-on or primer pair",
+        false,
+        { pass: 0, n: 1 },
+        { pass: 0, n: 0 },
+        false,
+      ],
+    ])(
+      "%s that fails counts toward Pairs only when it isn't level",
+      (_, level, pairs, levelPairs, meetsAll) => {
+        const s = summary(pairRows(true, true), [
+          contrast({ verdict: "no", level }),
+        ]);
+        expect(s).toMatchObject({ pairs, levelPairs, meetsAll });
+      },
+    );
 
     it("blocks the setup while a contrast is missing, and ignores oracle variants", () => {
       const s = summary(
@@ -734,7 +753,7 @@ describe("reportMarkdown", () => {
         ],
       );
       for (const text of [
-        "| haiku-low | 100% (2/2) [100%] | – (0/0) [–] | 0% (0/1) [0%] | 1 |",
+        "| haiku-low | 100% (2/2) [100%] | – (0/0) [–] | 0% (0/1) [0%] | – (0/0) [–] | 1 |",
         "- haiku-low, pa vs pb, rep 1 (shown AB): both pass, judge says no: They read alike.",
         "- haiku-low, pa vs pb, swapped: judge says yes, expected no: B reads like A.",
         "- haiku-low, pa vs pb, real: judge says no, expected yes: They read alike.",

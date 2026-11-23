@@ -248,6 +248,7 @@ export async function runContrasts(
           order: job.order,
           variant: job.variant,
           expect: job.pair.expect,
+          level: [job.pair.a, job.pair.b].some((c) => c.should === "level"),
           expected: job.expected,
           verdict: parsed.verdict,
           reason: parsed.reason,

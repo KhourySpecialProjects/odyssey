@@ -117,6 +117,8 @@ export type ContrastRow = {
   variant: "real" | "same" | "swapped";
   /** The pair's expect line, as the judge saw it */
   expect: string;
+  /** A side is a level case: reported, not counted toward Pairs; missing on older runs */
+  level?: boolean;
   expected: "yes" | "no" | null;
   verdict: "yes" | "no";
   reason: string;
@@ -243,6 +245,8 @@ type V2Scores = {
   personalized: Rate;
   /** (setup, rep, pair) where both rows pass and the contrast judge says they differ as expected */
   pairs: Rate;
+  /** The same for level pairs, which don't count toward the Pairs bar */
+  levelPairs: Rate;
   inventedHistory: Rate;
   /** v1-kind rows with a learner where the judge finds a claimed history */
   historyClaims: number;
@@ -279,6 +283,16 @@ function pairOutcomes(
         ];
   });
 }
+const pairRate = (
+  rows: ResultRow[],
+  contrasts: ContrastRow[],
+  level: boolean,
+): Rate => {
+  const outcomes = pairOutcomes(rows, contrasts).filter(
+    (o) => !!o.contrast.level === level,
+  );
+  return { pass: outcomes.filter((o) => o.pass).length, n: outcomes.length };
+};
 function v2Score(
   rows: ResultRow[],
   contrasts: ContrastRow[],
@@ -290,13 +304,8 @@ function v2Score(
   );
   return {
     personalized: rate(rows.filter(ofKind(["personalized"]))),
-    pairs: (() => {
-      const outcomes = pairOutcomes(rows, contrasts);
-      return {
-        pass: outcomes.filter((o) => o.pass).length,
-        n: outcomes.length,
-      };
-    })(),
+    pairs: pairRate(rows, contrasts, false),
+    levelPairs: pairRate(rows, contrasts, true),
     inventedHistory: rate(rows.filter(ofKind(["invented-history"]))),
     historyClaims: v1.filter((r) => r.grade.inventsHistory).length,
     recited: v1.filter((r) => r.grade.recitesHistory).length,
@@ -586,6 +595,8 @@ export function reportMarkdown(
       `${rateCell(s.inventedHistory)} [${s.v2Reps.map((r) => pct(share(r.inventedHistory))).join(", ")}]`,
     Pairs: (_, s) =>
       `${rateCell(s.pairs)} [${s.v2Reps.map((r) => pct(share(r.pairs))).join(", ")}]`,
+    "Level pairs (not counted)": (_, s) =>
+      `${rateCell(s.levelPairs)} [${s.v2Reps.map((r) => pct(share(r.levelPairs))).join(", ")}]`,
     "Contrast disagreed": (rs, s) =>
       String(
         pairOutcomes(rs, contrastsOf(s.setup)).filter(
@@ -829,7 +840,7 @@ export function reportMarkdown(
 
   const sections: Record<string, string | false> = {
     Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations. The first table is v1's, over rows without a learner. The second is the same thresholds over rows with a learner (twins and hand-written cases), where leaks must also be 0.\n\n${thresholds}\n\nWith a learner:\n\n${withLearnerTable}${learnerNotes.length ? `\n\n${learnerNotes.join("\n")}` : ""}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
-    Personalization: `Personalized and Pairs at least 80% and Invented history at least 90%; a pair passes when both its rows pass and the contrast judge says they differ as expected; history claims and recited history must be 0 (a claim still needs a hand check). Personalized, Pairs and Invented history are over their own rows; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${failedPairs.length ? `\n\nFailed pairs:\n\n${failedPairs.map((o) => `- ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep} (shown ${o.contrast.order}): ${failing(o)}, judge says ${o.contrast.verdict}: ${o.contrast.reason}`).join("\n")}` : ""}${oracleChecks.length || oracleMode ? `\n\nContrast judge vs oracle pairs: ${agreed}/${oracleExpected}` : ""}${disagreed.length ? `\n\nOracle checks the judge got wrong:\n\n${disagreed.map((c) => `- ${c.setup}, ${c.a} vs ${c.b}, ${c.variant}: judge says ${c.verdict}, expected ${c.expected}: ${c.reason}`).join("\n")}` : ""}${contrastErrors.length ? `\n\nContrast calls that failed (a resume retries them):\n\n${contrastErrors.map((e) => `- ${e.setup}, ${e.caseId} vs ${e.pair!.b} (${e.pair!.variant}), rep ${e.rep}: ${e.detail}`).join("\n")}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
+    Personalization: `Personalized and Pairs at least 80% and Invented history at least 90%; a pair passes when both its rows pass and the contrast judge says they differ as expected, and a pair with a level case is shown but not counted; history claims and recited history must be 0 (a claim still needs a hand check). Personalized, Pairs and Invented history are over their own rows; History claims and Recited history are over v1-kind rows with a learner.\n\n${personalization}${emptyBars.length ? `\n\n${emptyBars.join("\n")}` : ""}${failedPairs.length ? `\n\nFailed pairs:\n\n${failedPairs.map((o) => `- ${o.contrast.setup}, ${o.contrast.a} vs ${o.contrast.b}, rep ${o.contrast.rep} (shown ${o.contrast.order}${o.contrast.level ? ", level, not counted" : ""}): ${failing(o)}, judge says ${o.contrast.verdict}: ${o.contrast.reason}`).join("\n")}` : ""}${oracleChecks.length || oracleMode ? `\n\nContrast judge vs oracle pairs: ${agreed}/${oracleExpected}` : ""}${disagreed.length ? `\n\nOracle checks the judge got wrong:\n\n${disagreed.map((c) => `- ${c.setup}, ${c.a} vs ${c.b}, ${c.variant}: judge says ${c.verdict}, expected ${c.expected}: ${c.reason}`).join("\n")}` : ""}${contrastErrors.length ? `\n\nContrast calls that failed (a resume retries them):\n\n${contrastErrors.map((e) => `- ${e.setup}, ${e.caseId} vs ${e.pair!.b} (${e.pair!.variant}), rep ${e.rep}: ${e.detail}`).join("\n")}` : ""}${dismissals.length ? `\n\nDismissed by hand (hand-checks.json), left out of the two counts:\n\n${dismissals.join("\n")}` : ""}`,
     "By kind and profile": `Pass rates by kind and learner profile; quiz-ask, quiz-grade and review have no threshold yet.\n\n${byKindAndProfile}`,
     Summaries:
       rows.some((r) => r.kind === "summary") &&

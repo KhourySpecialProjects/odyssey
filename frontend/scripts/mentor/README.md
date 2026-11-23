@@ -146,8 +146,11 @@ question, both blocks, both replies and the `expect` line, and answers
 first on rep 1 and second on rep 2; labels stay with the students and only the
 order changes (in an oracle check it alternates by pair instead). The call shares
 `JUDGE_VERSION` and writes a row to `contrast.jsonl`. A pair passes only when
-both rows pass their own `should` and the verdict is yes. A pair with a row
-missing gets no call, and the report blocks the setup until it's filled in.
+both rows pass their own `should` and the verdict is yes. The Pairs bar (at
+least 80%) counts only build-on and primer pairs: a pair with a `level` case
+is shown as "Level pairs (not counted)", and its contrast row has `level:
+true`. A pair with a row missing gets no call, and the report blocks the setup
+until it's filled in.
 
 `--answers oracle` also grades the contrast judge: per pair it asks about the
 real oracles (expect yes), A's oracle against `contrastOracles.same`, a reworded
