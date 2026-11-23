@@ -934,9 +934,9 @@ describe("POST /api/mentor", () => {
           expect(allowance).toHaveBeenCalledWith(user);
           expect(access).not.toHaveBeenCalled();
           expect(limit).not.toHaveBeenCalled();
-          expect(sentRequest()).toEqual(
-            JSON.parse(JSON.stringify(hintOf(413).params)),
-          );
+          expect(find).toHaveBeenCalledWith(hintOf(413).key);
+          expect(claude.calls).toHaveLength(1);
+          expect(sentRequest()).toEqual(normal(hint(41, 413)));
           expect(record).toHaveBeenCalledWith(
             expect.objectContaining({ kind: "quiz-hint" }),
           );
@@ -972,6 +972,11 @@ describe("POST /api/mentor", () => {
             });
           } else {
             expect(store).not.toHaveBeenCalled();
+            // The store task ran and held the reply back
+            expect(tasks).toHaveLength(2);
+            expect(console.info).toHaveBeenCalledWith(
+              `[mentor] saved reply not stored (${check ? "held back" : "not checked"}), ${hintOf(413).slot}`,
+            );
           }
         });
       });
