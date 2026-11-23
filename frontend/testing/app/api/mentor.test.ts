@@ -777,5 +777,23 @@ describe("POST /api/mentor", () => {
       expect(find).not.toHaveBeenCalled();
       expect(claude.calls).toHaveLength(1);
     });
+
+    it("never looks up or stores a quiz hint (until PR 4)", async () => {
+      const response = await post(hint(41, 413));
+      expect(response.status).toBe(200);
+      await readAllMentorEvents(response.body!);
+      await afterResponse();
+
+      expect(find).not.toHaveBeenCalled();
+      expect(access).not.toHaveBeenCalled();
+      expect(allowance).toHaveBeenCalledWith(user);
+      expect(claude.calls).toHaveLength(1);
+      // Only the usage task is scheduled, and nothing is stored
+      expect(tasks).toHaveLength(1);
+      expect(store).not.toHaveBeenCalled();
+      expect(record).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "quiz-hint" }),
+      );
+    });
   });
 });
