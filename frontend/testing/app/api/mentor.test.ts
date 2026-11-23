@@ -16,7 +16,8 @@ import {
 import { mentorClient } from "@/lib/mentor/client";
 import { buildLessonContext, citationsFor } from "@/lib/mentor/context";
 import { readMentorEvents, type MentorHttpError } from "@/lib/mentor/events";
-import { MENTOR_SETUP } from "@/lib/mentor/prompt";
+import { resolveMentorAsk } from "@/lib/mentor/ask";
+import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
 import { getMentorSource, type MentorSource } from "@/lib/mentor/source";
 import { SSE_HEADERS } from "@/lib/mentor/sse";
 import { summaryRequest } from "@/lib/mentor/summary-request";
@@ -586,16 +587,20 @@ describe("POST /api/mentor", () => {
     const ids = { dropletId: 5, lessonId: lesson.id };
     const context = () => buildLessonContext(lesson, sourceOf().droplet);
     const key = () => summaryReply(context(), ids).key;
-    /** The request Claude was sent, as the model reads it */
+    /** The whole body Claude was sent, minus `stream` */
     const sentRequest = () => {
-      const { messages, system, model } = JSON.parse(claude.calls[0].body);
-      return { messages, system, model };
+      const { stream: _stream, ...body } = JSON.parse(claude.calls[0].body);
+      return body;
     };
-    const canonical = () => {
-      const { messages, system, model } = JSON.parse(
-        JSON.stringify(summaryRequest(context())),
+    const canonical = () =>
+      JSON.parse(JSON.stringify(summaryRequest(context())));
+    /** What today's route sends for this body: no saved reply involved */
+    const normal = (body: Record<string, unknown>) => {
+      const resolved = resolveMentorAsk(lesson, context(), body as never);
+      if (!resolved.ok) throw new Error("not a valid ask");
+      return JSON.parse(
+        JSON.stringify(buildMentorRequest(context(), resolved.ask)),
       );
-      return { messages, system, model };
     };
     const summary = (over: Record<string, unknown> = {}) =>
       ask({ message: SUMMARY, ...over });
@@ -649,7 +654,24 @@ describe("POST /api/mentor", () => {
         expect(find).toHaveBeenCalledWith(key());
       });
 
-      it.each(["disabled", "not_in_pilot"] as const)(
+      it("is still served at the daily limit", async () => {
+        allowance.mockResolvedValue({
+          allowed: false,
+          reason: "daily_limit",
+          status: 429,
+          message: "Limit.",
+          retryAt: null,
+        });
+        const response = await post(summary());
+
+        expect(response.status).toBe(200);
+        const events = await readAllMentorEvents(response.body!);
+        expect(events.at(-1)).toMatchObject({ type: "done" });
+        expect(access).toHaveBeenCalledWith(user);
+        expect(allowance).not.toHaveBeenCalled();
+      });
+
+      it.each(["disabled", "not_in_pilot", "unavailable"] as const)(
         "refuses on %s with no events",
         async (reason) => {
           const message = `Access says ${reason}.`;
@@ -757,6 +779,11 @@ describe("POST /api/mentor", () => {
 
       expect(find).not.toHaveBeenCalled();
       expect(claude.calls).toHaveLength(1);
+      expect(sentRequest()).toEqual(
+        normal({ ...ask({ message: "summarize it" }), history }),
+      );
+      expect(sentRequest()).not.toEqual(canonical());
+      expect(tasks).toHaveLength(1);
     });
 
     it.each<[string, Record<string, unknown>]>([
@@ -776,6 +803,9 @@ describe("POST /api/mentor", () => {
       expect((await post(body)).status).toBe(200);
       expect(find).not.toHaveBeenCalled();
       expect(claude.calls).toHaveLength(1);
+      expect(sentRequest()).toEqual(normal(body));
+      expect(sentRequest()).not.toEqual(canonical());
+      expect(tasks).toHaveLength(1);
     });
 
     it("never looks up or stores a quiz hint (until PR 4)", async () => {
