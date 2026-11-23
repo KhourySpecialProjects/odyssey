@@ -111,13 +111,24 @@ export async function startChat(input: {
   return { documentId: created.documentId };
 }
 
-export async function listChats(userId: number, lessonId?: number, now = new Date()): Promise<Row[]> {
+/** Matches the chat title or the start droplet or lesson name; `q` is trimmed and checked by the route */
+const searchFilter = (q: string) => ({
+  $or: [{ title: { $containsi: q } }, { droplet: { name: { $containsi: q } } }, { lesson: { name: { $containsi: q } } }],
+});
+
+export async function listChats(
+  userId: number,
+  options: { lessonId?: number; q?: string } = {},
+  now = new Date(),
+): Promise<Row[]> {
+  const { lessonId, q } = options;
   return findAll(chats(), {
     filters: {
       $and: [
         { authorizedUser: { id: userId }, lastMessageAt: { $notNull: true } },
         liveFilter(retentionCutoff(now)),
         ...(lessonId !== undefined ? [{ lesson: { id: lessonId } }] : []),
+        ...(q ? [searchFilter(q)] : []),
       ],
     },
     fields: ['documentId', 'kind', 'title', 'lastMessageAt'],

@@ -15,11 +15,29 @@ import { fail, isRowId, isText, parseBody } from '../../../lib/route-body';
 
 const DOCUMENT_ID = /^[A-Za-z0-9]{8,40}$/;
 const MAX_CITATIONS = 50;
+const MENTOR_SEARCH_MAX = 100;
+const SEARCH_HEADER = 'x-mentor-search';
 
 const asInt = (value: unknown) => (typeof value === 'string' && /^\d{1,10}$/.test(value) ? Number(value) : undefined);
 
+/**
+ * The search term travels in a header, not the query string, so the request
+ * logger never prints what the student typed. URL-encoded, one value, 1-100 characters.
+ */
+function readSearch(raw: string): string | null {
+  if (raw.includes(',')) return null;
+  try {
+    const q = decodeURIComponent(raw).trim();
+    // Control characters (a NUL is a Postgres error) are never a search
+    if (/[\u0000-\u001f\u007f]/.test(q)) return null;
+    return q.length >= 1 && q.length <= MENTOR_SEARCH_MAX ? q : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Reads userId (and the optional lessonId and kind) from a query string; an error message otherwise */
-function readQuery(query: Record<string, unknown>) {
+function readQuery(query: Record<string, unknown>, search?: string) {
   const allowed = ['userId', 'lessonId', 'kind', 'messages'];
   const extra = Object.keys(query).find((key) => !allowed.includes(key));
   if (extra) return { error: `Invalid key ${extra}` };
@@ -29,7 +47,9 @@ function readQuery(query: Record<string, unknown>) {
   if (query.lessonId !== undefined && !isRowId(lessonId)) return { error: 'lessonId must be a positive integer' };
   const kind = query.kind as MentorChatKind | undefined;
   if (kind !== undefined && !MENTOR_CHAT_KINDS.includes(kind)) return { error: 'kind must be lesson or explain' };
-  return { userId: userId as number, lessonId, kind, withMessages: query.messages === 'true' };
+  const q = search === undefined ? undefined : readSearch(search);
+  if (q === null) return { error: `search must be 1 to ${MENTOR_SEARCH_MAX} characters` };
+  return { userId: userId as number, lessonId, kind, q, withMessages: query.messages === 'true' };
 }
 
 function handle(ctx: any, error: unknown, what: string) {
@@ -60,10 +80,10 @@ export default {
   },
 
   async list(ctx) {
-    const q = readQuery(ctx.query ?? {});
+    const q = readQuery(ctx.query ?? {}, ctx.get(SEARCH_HEADER) || undefined);
     if ('error' in q) return fail(ctx, 400, q.error as string);
     try {
-      ctx.body = { data: await listChats(q.userId, q.lessonId) };
+      ctx.body = { data: await listChats(q.userId, { lessonId: q.lessonId, q: q.q }) };
     } catch (error) {
       handle(ctx, error, 'list chats');
     }

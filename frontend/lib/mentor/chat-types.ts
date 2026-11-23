@@ -22,5 +22,7 @@ export type MentorMsg = {
   text: string;
   citations: Citation[];
   truncated: boolean;
+  /** The lesson the answer was grounded in; its citations point only there */
+  lessonId?: number;
   error?: { message: string; retry: boolean };
 };

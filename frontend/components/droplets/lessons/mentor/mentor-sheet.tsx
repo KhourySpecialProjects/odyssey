@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Send, Sparkles, Square, X } from "lucide-react";
+import { ArrowLeft, List, Plus, Send, Sparkles, Square, X } from "lucide-react";
 import { LESSON_PANEL } from "@/lib/lesson-panel";
 import { MENTOR_MESSAGE_MAX } from "@/lib/validations/mentor";
 import type { ChatMsg } from "@/hooks/use-mentor-chat";
 import type { MentorMsg } from "@/lib/mentor/chat-types";
 import type { Citation } from "@/lib/mentor/types";
+import type { MentorChatSummary } from "@/lib/requests/mentor-chats";
 import { MentorMessage, StudentMessage } from "./mentor-message";
+import { MentorChatList, type ChatListState } from "./mentor-chat-list";
 import { MentorNotice } from "./mentor-notice";
 import type { MentorFeedback } from "./mentor-rating";
 
@@ -21,6 +23,7 @@ export const STARTERS = [
 type SheetProps = {
   open: boolean;
   modal: boolean;
+  lessonId: number;
   lessonName: string;
   messages: ChatMsg[];
   streaming: boolean;
@@ -39,7 +42,18 @@ type SheetProps = {
   onShowSource: (citation: Citation) => void;
   onSave?: (message: MentorMsg) => Promise<boolean>;
   feedback?: MentorFeedback;
+  view: "chat" | "list";
+  onView: (view: "chat" | "list") => void;
+  onNewChat: () => void;
+  chatList: ChatListState;
+  openChatId: string | null;
+  onOpenChat: (id: string) => void;
+  onDeleteChat: (chat: MentorChatSummary) => Promise<void>;
+  onRetryChats: () => void;
 };
+
+const toolbarButton =
+  "inline-flex items-center gap-1 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#287697] dark:border-slate-500 dark:text-slate-100 dark:hover:bg-slate-800";
 
 /** The student message an answer replies to, if there is one */
 const questionOf = (messages: ChatMsg[], answer: MentorMsg) => {
@@ -82,6 +96,26 @@ export function MentorSheet(p: SheetProps) {
     box.style.height = "auto";
     box.style.height = `${Math.min(box.scrollHeight + 2, 140)}px`;
   }, [p.draft, p.open]);
+
+  const listHeading = useRef<HTMLHeadingElement>(null);
+  const inList = p.view === "list";
+  const focusSoon = (el: () => HTMLElement | null) =>
+    setTimeout(() => el()?.focus());
+
+  // Switching views moves focus to where the student is now
+  const lastView = useRef(p.view);
+  useEffect(() => {
+    if (lastView.current === p.view) return;
+    lastView.current = p.view;
+    if (p.view === "list") listHeading.current?.focus();
+    else composer.current?.focus();
+  }, [p.view]);
+
+  const newChat = () => {
+    p.onNewChat();
+    p.onView("chat");
+    focusSoon(() => composer.current);
+  };
 
   const send = () => {
     if (p.streaming || locked || !p.draft.trim()) return;
@@ -161,6 +195,37 @@ export function MentorSheet(p: SheetProps) {
             </Dialog.Close>
           </header>
 
+          <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-2 dark:border-slate-500">
+            {inList ? (
+              <button
+                type="button"
+                onClick={() => p.onView("chat")}
+                className={toolbarButton}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                Back to chat
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => p.onView("list")}
+                className={toolbarButton}
+              >
+                <List className="h-3.5 w-3.5" aria-hidden="true" />
+                Chats
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={p.streaming}
+              onClick={newChat}
+              className={`${toolbarButton} disabled:opacity-60`}
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              New chat
+            </button>
+          </div>
+
           {/* aria-live, not role="status": the footer counts [role=status] as answered quizzes */}
           <div aria-live="polite" className="sr-only">
             <span key={p.announcement.n}>{p.announcement.text}</span>
@@ -175,7 +240,29 @@ export function MentorSheet(p: SheetProps) {
             }}
             ref={scroller}
           >
-            {p.messages.length === 0 &&
+            {inList && (
+              <section aria-labelledby="mentor-chats-heading">
+                <h2
+                  id="mentor-chats-heading"
+                  ref={listHeading}
+                  tabIndex={-1}
+                  className="mb-2 text-sm font-bold text-slate-900 focus:outline-none dark:text-slate-50"
+                >
+                  Your chats
+                </h2>
+                <MentorChatList
+                  state={p.chatList}
+                  openId={p.openChatId}
+                  busy={p.streaming}
+                  onOpen={p.onOpenChat}
+                  onDelete={p.onDeleteChat}
+                  onFocusHeading={() => listHeading.current?.focus()}
+                  onRetry={p.onRetryChats}
+                />
+              </section>
+            )}
+            {!inList &&
+              p.messages.length === 0 &&
               (p.accepted ? (
                 <div className="flex flex-wrap gap-2">
                   {STARTERS.map((s) => (
@@ -192,91 +279,98 @@ export function MentorSheet(p: SheetProps) {
               ) : (
                 <MentorNotice onAccept={p.onAccept} buttonRef={gotIt} />
               ))}
-            <ol aria-label="Conversation" className="space-y-3">
-              {p.messages.map((m) =>
-                m.role === "student" ? (
-                  <StudentMessage key={m.id} message={m} />
-                ) : (
-                  <MentorMessage
-                    key={m.id}
-                    message={m}
-                    lessonName={p.lessonName}
-                    onShowSource={p.onShowSource}
-                    onSave={p.onSave && (() => p.onSave!(m))}
-                    feedback={p.feedback}
-                    questionText={questionOf(p.messages, m)}
-                    onRetry={
-                      m.error?.retry && !p.lock
-                        ? () => p.onRetry(m.id)
-                        : undefined
-                    }
-                  />
-                ),
-              )}
-            </ol>
+            {!inList && (
+              <ol aria-label="Conversation" className="space-y-3">
+                {p.messages.map((m) =>
+                  m.role === "student" ? (
+                    <StudentMessage key={m.id} message={m} />
+                  ) : (
+                    <MentorMessage
+                      key={m.id}
+                      message={m}
+                      lessonName={p.lessonName}
+                      stale={
+                        m.lessonId !== undefined && m.lessonId !== p.lessonId
+                      }
+                      onShowSource={p.onShowSource}
+                      onSave={p.onSave && (() => p.onSave!(m))}
+                      feedback={p.feedback}
+                      questionText={questionOf(p.messages, m)}
+                      onRetry={
+                        m.error?.retry && !p.lock
+                          ? () => p.onRetry(m.id)
+                          : undefined
+                      }
+                    />
+                  ),
+                )}
+              </ol>
+            )}
           </div>
 
-          <div className="border-t border-slate-200 p-4 dark:border-slate-500">
-            {p.lock && (
+          {!inList && (
+            <div className="border-t border-slate-200 p-4 dark:border-slate-500">
+              {p.lock && (
+                <p
+                  role="alert"
+                  className="mb-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+                >
+                  {p.lock}
+                </p>
+              )}
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={composer}
+                  rows={1}
+                  aria-label="Ask about this lesson"
+                  aria-describedby="mentor-fine-print"
+                  placeholder="Ask about this lesson..."
+                  maxLength={MENTOR_MESSAGE_MAX}
+                  disabled={locked}
+                  value={p.draft}
+                  onChange={(e) => p.setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey &&
+                      !e.nativeEvent.isComposing &&
+                      // Safari's IME-commit Enter reports isComposing false
+                      e.nativeEvent.keyCode !== 229
+                    ) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
+                  className="min-h-10 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100"
+                />
+                {/* One button, so focus stays on it as Send turns into Stop */}
+                <button
+                  type="button"
+                  aria-disabled={!p.streaming && (locked || !p.draft.trim())}
+                  onClick={p.streaming ? p.onStop : send}
+                  className={`inline-flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-white ${
+                    p.streaming
+                      ? "bg-slate-800"
+                      : "bg-[#287697] aria-disabled:opacity-60"
+                  }`}
+                >
+                  {p.streaming ? (
+                    <Square className="h-3 w-3" aria-hidden="true" />
+                  ) : (
+                    <Send className="h-3 w-3" aria-hidden="true" />
+                  )}
+                  {p.streaming ? "Stop" : "Send"}
+                </button>
+              </div>
               <p
-                role="alert"
-                className="mb-2 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+                id="mentor-fine-print"
+                className="mt-2 text-[11.5px] leading-[17px] text-slate-600 dark:text-slate-300"
               >
-                {p.lock}
+                Answers come from Odyssey&apos;s lessons, with sources. In
+                check-ins Mentor gives hints, not answers.
               </p>
-            )}
-            <div className="flex items-end gap-2">
-              <textarea
-                ref={composer}
-                rows={1}
-                aria-label="Ask about this lesson"
-                aria-describedby="mentor-fine-print"
-                placeholder="Ask about this lesson..."
-                maxLength={MENTOR_MESSAGE_MAX}
-                disabled={locked}
-                value={p.draft}
-                onChange={(e) => p.setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === "Enter" &&
-                    !e.shiftKey &&
-                    !e.nativeEvent.isComposing &&
-                    // Safari's IME-commit Enter reports isComposing false
-                    e.nativeEvent.keyCode !== 229
-                  ) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-                className="min-h-10 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100"
-              />
-              {/* One button, so focus stays on it as Send turns into Stop */}
-              <button
-                type="button"
-                aria-disabled={!p.streaming && (locked || !p.draft.trim())}
-                onClick={p.streaming ? p.onStop : send}
-                className={`inline-flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-white ${
-                  p.streaming
-                    ? "bg-slate-800"
-                    : "bg-[#287697] aria-disabled:opacity-60"
-                }`}
-              >
-                {p.streaming ? (
-                  <Square className="h-3 w-3" aria-hidden="true" />
-                ) : (
-                  <Send className="h-3 w-3" aria-hidden="true" />
-                )}
-                {p.streaming ? "Stop" : "Send"}
-              </button>
             </div>
-            <p
-              id="mentor-fine-print"
-              className="mt-2 text-[11.5px] leading-[17px] text-slate-600 dark:text-slate-300"
-            >
-              Answers come from Odyssey&apos;s lessons, with sources. In
-              check-ins Mentor gives hints, not answers.
-            </p>
-          </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

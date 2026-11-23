@@ -14,6 +14,14 @@ const click = (selector: string) =>
 // A parent that never re-renders, like one unmounted by a browser back
 const noRerender = () => jest.fn();
 
+// driver.js 1.14 builds its clip rect with `new DOMRect`, which jsdom lacks
+beforeAll(() => {
+  globalThis.DOMRect ??= function (x = 0, y = 0, width = 0, height = 0) {
+    const edges = { top: y, left: x, right: x + width, bottom: y + height };
+    return { x, y, width, height, ...edges };
+  } as unknown as typeof DOMRect;
+});
+
 describe.each([
   ["DraftTour", DraftTour, TOUR_KEY],
   ["VoyageFormTour", VoyageFormTour, VOYAGE_TOUR_KEY],

@@ -14,7 +14,11 @@ const PROFILE_FIELDS = [
 ];
 
 // Its own const, so `as const` below doesn't make it a readonly tuple.
-const PROFILE_FIELDS_WITH_ONBOARDING = [...PROFILE_FIELDS, "onboardedAt"];
+const PROFILE_FIELDS_WITH_ONBOARDING = [
+  ...PROFILE_FIELDS,
+  "onboardedAt",
+  "mentorPersonalization", // self view only; other users' presets omit it
+];
 
 export const USER_POPULATES = {
   minimal: {

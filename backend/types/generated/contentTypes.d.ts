@@ -843,6 +843,8 @@ export interface ApiAuthorizedUserAuthorizedUser
     lastName: Schema.Attribute.String;
     linkedin: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
+    mentorPersonalization: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::authorized-user.authorized-user'

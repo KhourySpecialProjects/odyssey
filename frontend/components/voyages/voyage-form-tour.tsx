@@ -42,7 +42,7 @@ export function VoyageFormTour({ run, setRun }: VoyageFormTourProps) {
             title: "Let's build a Voyage!",
             description:
               "A voyage is a learning path your students follow, island by island. You can mix playlists, individual droplets, and even leave spots open for others to contribute.",
-            side: "over",
+            // No element, so driver.js centres this popover on screen
             align: "center",
           },
         },

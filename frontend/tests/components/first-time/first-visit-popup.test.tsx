@@ -75,6 +75,7 @@ describe("FirstVisitPopup", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (updateUserInfo as jest.Mock).mockResolvedValue({ ok: true });
   });
 
   describe("form validation and submission", () => {
@@ -200,5 +201,26 @@ describe("FirstVisitPopup", () => {
     expect(toast.error).toHaveBeenCalledWith(
       "Please enter your last name before continuing",
     );
+  });
+
+  it("shows an error and stays open when saving firstTime fails", async () => {
+    (updateUserInfo as jest.Mock).mockResolvedValue({ ok: false });
+    const { getByRole, getByLabelText } = render(
+      <FirstVisitPopup user={mockUser} />,
+    );
+    fireEvent.change(getByLabelText("First name"), { target: { value: "J" } });
+    fireEvent.change(getByLabelText("Last name"), { target: { value: "D" } });
+    fireEvent.change(getByLabelText("Choose a time zone..."), {
+      target: { value: "America/New_York" },
+    });
+    await act(async () => {
+      fireEvent.keyDown(getByRole("dialog", { hidden: true }), {
+        key: "Escape",
+      });
+    });
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't save your information. Please try again.",
+    );
+    expect(createEnrollment).not.toHaveBeenCalled();
   });
 });

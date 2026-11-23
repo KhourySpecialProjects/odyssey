@@ -157,3 +157,27 @@ describe('mentor-chat and mentor-message (ODY-937)', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('owner list search (X-Mentor-Search header)', () => {
+  const search = (q) => api('get', '/api/mentor-chats/owned?userId=1').set('X-Mentor-Search', q);
+
+  it.each([
+    ['blank', '%20%20'],
+    ['over 100 characters', 'a'.repeat(101)],
+    ['badly encoded', '%E0%A4%A'],
+    ['repeated', 'a, b'],
+    ['a NUL', 'a%00b'],
+    ['a newline', 'a%0Ab'],
+    ['a DEL', 'a%7Fb'],
+  ])('rejects a %s term with 400', async (_name, q) => {
+    expect((await search(q)).status).toBe(400);
+  });
+
+  it('rejects q in the query string, and accepts a trimmed term', async () => {
+    expect((await api('get', '/api/mentor-chats/owned?userId=1&q=a')).status).toBe(400);
+    const ok = await search('%20loop%20');
+    expect(ok.status).toBe(200);
+    expect(ok.body.data.length).toBeGreaterThan(0);
+    expect(ok.body.data.every((c) => /loop/i.test(c.title))).toBe(true);
+  });
+});

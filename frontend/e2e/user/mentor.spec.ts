@@ -145,7 +145,7 @@ test.describe("Mentor sidebar", () => {
     // auth.json carries localStorage: a saved theme or notice would skew the run
     await page.addInitScript(() => {
       localStorage.removeItem("theme");
-      localStorage.removeItem("mentor-notice-v1");
+      localStorage.removeItem("mentor-notice-v2");
     });
   });
 

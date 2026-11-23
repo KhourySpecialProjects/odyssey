@@ -55,6 +55,8 @@ export async function chatApi<T>(
   options: {
     query?: object;
     body?: object;
+    /** Extra headers, e.g. the search term, which must stay out of the URL (and its logs) */
+    headers?: Record<string, string>;
     next?: { revalidate: number; tags: string[] };
   } = {},
 ): Promise<T> {
@@ -66,6 +68,7 @@ export async function chatApi<T>(
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
       ...STRAPI_RESPONSE_FORMAT_HEADER,
+      ...options.headers,
     },
     ...(options.body && { body: JSON.stringify(options.body) }),
     ...(options.next ? { next: options.next } : { cache: "no-store" as const }),
@@ -95,6 +98,7 @@ export async function startMentorChat(input: {
       title: input.title.trim().slice(0, MENTOR_CHAT_TITLE_MAX),
     },
   });
+  revalidateTag(CACHE_TAGS.mentorChats(input.userId));
   return created.documentId;
 }
 

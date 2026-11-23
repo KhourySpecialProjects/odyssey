@@ -7,6 +7,10 @@ import { trackMentor } from "@/lib/mentor/analytics";
 import type { MentorMsg, StudentMsg } from "@/lib/mentor/chat-types";
 import type { MentorTurn } from "@/lib/mentor/types";
 import {
+  getMentorChat,
+  type MentorChatMessage,
+} from "@/lib/requests/mentor-chats";
+import {
   MENTOR_HISTORY_MAX,
   MENTOR_MESSAGE_MAX,
   MENTOR_REPLY_MAX,
@@ -115,6 +119,31 @@ export async function failureOf(res: Response) {
   return { message, lock, retry };
 }
 
+/** A saved chat's messages as the panel shows them: answers done, one question each */
+function savedMessages(saved: MentorChatMessage[], lessonId?: number) {
+  const out: ChatMsg[] = [];
+  let askId = "";
+  for (const m of saved) {
+    if (m.role === "user") {
+      askId = newId();
+      out.push({ id: askId, role: "student", text: m.text });
+    } else if (askId) {
+      out.push({
+        id: newId(),
+        role: "mentor",
+        askId,
+        status: "done",
+        text: m.text,
+        citations: m.citations ?? [],
+        truncated: false,
+        lessonId,
+      });
+      askId = "";
+    }
+  }
+  return out;
+}
+
 /** The sidebar's conversation: asks POST /api/mentor and reads its stream. */
 export function useMentorChat({
   dropletId,
@@ -134,6 +163,8 @@ export function useMentorChat({
   const locked = useRef(false);
   // The saved chat this conversation continues (ODY-937), from X-Mentor-Chat-Id
   const chatId = useRef<string | null>(null);
+  const [openChatId, setOpenChatId] = useState<string | null>(null);
+  const loadToken = useRef(0);
 
   const commit = useCallback((next: ChatMsg[]) => {
     messagesRef.current = next;
@@ -190,6 +221,7 @@ export function useMentorChat({
           return;
         }
         chatId.current = res.headers.get("X-Mentor-Chat-Id") ?? chatId.current;
+        if (mounted.current) setOpenChatId(chatId.current);
         if (!res.body) throw new MentorStreamError("No body");
         let text = "";
         for await (const e of readMentorEvents(res.body)) {
@@ -223,6 +255,8 @@ export function useMentorChat({
     (input: MentorAsk) => {
       const shown = studentOf(input);
       if (busy.current || locked.current || !shown) return;
+      // A chat load still in flight must not replace this conversation
+      loadToken.current += 1;
       trackMentor("mentor_asked", {
         kind: input.kind,
         droplet_id: dropletId,
@@ -238,6 +272,7 @@ export function useMentorChat({
         text: "",
         citations: [],
         truncated: false,
+        lessonId,
       };
       const history = historyOf(
         messagesRef.current,
@@ -258,7 +293,9 @@ export function useMentorChat({
       const at = list.findIndex((m) => m.id === answer.askId);
       const question = list[at];
       if (question?.role !== "student") return;
+      loadToken.current += 1;
       patch(id, {
+        lessonId,
         status: "streaming",
         text: "",
         citations: [],
@@ -267,7 +304,7 @@ export function useMentorChat({
       });
       void run(id, question, historyOf(list, at));
     },
-    [patch, run],
+    [patch, run, lessonId],
   );
 
   const stop = useCallback(() => {
@@ -277,11 +314,54 @@ export function useMentorChat({
 
   // Starts a new conversation: the next ask opens a new saved chat
   const clear = useCallback(() => {
+    loadToken.current += 1;
     stopped.current = true;
     controller.current?.abort();
     chatId.current = null;
+    setOpenChatId(null);
     commit([]);
   }, [commit]);
 
-  return { messages, streaming, lock, ask, stop, retry, clear };
+  /**
+   * Opens a saved chat in place of the conversation, stopping any stream.
+   * `onlyIfEmpty` gives up if the student has started something meanwhile.
+   * Answers remember their lesson: the sheet drops citations from another one.
+   */
+  const loadChat = useCallback(
+    async (id: string, opts: { onlyIfEmpty?: boolean } = {}) => {
+      const token = (loadToken.current += 1);
+      const res = await getMentorChat(id);
+      if (
+        !res.ok ||
+        token !== loadToken.current ||
+        !mounted.current ||
+        busy.current
+      )
+        return false;
+      if (
+        opts.onlyIfEmpty &&
+        (messagesRef.current.length > 0 || chatId.current)
+      )
+        return false;
+      stopped.current = true;
+      controller.current?.abort();
+      chatId.current = id;
+      setOpenChatId(id);
+      commit(savedMessages(res.data.messages, res.data.chat.lesson?.id));
+      return true;
+    },
+    [commit],
+  );
+
+  return {
+    messages,
+    streaming,
+    lock,
+    openChatId,
+    ask,
+    stop,
+    retry,
+    clear,
+    loadChat,
+  };
 }

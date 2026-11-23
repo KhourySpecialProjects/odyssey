@@ -32,6 +32,7 @@ type Failure = { ok: false; error: "unauthenticated" | "not_found" | "failed" };
 
 const listSchema = z.object({
   lessonId: z.number().int().positive().optional(),
+  q: z.string().trim().min(1).max(100).optional(),
 });
 
 function failed(error: unknown): Failure {
@@ -39,9 +40,9 @@ function failed(error: unknown): Failure {
   return { ok: false, error: "failed" };
 }
 
-/** The student's chats, newest first. Strapi leaves out chats over 30 days old. */
+/** The student's chats, newest first, optionally matching `q` (title, droplet or lesson name). Chats over 30 days old are left out. */
 export async function listMentorChats(
-  input: { lessonId?: number } = {},
+  input: { lessonId?: number; q?: string } = {},
 ): Promise<{ ok: true; data: MentorChatSummary[] } | Failure> {
   const gate = await requireRole([]);
   if (!gate.ok) return { ok: false, error: "unauthenticated" };
@@ -51,6 +52,10 @@ export async function listMentorChats(
   try {
     const rows = await chatApi<MentorChatSummary[] | null>("GET", "/owned", {
       query: { userId, lessonId: parsed.data.lessonId },
+      // In a header, not the URL, so no request log carries what was typed
+      headers: parsed.data.q
+        ? { "X-Mentor-Search": encodeURIComponent(parsed.data.q) }
+        : undefined,
       next: { revalidate: 60, tags: [CACHE_TAGS.mentorChats(userId)] },
     });
     return { ok: true, data: rows ?? [] };
