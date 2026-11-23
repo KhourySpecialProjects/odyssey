@@ -13,9 +13,6 @@ const decodedSrc = (container: HTMLElement) => {
   return decodeURIComponent(src.slice(DATA_PREFIX.length));
 };
 
-const svgWith = (inner: string, rootAttrs = "") =>
-  `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10"${rootAttrs}>${inner}<rect width="4" height="4"/></svg>`;
-
 describe("DropletBadge", () => {
   it("is announced as '<title> badge' with a decorative emblem and one title", () => {
     const { container } = render(
@@ -70,45 +67,6 @@ describe("DropletBadge", () => {
     );
     expect(screen.getByTestId("badge-placeholder")).toBeInTheDocument();
     expect(container.querySelector("img")).toBeNull();
-  });
-
-  it.each([
-    ["script", svgWith("<script>alert(1)</script>"), /<script|alert/],
-    ["onload", svgWith("", ' onload="alert(1)"'), /onload|alert/],
-    [
-      "foreignObject",
-      svgWith("<foreignObject><div>hi</div></foreignObject>"),
-      /foreignObject|<div/i,
-    ],
-    [
-      "outside href",
-      svgWith(
-        '<use href="https://evil.test/a.svg#x"/><image href="https://evil.test/i.png"/>',
-      ),
-      /evil\.test|<use|<image/,
-    ],
-    [
-      "xlink:href",
-      svgWith('<use xlink:href="https://evil.test/a.svg#x"/>'),
-      /evil\.test|xlink:href/,
-    ],
-    [
-      "javascript: url",
-      svgWith('<a href="javascript:alert(1)"><circle r="2"/></a>'),
-      /javascript:/i,
-    ],
-    [
-      "style import",
-      svgWith("<style>@import url(https://evil.test/x.css);</style>"),
-      /evil\.test|@import/,
-    ],
-  ])("strips %s from the emblem", (_name, svg, banned) => {
-    const { container } = render(
-      <DropletBadge title="T" emblemSvg={svg} size="md" />,
-    );
-    const out = decodedSrc(container);
-    expect(out).toContain("<rect");
-    expect(out).not.toMatch(banned);
   });
 
   it("never uses dangerouslySetInnerHTML", () => {

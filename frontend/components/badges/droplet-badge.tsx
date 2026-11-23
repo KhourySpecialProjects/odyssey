@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import { emblemToDataUrl } from "@/lib/badges/emblem";
 import { cn } from "@/lib/utils";
 import { BadgeRibbon, type BadgeSize } from "./badge-ribbon";
 
@@ -20,23 +20,6 @@ const TILE_PADDING: Record<BadgeSize, string> = {
   md: "p-4",
   lg: "p-7",
 };
-
-/**
- * Emblems are untrusted model output. Sanitize with the SVG profile, drop
- * anything that can reference outside files, and return a data URL for an
- * <img> (which runs no scripts and loads nothing external). Returns null when
- * nothing usable is left.
- */
-export function emblemToDataUrl(svg?: string): string | null {
-  if (!svg?.trim()) return null;
-  const clean = DOMPurify.sanitize(svg, {
-    USE_PROFILES: { svg: true },
-    FORBID_TAGS: ["image", "use", "a", "style", "foreignObject"],
-    FORBID_ATTR: ["style", "href", "xlink:href"],
-  }).trim();
-  if (!/<svg[\s>]/i.test(clean)) return null;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(clean)}`;
-}
 
 function PlaceholderEmblem() {
   return (
