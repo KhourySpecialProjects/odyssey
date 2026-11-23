@@ -9,7 +9,8 @@ export type AIAction =
   | "fun-fact"
   | "ai-scoring"
   | "overview-scan"
-  | "mentor";
+  | "mentor"
+  | "mentor-saved";
 
 export type RoleTier =
   | "system-admin"
@@ -75,6 +76,14 @@ export const RATE_LIMITS: Record<AIAction, Record<RoleTier, number>> = {
     faculty: 20,
     "creator-editor": 20,
     student: 20,
+  },
+  // Saved Mentor replies (ODY-967) skip the live burst guard, but each one
+  // writes a chat row. Per ECS task.
+  "mentor-saved": {
+    "system-admin": 1000,
+    faculty: 60,
+    "creator-editor": 60,
+    student: 60,
   },
 };
 

@@ -1,4 +1,8 @@
 import { after } from "next/server";
+import {
+  checkRateLimit,
+  formatRateLimitError,
+} from "@/lib/import/rate-limiter";
 import { requireRole } from "@/lib/auth/require-role";
 import { lessonAccess } from "@/lib/lesson-access";
 import { streamMentorAnswer } from "@/lib/mentor/answer";
@@ -11,19 +15,33 @@ import {
   startMentorChat,
   type MentorChatRow,
 } from "@/lib/mentor/chat-history";
+import {
+  hintReply,
+  storeCachedReplyWhenDone,
+  summaryReply,
+  replayCachedReply,
+} from "@/lib/mentor/cached-reply";
+import { findCachedReply } from "@/lib/mentor/cached-reply-store";
 import { buildLessonContext } from "@/lib/mentor/context";
 import type { MentorHttpError, MentorHttpErrorCode } from "@/lib/mentor/events";
 import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
 import { getMentorSource } from "@/lib/mentor/source";
-import { checkMentorAllowance, recordMentorUsage } from "@/lib/mentor/usage";
+import { isSummaryRequest } from "@/lib/mentor/summary-request";
+import {
+  checkMentorAccess,
+  checkMentorAllowance,
+  recordMentorUsage,
+} from "@/lib/mentor/usage";
 import { mentorRequestSchema } from "@/lib/validations/mentor";
 
 // POST /api/mentor (ODY-886): every Mentor answer, streamed as server-sent
 // events; the contract is in lib/mentor/events.ts. Route handlers aren't
 // covered by the "use server" auth guard, so every check is here, in this
 // order: sign-in, the body, the droplet and lesson, the ask, then ODY-884's
-// allowance. None of them calls Claude. The browser sends ids only: the
-// lesson comes from Strapi, and quiz answers never reach the model.
+// allowance. None of them calls Claude. A saved summary or quiz explanation (ODY-967) is looked
+// up after the ask, and on a hit only Mentor's switch and the pilot are
+// checked. The browser sends ids only: the lesson comes from Strapi, and quiz
+// answers never reach the model.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,10 +135,44 @@ export async function POST(request: Request): Promise<Response> {
       return fail(400, "cannot_answer");
     }
 
-    const allowance = await checkMentorAllowance(gate.user);
+    // ODY-967: a summary is one saved reply per lesson version, and a wrong
+    // pick's explanation one per question and pick, shared by every student.
+    // A saved reply calls no model, so only Mentor's switch and the pilot can
+    // refuse it.
+    const ids = { dropletId: input.dropletId, lessonId: input.lessonId };
+    const reply =
+      input.kind === "lesson" &&
+      isSummaryRequest(input.message, { hasHistory: !!input.history?.length })
+        ? summaryReply(context, ids)
+        : resolved.ask.kind === "quiz-hint"
+          ? hintReply(context, resolved.ask, ids)
+          : null;
+    const saved = reply ? await findCachedReply(reply.key) : null;
+    const allowance = saved
+      ? await checkMentorAccess(gate.user)
+      : await checkMentorAllowance(gate.user);
     if (!allowance.allowed) {
       const { status, reason, message, retryAt } = allowance;
       return refuse(status, reason, message, retryAt);
+    }
+    // A hit skips the live burst guard. A summary hit still writes a chat row,
+    // so all hits share their own limit. Same refusal as checkMentorAllowance's
+    // burst guard.
+    if (saved) {
+      const limit = checkRateLimit(
+        gate.user.email,
+        gate.user.roles,
+        "mentor-saved",
+      );
+      if (!limit.allowed) {
+        const retryAfterMs = limit.retryAfterMs ?? 0;
+        return refuse(
+          429,
+          "rate_limited",
+          formatRateLimitError(retryAfterMs),
+          new Date(Date.now() + retryAfterMs).toISOString(),
+        );
+      }
     }
 
     // ODY-937: any saved chat of this kind continues on any lesson; quiz hints are never saved
@@ -135,8 +187,9 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
-    const params = buildMentorRequest(context, resolved.ask);
-    const note = own && startNote(own, input.lessonId);
+    // A reply's request is the one its key names: no note, no learner block
+    const params = reply?.params ?? buildMentorRequest(context, resolved.ask);
+    const note = !reply && own && startNote(own, input.lessonId);
     // After the cached lesson block, so the cached prefix stays the lesson's
     if (note) {
       const first = params.messages[0].content;
@@ -144,12 +197,15 @@ export async function POST(request: Request): Promise<Response> {
         first.splice(1, 0, { type: "text", text: note });
     }
 
-    const answer = await streamMentorAnswer({
-      client: mentorClient(),
-      params,
-      context,
-      signal: request.signal,
-    });
+    if (saved && reply) console.info(`[mentor] saved reply hit, ${reply.slot}`);
+    const answer = saved
+      ? replayCachedReply({ text: saved, context, signal: request.signal })
+      : await streamMentorAnswer({
+          client: mentorClient(),
+          params,
+          context,
+          signal: request.signal,
+        });
     if (!answer) return fail(502, "model_unavailable");
 
     // ODY-937: quiz hints are never saved; a failure here never costs the answer
@@ -197,6 +253,9 @@ export async function POST(request: Request): Promise<Response> {
         console.error("[mentor] chat save failed:", errorName(error));
       }
     });
+    if (reply && !saved) {
+      after(() => storeCachedReplyWhenDone(reply, answer.completed));
+    }
     return answer.response;
   } catch (error) {
     console.error("[mentor] the route failed:", error);
