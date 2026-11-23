@@ -8,13 +8,21 @@ import {
   saveMentorExchange,
   startMentorChat,
 } from "@/lib/mentor/chat-history";
+import { summaryReply } from "@/lib/mentor/cached-reply";
+import {
+  findCachedReply,
+  storeCachedReply,
+} from "@/lib/mentor/cached-reply-store";
 import { mentorClient } from "@/lib/mentor/client";
+import { buildLessonContext, citationsFor } from "@/lib/mentor/context";
 import { readMentorEvents, type MentorHttpError } from "@/lib/mentor/events";
 import { MENTOR_SETUP } from "@/lib/mentor/prompt";
 import { getMentorSource, type MentorSource } from "@/lib/mentor/source";
 import { SSE_HEADERS } from "@/lib/mentor/sse";
+import { summaryRequest } from "@/lib/mentor/summary-request";
 import type { MentorLesson } from "@/lib/mentor/types";
 import {
+  checkMentorAccess,
   checkMentorAllowance,
   recordMentorUsage,
   type MentorAllowance,
@@ -40,7 +48,12 @@ jest.mock("@/lib/mentor/chat-history", () => ({
   startMentorChat: jest.fn(),
   errorName: (e: unknown) => (e instanceof Error ? e.name : "UnknownError"),
 }));
+jest.mock("@/lib/mentor/cached-reply-store", () => ({
+  findCachedReply: jest.fn(),
+  storeCachedReply: jest.fn(),
+}));
 jest.mock("@/lib/mentor/usage", () => ({
+  checkMentorAccess: jest.fn(),
   checkMentorAllowance: jest.fn(),
   recordMentorUsage: jest.fn(),
 }));
@@ -48,6 +61,9 @@ jest.mock("@/lib/mentor/usage", () => ({
 const gate = jest.mocked(requireRole);
 const source = jest.mocked(getMentorSource);
 const allowance = jest.mocked(checkMentorAllowance);
+const access = jest.mocked(checkMentorAccess);
+const find = jest.mocked(findCachedReply);
+const store = jest.mocked(storeCachedReply);
 const record = jest.mocked(recordMentorUsage);
 const owned = jest.mocked(ownedChat);
 const start = jest.mocked(startMentorChat);
@@ -127,6 +143,9 @@ beforeEach(() => {
   gate.mockResolvedValue({ ok: true, user });
   source.mockResolvedValue(sourceOf());
   allowance.mockResolvedValue({ allowed: true });
+  access.mockResolvedValue({ allowed: true });
+  find.mockResolvedValue(null);
+  store.mockResolvedValue({ stored: true });
   record.mockResolvedValue(true);
   owned.mockResolvedValue(null);
   start.mockResolvedValue("newchat0001");
@@ -558,6 +577,205 @@ describe("POST /api/mentor", () => {
       expect(response.status).toBe(200);
       expect(response.headers.get("X-Mentor-Chat-Id")).toBeNull();
       expect(save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("saved summaries (ODY-967)", () => {
+    const SAVED = "An index speeds up reads [p2].";
+    const SUMMARY = "Summarize this lesson";
+    const ids = { dropletId: 5, lessonId: lesson.id };
+    const context = () => buildLessonContext(lesson, sourceOf().droplet);
+    const key = () => summaryReply(context(), ids).key;
+    /** The request Claude was sent, as the model reads it */
+    const sentRequest = () => {
+      const { messages, system, model } = JSON.parse(claude.calls[0].body);
+      return { messages, system, model };
+    };
+    const canonical = () => {
+      const { messages, system, model } = JSON.parse(
+        JSON.stringify(summaryRequest(context())),
+      );
+      return { messages, system, model };
+    };
+    const summary = (over: Record<string, unknown> = {}) =>
+      ask({ message: SUMMARY, ...over });
+
+    describe("a hit", () => {
+      beforeEach(() => find.mockResolvedValue(SAVED));
+
+      it("replays the saved text with no model call, usage row or burst slot", async () => {
+        const response = await post(summary());
+
+        expect(find).toHaveBeenCalledWith(key());
+        const events = await readAllMentorEvents(response.body!);
+        const texts = events.slice(0, -1);
+        expect(texts.every((e) => e.type === "text")).toBe(true);
+        expect(
+          texts.map((e) => (e.type === "text" ? e.text : "")).join(""),
+        ).toBe(SAVED);
+        expect(events.at(-1)).toEqual({
+          type: "done",
+          citations: citationsFor(context(), SAVED),
+          truncated: false,
+        });
+        await afterResponse();
+        expect(access).toHaveBeenCalledWith(user);
+        expect(allowance).not.toHaveBeenCalled();
+        expect(claude.calls).toHaveLength(0);
+        expect(record).not.toHaveBeenCalled();
+        expect(store).not.toHaveBeenCalled();
+      });
+
+      it("saves it to the chat under the student's own message", async () => {
+        const response = await post(summary({ message: "tl;dr" }));
+        await readAllMentorEvents(response.body!);
+        await afterResponse();
+
+        expect(response.headers.get("X-Mentor-Chat-Id")).toBe("newchat0001");
+        expect(start).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "tl;dr" }),
+        );
+        expect(save).toHaveBeenCalledWith(
+          expect.objectContaining({ question: "tl;dr", answer: SAVED }),
+        );
+      });
+
+      it("serves 'summarize this lesson' from the store mid-chat", async () => {
+        const history = [
+          { role: "student", text: "Hi" },
+          { role: "mentor", text: "Hello" },
+        ];
+        await readAllMentorEvents((await post(summary({ history }))).body!);
+        expect(find).toHaveBeenCalledWith(key());
+      });
+
+      it.each(["disabled", "not_in_pilot"] as const)(
+        "refuses on %s with no events",
+        async (reason) => {
+          const message = `Access says ${reason}.`;
+          access.mockResolvedValue({
+            allowed: false,
+            reason,
+            status: 503,
+            message,
+            retryAt: null,
+          });
+          const response = await post(summary());
+
+          expect(response.status).toBe(503);
+          expect(await response.json()).toEqual({
+            error: reason,
+            message,
+            retryAt: null,
+          });
+          expect(claude.calls).toHaveLength(0);
+          expect(start).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    describe("a miss", () => {
+      it("generates the canonical request, records usage and stores the reply", async () => {
+        const response = await post(summary());
+        await readAllMentorEvents(response.body!);
+        await afterResponse();
+
+        expect(allowance).toHaveBeenCalledWith(user);
+        expect(access).not.toHaveBeenCalled();
+        expect(sentRequest()).toEqual(canonical());
+        expect(record).toHaveBeenCalledWith(
+          expect.objectContaining({ kind: "lesson" }),
+        );
+        expect(store).toHaveBeenCalledWith({
+          ...summaryReply(context(), ids).row,
+          text: SAVED,
+        });
+      });
+
+      it("stores nothing when Claude refuses", async () => {
+        useClaude({ stopReason: "refusal" });
+        await readAllMentorEvents((await post(summary())).body!);
+        await afterResponse();
+
+        expect(store).not.toHaveBeenCalled();
+      });
+
+      it("is still refused at the daily limit", async () => {
+        allowance.mockResolvedValue({
+          allowed: false,
+          reason: "daily_limit",
+          status: 429,
+          message: "Limit.",
+          retryAt: null,
+        });
+        expect((await post(summary())).status).toBe(429);
+        expect(claude.calls).toHaveLength(0);
+      });
+    });
+
+    it.each<[string, Record<string, unknown>, () => void]>([
+      [SUMMARY, {}, () => {}],
+      [
+        "can you give me a quick summary?",
+        {
+          history: [
+            { role: "student", text: "Hi" },
+            { role: "mentor", text: "Hello" },
+          ],
+        },
+        () => {},
+      ],
+      [
+        "tl;dr",
+        { chatId: "ownedchat01" },
+        () =>
+          owned.mockResolvedValue({
+            documentId: "ownedchat01",
+            kind: "lesson",
+            lesson: { id: lesson.id + 1, name: "Joins" },
+            droplet: { id: 4, name: "SQL basics" },
+          } as never),
+      ],
+      [SUMMARY, FORGED, () => {}],
+    ])("uses one key and request for %j", async (message, over, arrange) => {
+      arrange();
+      await readAllMentorEvents((await post(ask({ message, ...over }))).body!);
+
+      expect(find).toHaveBeenCalledWith(key());
+      expect(sentRequest()).toEqual(canonical());
+      expect(claude.calls[0].body).not.toContain("This chat started in");
+    });
+
+    it("sends 'summarize it' mid-chat live, without a lookup", async () => {
+      const history = [
+        { role: "student", text: "Hi" },
+        { role: "mentor", text: "Hello" },
+      ];
+      await readAllMentorEvents(
+        (await post(ask({ message: "summarize it", history }))).body!,
+      );
+
+      expect(find).not.toHaveBeenCalled();
+      expect(claude.calls).toHaveLength(1);
+    });
+
+    it.each<[string, Record<string, unknown>]>([
+      [
+        "a summary of one part",
+        ask({ message: "summarize the part about recursion" }),
+      ],
+      [
+        "an explain selection",
+        ask({
+          kind: "explain",
+          message: undefined,
+          selection: "Keys matter.",
+        }),
+      ],
+    ])("never looks up %s", async (_, body) => {
+      expect((await post(body)).status).toBe(200);
+      expect(find).not.toHaveBeenCalled();
+      expect(claude.calls).toHaveLength(1);
     });
   });
 });
