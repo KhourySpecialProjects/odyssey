@@ -176,6 +176,13 @@
  * learner-profile Per-user tag "learner-profile-{userId}": read by            900s
  *                 getLearnerProfile (engine, Settings);
  *                 invalidated by saveLearnerProfile
+ * droplet-badge   Per-droplet tag "droplet-badge-{dropletId}": every read of    900s
+ *                 that droplet's picked badge or stored options
+ *                 (getPickedBadges, getBadgeOptions); invalidated by
+ *                 saveBadgeOptions and pickBadge (ODY-987)
+ *                 ↳ Global tag "droplet-badges" (sweeps every droplet's
+ *                   badge reads): carried by every read; no action sweeps
+ *                   it yet, for a bulk reset by hand in the Strapi admin
  */
 
 export const CACHE_TAGS = {
@@ -189,6 +196,7 @@ export const CACHE_TAGS = {
   authors: "authors",
   lesson: "lesson",
   announcements: "announcements",
+  dropletBadges: "droplet-badges", // every droplet's badge reads (ODY-987); expires after 900s
   mentorSetting: "mentor-setting", // Ask Mentor gate; expires after 60s
   coCompletion: "co-completion", // droplet pair and completion counts (ODY-962, ODY-976); expires after 3600s
   tags: "tags",
@@ -219,6 +227,7 @@ export const CACHE_TAGS = {
   favorites: (userId: number) => `favorites-${userId}`, // droplet ids the user favorited (explore hearts)
   streak: (userId: number) => `streak-${userId}`, // the days a user finished a new lesson (ODY-918)
   recommendations: (userId: number) => `recommendations-${userId}`, // one student's picks (ODY-952)
+  dropletBadge: (dropletId: number) => `droplet-badge-${dropletId}`, // one droplet's picked badge and options (ODY-987)
   mentorChats: (userId: number) => `mentor-chats-${userId}`, // one student's saved Mentor chats (ODY-937)
   learnerProfile: (userId: number) => `learner-profile-${userId}`, // one student's quiz answers (ODY-953)
 
