@@ -150,15 +150,15 @@ export function ReviewPanel({
 
   return (
     <section aria-label="Scorecard" className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 border-b border-slate-200 px-4 pt-4 pb-3">
-        <h2 className="pr-8 text-base font-semibold text-slate-900">
+      <div className="shrink-0 border-b border-slate-200 px-4 pt-4 pb-3 dark:border-[#33425c]">
+        <h2 className="pr-8 text-base font-semibold text-slate-900 dark:text-slate-100">
           Scorecard
         </h2>
-        <p className="mt-0.5 truncate text-sm font-medium text-[#344054]">
+        <p className="mt-0.5 truncate text-sm font-medium text-[#344054] dark:text-slate-200">
           {droplet.name}
         </p>
         {meta && (
-          <p className="text-xs text-[#667085]">
+          <p className="text-xs text-[#667085] dark:text-slate-400">
             {[
               meta.reviewerName && `Reviewed by ${meta.reviewerName}`,
               meta.authorNames?.length &&
