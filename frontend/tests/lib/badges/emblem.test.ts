@@ -63,13 +63,18 @@ describe("emblemToDataUrl", () => {
     expect(out).not.toMatch(banned);
   });
 
-  it("adds the svg namespace when the root has none", () => {
+  it.each([
+    ["has none", ""],
+    ["has an empty one", ' xmlns=""'],
+    ["has another", ' xmlns="http://evil.test/ns"'],
+  ])("gives the root the svg namespace when it %s", (_label, xmlns) => {
     const out = decode(
       emblemToDataUrl(
-        '<svg viewBox="0 0 250 100"><rect width="4" height="4"/></svg>',
+        `<svg${xmlns} viewBox="0 0 250 100"><rect width="4" height="4"/></svg>`,
       ),
     );
     expect(out).toContain(`xmlns="${SVG_NS}"`);
+    expect(out).not.toContain("evil.test");
   });
 
   it("leaves a fill url() to an outside file in place: an <img> never loads it", () => {

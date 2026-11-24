@@ -50,7 +50,8 @@ export function sanitizeEmblem(svg?: string): string | null {
   );
   const root = nodes.length === 1 ? (nodes[0] as Element) : null;
   if (root?.nodeType !== ELEMENT_NODE || root.localName !== "svg") return null;
-  if (!root.hasAttribute("xmlns")) root.setAttribute("xmlns", SVG_NS);
+  // An <img> reads it as XML, where only this namespace makes it an SVG
+  root.setAttribute("xmlns", SVG_NS);
   return root.outerHTML;
 }
 
