@@ -32,7 +32,13 @@ describe("learner source", () => {
     ).resolves.toBeNull();
   });
 
-  it("keeps the student's consent seam closed until ODY-935", async () => {
+  it("re-exports ODY-935's check, which fails closed on a lookup error", async () => {
+    const error = jest.spyOn(console, "error").mockImplementation(() => {});
+    const fetchSpy = jest
+      .spyOn(global, "fetch")
+      .mockRejectedValue(new Error("down"));
     await expect(studentAllowsPersonalization(7)).resolves.toBe(false);
+    fetchSpy.mockRestore();
+    error.mockRestore();
   });
 });

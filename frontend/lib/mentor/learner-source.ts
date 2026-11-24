@@ -3,12 +3,8 @@ import { toLearnerContext, type LearnerContext } from "@/lib/mentor/learner";
 import { getLearnerEnrollments } from "@/lib/requests/learner-enrollments";
 import type { MentorSource } from "./source";
 
-/** Whether the student allows personalization; false until ODY-935 swaps this body or re-exports its function. */
-export async function studentAllowsPersonalization(
-  _userId: number,
-): Promise<boolean> {
-  return false;
-}
+// ODY-935's check: fails closed, so a lookup error sends no learner block.
+export { studentAllowsPersonalization } from "@/lib/mentor/personalization";
 
 /**
  * The learner context for one student in one droplet, or null when the fetch
