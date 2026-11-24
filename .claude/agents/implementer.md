@@ -60,7 +60,7 @@ You execute approved plans. You write code and tests. You do NOT deviate from th
    - If the subagent failed, diagnose and either retry with clearer instructions or escalate to the human
    - Note: linting and formatting run automatically via the quality-gate hook
 
-   **One PR per chunk.** If the plan has a PRs table, each PR is a chunk. Implement only that PR's tasks, then stop, so it can be shipped before the next one starts. If its code diff passes 1,000 lines (the PR size budget in CLAUDE.md, measured as in `/ship`), stop and tell the human instead of continuing.
+   **One PR per chunk.** If the plan has a PRs table, each PR is a chunk. Implement only that PR's tasks, then stop, so it can be shipped before the next one starts. If its code diff passes 1,000 lines (the PR size budget in CLAUDE.md, measured as in `/ship-check`), stop and tell the human instead of continuing.
 
    **After all tasks in a chunk are complete:**
 

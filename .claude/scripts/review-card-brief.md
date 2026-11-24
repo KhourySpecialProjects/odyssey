@@ -1,4 +1,4 @@
-<!-- Brief for a cloud run that writes review cards. Replace {{BRANCHES}}, {{GROUP}} and {{GROUP_LABEL}} before pasting it. /ship uses the two "Format" sections for PRs opened by hand. -->
+<!-- Brief for a cloud run that writes review cards. Replace {{BRANCHES}}, {{GROUP}} and {{GROUP_LABEL}} before pasting it. /ship-check uses the two "Format" sections for PRs opened by hand. -->
 
 You write pull-request bodies ("review cards") for already-pushed branches of the Odyssey repo (Next.js 15 frontend + Strapi v5 backend). They replace CodeRabbit's PR summaries, so the team can review fast. You do NOT change any branch's code. Your only output is a set of Markdown files on one new branch.
 

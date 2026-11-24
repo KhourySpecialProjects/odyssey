@@ -48,7 +48,7 @@ That's it for the basics. Everything below explains what happens under the hood.
 | `/implement`   | After a plan is approved                   | Executes the plan. Writes code and tests using TDD.          |
 | `/review`      | After each implementation chunk            | Reviews code against the plan. Reports findings by severity. |
 | `/audit`       | Feature branch complete, before merge      | Full cross-cutting audit. Expensive — use once per feature.  |
-| `/ship`        | Ready to push                              | Runs CI, generates PR summary, verifies branch is ready.     |
+| `/ship-check`  | Ready to push                              | Runs CI, generates PR summary, verifies branch is ready.     |
 | `/ci`          | Anytime                                    | Runs Prettier + ESLint + Jest + builds locally.              |
 | `/ci quick`    | Quick check                                | Same as `/ci` but skips builds.                              |
 
@@ -60,7 +60,7 @@ All commands use `disable-model-invocation: true` — they're dispatch templates
 - **`/implement`** — Finds most recent plan if no path given, checks for incomplete tasks, invokes implementer agent
 - **`/review`** — Runs `git diff --name-only`, finds active plan, invokes reviewer agent
 - **`/audit`** — Runs `git diff production --stat`, warns about cost, invokes auditor agent
-- **`/ship`** — Runs full CI via `scripts/ci-local.sh`, gathers branch context, generates PR description. Does NOT push.
+- **`/ship-check`** — Runs full CI via `scripts/ci-local.sh`, gathers branch context, generates PR description. Does NOT push.
 - **`/ci`** — Runs prettier → lint → tests → builds sequentially. Truncates noisy output. Reports structured verdict.
 
 ## The Workflow
@@ -90,7 +90,7 @@ Formatting runs automatically after every change. File protection prevents accid
         ↓
 /audit                 Cross-cutting audit (once, when done)
         ↓
-/ship                  Run CI, generate PR description
+/ship-check            Run CI, generate PR description
         ↓
   You push manually    Claude never pushes
 ```
@@ -205,7 +205,7 @@ This workflow was built from scratch for Odyssey, informed by patterns from othe
 | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | 5-agent pipeline (plan → implement → review → audit → ship) | [Superpowers](https://github.com/obra/superpowers) (brainstorm → plan → implement → review)    | Consolidated brainstorming into planner. Added auditor + wrap-up. Made every agent Odyssey-specific. |
 | Devil's advocate validator in auditor                       | [Trail of Bits](https://github.com/trailofbits/claude-code-config) adversarial review patterns | Applied as a false-positive filter with fresh-context subagent                                       |
-| `/ship` command                                             | [gstack](https://github.com/garrytan/gstack) `/ship` (Garry Tan)                               | Adapted to Odyssey's no-push policy                                                                  |
+| `/ship-check` command                                       | [gstack](https://github.com/garrytan/gstack) `/ship` (Garry Tan)                               | Adapted to Odyssey's no-push policy                                                                  |
 | File-based state passing via `docs/plans/`                  | [BMAD Method](https://github.com/aj-geddes/claude-code-bmad-skills) phase system               | Used `docs/plans/` as the shared state bus instead of BMAD's role-based handoffs                     |
 | Path-conditional rules                                      | [Cursor](https://cursor.com/docs/context/rules) `.mdc` rules                                   | Claude Code's native `paths:` frontmatter                                                            |
 | Quality gate hook                                           | [Trail of Bits](https://github.com/trailofbits/claude-code-config) hook patterns               | Auto-format on every turn using Prettier                                                             |
