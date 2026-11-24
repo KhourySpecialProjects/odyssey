@@ -207,7 +207,6 @@ describe("LessonRenderer (viewer)", () => {
     jest
       .mocked(deleteHighlight)
       .mockResolvedValue({ ok: true, error: null, data: { id: 7 } });
-    jest.mocked(getEnrollByID).mockResolvedValue({ id: "5" } as never);
     jest.mocked(createNote).mockResolvedValue({ success: true });
   });
 
@@ -559,6 +558,7 @@ describe("LessonRenderer (viewer)", () => {
         1,
         expect.objectContaining({ id: 8, text: "SQL" }),
       );
+      expect(getEnrollByID).not.toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith("Note created");
       expect(toast.success).not.toHaveBeenCalledWith("Highlight saved");
     });

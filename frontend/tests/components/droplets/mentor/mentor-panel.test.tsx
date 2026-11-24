@@ -210,7 +210,7 @@ describe("MentorPanel", () => {
     await waitFor(() => expect(onNoteSaved).toHaveBeenCalled());
     expect(createNote).toHaveBeenCalledWith(
       lesson,
-      { id: 5 },
+      { id: "5" },
       120,
       7,
       undefined,

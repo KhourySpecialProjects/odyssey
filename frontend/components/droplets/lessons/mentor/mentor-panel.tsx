@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMentorChat } from "@/hooks/use-mentor-chat";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { answerNoteHtml, displayAnswer } from "@/lib/mentor/answer-text";
 import { trackMentor } from "@/lib/mentor/analytics";
@@ -289,13 +288,9 @@ export function MentorPanel({
       const question = chat.messages.find((m) => m.id === message.askId);
       const root = lessonRoot();
       try {
-        const enrollment = await getEnrollByID(String(enrollmentId), {
-          fields: ["id"],
-          populate: {},
-        });
         const result = await createNote(
           lesson,
-          enrollment,
+          { id: String(enrollmentId) },
           // Citations from another lesson don't point into this one
           root &&
             (message.lessonId === undefined || message.lessonId === lesson.id)

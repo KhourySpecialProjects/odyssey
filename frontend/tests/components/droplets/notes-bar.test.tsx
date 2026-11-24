@@ -107,7 +107,6 @@ describe("NotesBar", () => {
     );
     (updateNotePosition as jest.Mock).mockResolvedValue({ success: true });
     (deleteNote as jest.Mock).mockResolvedValue({ ok: true });
-    (getEnrollByID as jest.Mock).mockResolvedValue(mockEnrollment);
     (createNote as jest.Mock).mockResolvedValue({ success: true });
     (updateNoteContent as jest.Mock).mockResolvedValue({ success: true });
   });
@@ -174,6 +173,13 @@ describe("NotesBar", () => {
         expect(createNote).toHaveBeenCalled();
         expect(getNotesByAuthorizedUserAndLesson).toHaveBeenCalled();
       });
+      expect(createNote).toHaveBeenCalledWith(
+        mockLesson,
+        { id: "123" },
+        expect.any(Number),
+        1,
+      );
+      expect(getEnrollByID).not.toHaveBeenCalled();
     });
 
     it("handles failed note creation", async () => {

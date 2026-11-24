@@ -53,6 +53,10 @@ jest.mock("../../lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
 
+jest.mock("../../lib/requests/droplet", () => ({
+  updateDropletAverageRating: jest.fn(),
+}));
+
 // Tested in testing/lib/streak-days.test.ts; here only whether it's called
 jest.mock("../../lib/streak-days", () => ({
   recordStreakDay: jest.fn(async () => true),
@@ -61,6 +65,12 @@ jest.mock("../../lib/streak-days", () => ({
 // Tested in testing/lib/reminders.test.ts; here only whether it's called
 jest.mock("../../lib/reminders", () => ({
   clearReminderOnProgress: jest.fn(async () => true),
+}));
+
+// Voyage steps have their own tests (enrollment-voyage-steps.test.ts); keep
+// them from using up the fetchAPI responses queued here.
+jest.mock("../../lib/requests/voyage-enrollment", () => ({
+  checkAndCompleteVoyageNode: jest.fn(),
 }));
 
 jest.mock("next/cache", () => ({
@@ -464,6 +474,97 @@ describe("Enrollment Tests", () => {
 
       expect(result.success).toBe(false);
       expect(revalidateTag).not.toHaveBeenCalled();
+    });
+
+    describe("droplet average rating", () => {
+      const {
+        updateDropletAverageRating,
+      } = require("../../lib/requests/droplet");
+      const fiveRatings = [4, 4, 4, 4, 4].map((rating, i) => ({
+        id: i + 1,
+        rating,
+      }));
+
+      const arrange = () => {
+        getCurrentUser.mockResolvedValue({ email: "test@northeastern.edu" });
+        getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+        global.fetch.mockResolvedValue({
+          ok: true,
+          json: async () => ({ data: { id: 24 } }),
+        });
+      };
+
+      it("reads the droplet id with the enrollment", async () => {
+        arrange();
+        fetchAPI.mockResolvedValueOnce(owned({ droplet: { id: 9 } }));
+        fetchAPI.mockResolvedValueOnce(fiveRatings);
+
+        await changeEnrollmentRating(4, "24");
+
+        expect(fetchAPI.mock.calls[0][1].urlParams.populate).toEqual({
+          authorizedUser: { fields: ["id"] },
+          droplet: { fields: ["id"] },
+        });
+      });
+
+      it("recomputes and stores the average on the server after a rating", async () => {
+        arrange();
+        fetchAPI.mockResolvedValueOnce(owned({ droplet: { id: 9 } }));
+        fetchAPI.mockResolvedValueOnce(fiveRatings);
+
+        const result = await changeEnrollmentRating(4, "24");
+
+        expect(result).toEqual({ success: true });
+        expect(updateDropletAverageRating).toHaveBeenCalledWith(4, 9);
+      });
+
+      it("skips the average when the enrollment has no droplet", async () => {
+        arrange();
+        fetchAPI.mockResolvedValueOnce(owned({ droplet: null }));
+
+        const result = await changeEnrollmentRating(4, "24");
+
+        expect(result).toEqual({ success: true });
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(updateDropletAverageRating).not.toHaveBeenCalled();
+      });
+
+      it("still returns success when the average step fails", async () => {
+        arrange();
+        fetchAPI.mockResolvedValueOnce(owned({ droplet: { id: 9 } }));
+        fetchAPI.mockRejectedValueOnce(new Error("strapi down"));
+
+        const result = await changeEnrollmentRating(4, "24");
+
+        expect(result).toEqual({ success: true });
+        expect(updateDropletAverageRating).not.toHaveBeenCalled();
+        expect(console.error).toHaveBeenCalled();
+      });
+
+      it("still returns success when storing the average fails", async () => {
+        arrange();
+        fetchAPI.mockResolvedValueOnce(owned({ droplet: { id: 9 } }));
+        fetchAPI.mockResolvedValueOnce(fiveRatings);
+        updateDropletAverageRating.mockRejectedValueOnce(new Error("nope"));
+
+        const result = await changeEnrollmentRating(4, "24");
+
+        expect(result).toEqual({ success: true });
+      });
+
+      it("does not write or recompute for another user's enrollment", async () => {
+        arrange();
+        fetchAPI.mockResolvedValueOnce(
+          owned({ authorizedUser: { id: 2 }, droplet: { id: 9 } }),
+        );
+
+        const result = await changeEnrollmentRating(4, "24");
+
+        expect(result.success).toBe(false);
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(updateDropletAverageRating).not.toHaveBeenCalled();
+      });
     });
   });
 
