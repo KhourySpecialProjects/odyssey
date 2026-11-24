@@ -219,6 +219,7 @@ export function DropletTile({
         },
       },
     });
+    if (!fullDroplet) throw new Error("Droplet not found");
 
     const contentMeta = `# ${fullDroplet.name}
 
@@ -559,7 +560,10 @@ ${
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  exportDropletMarkdown();
+                  exportDropletMarkdown().catch((error) => {
+                    console.error("Error exporting droplet:", error);
+                    toast.error("Failed to export Markdown. Please try again.");
+                  });
                 }}
                 className={`${isAdmin ? "visible" : "hidden"} bg-transparent shadow-none hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent`}
               >
