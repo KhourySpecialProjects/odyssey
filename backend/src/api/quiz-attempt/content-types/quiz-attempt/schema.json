@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "quiz_attempts",
+  "info": {
+    "singularName": "quiz-attempt",
+    "pluralName": "quiz-attempts",
+    "displayName": "Quiz Attempt",
+    "description": "One row per lesson quiz submit: ids, a result and a time, never answer text (ODY-939)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet"
+    },
+    "quizType": {
+      "type": "enumeration",
+      "enum": ["choice", "open-ended"],
+      "required": true
+    },
+    "questionId": {
+      "type": "biginteger",
+      "required": true
+    },
+    "correct": {
+      "type": "boolean",
+      "required": true
+    },
+    "attempt": {
+      "type": "integer",
+      "min": 1,
+      "required": true
+    },
+    "submitId": {
+      "type": "string",
+      "maxLength": 64,
+      "private": true,
+      "required": true
+    }
+  }
+}

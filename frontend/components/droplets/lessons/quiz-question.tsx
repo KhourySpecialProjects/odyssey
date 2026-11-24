@@ -26,6 +26,7 @@ import { MentorHint } from "@/components/droplets/lessons/mentor/mentor-hint";
 import { MentorRating } from "@/components/droplets/lessons/mentor/mentor-rating";
 import { displayAnswer } from "@/lib/mentor/answer-text";
 import { trackMentor } from "@/lib/mentor/analytics";
+import { fireQuizAttempt } from "@/lib/quiz-attempt-client";
 
 declare global {
   interface Window {
@@ -176,6 +177,15 @@ export function QuizQuestionBlock({
         });
       }
       hinted.current = false;
+
+      fireQuizAttempt({
+        userId,
+        dropletId,
+        lessonId,
+        quizType: "choice",
+        questionId: question.id,
+        correct: isCorrect,
+      });
 
       setShowResult(true);
     }

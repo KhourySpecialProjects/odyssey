@@ -7,6 +7,7 @@ import { RenderedContent } from "@/components/ui/rendered-content";
 import { stripHtmlTags } from "@/lib/utils";
 import { ArrowLeftIcon } from "lucide-react";
 import posthog from "posthog-js";
+import { fireQuizAttempt } from "@/lib/quiz-attempt-client";
 declare global {
   interface Window {
     posthog?: typeof posthog;
@@ -102,6 +103,15 @@ export function OpenEndedQuizQuestionBlock({
         timestamp: new Date().toISOString(),
       });
     }
+
+    fireQuizAttempt({
+      userId,
+      dropletId,
+      lessonId,
+      quizType: "open-ended",
+      questionId: question.id,
+      correct: isAnswerCorrect,
+    });
 
     setShowResult(true);
   };

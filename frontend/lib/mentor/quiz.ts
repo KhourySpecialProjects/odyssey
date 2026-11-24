@@ -64,3 +64,17 @@ export function findQuizQuestion(
   const question = choiceQuestionById(lesson, questionId);
   return question && quizQuestionOf(question);
 }
+
+/** True if exactly one open-ended question in the lesson has this page id. Ids only, no answers. */
+export function hasOpenEndedQuestion(
+  lesson: MentorLesson,
+  questionId: number,
+): boolean {
+  return (
+    displayBlocksOf(lesson).flatMap((block) =>
+      block.__component === "droplets.open-ended-quiz"
+        ? (block.questions ?? []).filter((q) => q.id === questionId)
+        : [],
+    ).length === 1
+  );
+}

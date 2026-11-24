@@ -2127,6 +2127,58 @@ export interface ApiPlaylistPlaylist extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiQuizAttemptQuizAttempt extends Struct.CollectionTypeSchema {
+  collectionName: 'quiz_attempts';
+  info: {
+    description: 'One row per lesson quiz submit: ids, a result and a time, never answer text (ODY-939)';
+    displayName: 'Quiz Attempt';
+    pluralName: 'quiz-attempts';
+    singularName: 'quiz-attempt';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    attempt: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    correct: Schema.Attribute.Boolean & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::quiz-attempt.quiz-attempt'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    questionId: Schema.Attribute.BigInteger & Schema.Attribute.Required;
+    quizType: Schema.Attribute.Enumeration<['choice', 'open-ended']> &
+      Schema.Attribute.Required;
+    submitId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
 export interface ApiRecommendationDismissalRecommendationDismissal
   extends Struct.CollectionTypeSchema {
   collectionName: 'recommendation_dismissals';
@@ -3238,6 +3290,7 @@ declare module '@strapi/strapi' {
       'api::overview-scan-dismissal.overview-scan-dismissal': ApiOverviewScanDismissalOverviewScanDismissal;
       'api::overview-scan.overview-scan': ApiOverviewScanOverviewScan;
       'api::playlist.playlist': ApiPlaylistPlaylist;
+      'api::quiz-attempt.quiz-attempt': ApiQuizAttemptQuizAttempt;
       'api::recommendation-dismissal.recommendation-dismissal': ApiRecommendationDismissalRecommendationDismissal;
       'api::report.report': ApiReportReport;
       'api::review-comment.review-comment': ApiReviewCommentReviewComment;
