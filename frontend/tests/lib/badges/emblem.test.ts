@@ -91,6 +91,7 @@ describe("emblemToDataUrl", () => {
       "Here is your emblem:\n```svg\n" + svgWith("") + "\n```",
     ],
     ["a doctype before the svg", "<!DOCTYPE svg>&nbsp;" + svgWith("")],
+    ["two svgs side by side", svgWith("") + svgWith("")],
     [
       "input over 12 KB",
       svgWith(`<desc>${"x".repeat(EMBLEM_MAX_BYTES)}</desc>`),

@@ -23,25 +23,35 @@ export const EMBLEM_MAX_BYTES = 12 * 1024;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+// Node types, by number: the server has no global `Node`
+const ELEMENT_NODE = 1;
+const TEXT_NODE = 3;
+
 /** Its size in UTF-8 bytes: `length` counts UTF-16 units, so 界 is 1, not 3 */
 const utf8Bytes = (text: string) => new TextEncoder().encode(text).length;
 
 /**
  * Sanitize an emblem SVG. Returns the clean `<svg>…</svg>` string, or null
- * when the input is over 12 KB in UTF-8, or is not a real SVG once sanitized.
+ * when the input is over 12 KB in UTF-8, or isn't a single real SVG once
+ * sanitized.
  */
 export function sanitizeEmblem(svg?: string): string | null {
   if (!svg?.trim() || utf8Bytes(svg) > EMBLEM_MAX_BYTES) return null;
-  const clean = DOMPurify.sanitize(svg, {
+  const fragment = DOMPurify.sanitize(svg, {
     USE_PROFILES: { svg: true },
     FORBID_TAGS: ["image", "use", "a", "style", "foreignObject"],
     FORBID_ATTR: ["style", "href", "xlink:href", "filter"],
-  }).trim();
-  if (!/^<svg[\s>]/i.test(clean) || !/<\/svg>$/i.test(clean)) return null;
-  const rootTag = clean.slice(0, clean.indexOf(">") + 1);
-  return /\sxmlns\s*=/i.test(rootTag)
-    ? clean
-    : clean.replace(/^<svg/i, `<svg xmlns="${SVG_NS}"`);
+    RETURN_DOM_FRAGMENT: true,
+  });
+  // One <svg> and nothing beside it but ASCII whitespace (not even &nbsp;)
+  const nodes = Array.from(fragment.childNodes).filter(
+    (n) =>
+      n.nodeType !== TEXT_NODE || !/^[ \t\n\f\r]*$/.test(n.nodeValue ?? ""),
+  );
+  const root = nodes.length === 1 ? (nodes[0] as Element) : null;
+  if (root?.nodeType !== ELEMENT_NODE || root.localName !== "svg") return null;
+  if (!root.hasAttribute("xmlns")) root.setAttribute("xmlns", SVG_NS);
+  return root.outerHTML;
 }
 
 /** Sanitize an emblem and encode it as an SVG data URL, or null when unusable. */
