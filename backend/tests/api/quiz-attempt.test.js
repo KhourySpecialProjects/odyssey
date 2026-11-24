@@ -23,10 +23,12 @@ let droplet;
 
 const rest = () => request(strapi.server.httpServer);
 const auth = () => ({ Authorization: `Bearer ${token}` });
-const post = (body) => rest().post('/api/quiz-attempts/record').set(auth()).send(body);
+const post = (body) =>
+  rest().post('/api/quiz-attempts/record').set(auth()).send(body);
 
 let n = 0;
-const submitId = () => `a1b2c3d4-0000-4000-8000-${String(++n).padStart(12, '0')}`;
+const submitId = () =>
+  `a1b2c3d4-0000-4000-8000-${String(++n).padStart(12, '0')}`;
 const body = (overrides = {}) => ({
   userId: user.id,
   lessonId: lesson.id,
@@ -64,7 +66,10 @@ beforeEach(async () => {
     data: dropletData({ lessons: [lesson.documentId] }),
   });
   await strapi.documents(ENROLLMENT_UID).create({
-    data: enrollmentData({ authorizedUser: user.documentId, droplet: droplet.documentId }),
+    data: enrollmentData({
+      authorizedUser: user.documentId,
+      droplet: droplet.documentId,
+    }),
   });
 });
 
@@ -75,12 +80,18 @@ describe('POST /quiz-attempts/record', () => {
     expect(res.status).toBe(200);
     const [row] = await rows();
     expect(res.body.data).toEqual({ id: row.id, attempt: 1 });
-    expect(row).toMatchObject({ quizType: 'choice', correct: true, attempt: 1 });
+    expect(row).toMatchObject({
+      quizType: 'choice',
+      correct: true,
+      attempt: 1,
+    });
     expect(String(row.questionId)).toBe('2147483648');
     expect(row.user.id).toBe(user.id);
     expect(row.lesson.id).toBe(lesson.id);
     expect(row.droplet.id).toBe(droplet.id);
-    expect(Object.keys(row)).not.toEqual(expect.arrayContaining(['answer', 'answerText']));
+    expect(Object.keys(row)).not.toEqual(
+      expect.arrayContaining(['answer', 'answerText']),
+    );
   });
 
   it('numbers a retry as attempt 2, per quiz type', async () => {
@@ -115,7 +126,9 @@ describe('POST /quiz-attempts/record', () => {
   });
 
   it('is a 404 when the lesson is not in the droplet', async () => {
-    const stray = await strapi.documents(LESSON_UID).create({ data: lessonData() });
+    const stray = await strapi
+      .documents(LESSON_UID)
+      .create({ data: lessonData() });
 
     expect((await record({ lessonId: stray.id })).status).toBe(404);
     expect(await rows()).toHaveLength(0);
@@ -137,7 +150,9 @@ describe('POST /quiz-attempts/record', () => {
       });
     }
     const { start } = dayBounds(new Date());
-    await strapi.db.connection('quiz_attempts').update({ created_at: new Date(start.getTime() - 60000) });
+    await strapi.db
+      .connection('quiz_attempts')
+      .update({ created_at: new Date(start.getTime() - 60000) });
 
     expect((await record()).status).toBe(200);
   }, 120000);
@@ -187,7 +202,10 @@ describe('POST /quiz-attempts/record', () => {
 
     expect((await record()).status).toBe(429);
     await strapi.documents(ENROLLMENT_UID).create({
-      data: enrollmentData({ authorizedUser: other.documentId, droplet: droplet.documentId }),
+      data: enrollmentData({
+        authorizedUser: other.documentId,
+        droplet: droplet.documentId,
+      }),
     });
     expect((await record({ userId: other.id })).status).toBe(200);
   }, 120000);
@@ -199,6 +217,47 @@ describe('POST /quiz-attempts/record', () => {
     expect(await rows()).toHaveLength(0);
   });
 
+  it('refuses a registered user JWT even when the role is granted the action', async () => {
+    const roleService = strapi.plugin('users-permissions').service('role');
+    const { id } = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findOne({ where: { type: 'authenticated' } });
+    const role = await roleService.findOne(id);
+    await roleService.updateRole(id, {
+      permissions: {
+        ...role.permissions,
+        'api::quiz-attempt': {
+          controllers: { 'custom-quiz-attempt': { record: { enabled: true } } },
+        },
+      },
+    });
+    const registered = await rest()
+      .post('/api/auth/local/register')
+      .send({
+        username: `u${Date.now()}`,
+        email: `u${Date.now()}@example.test`,
+        password: 'Passw0rd!long',
+      });
+    expect(registered.body.jwt).toBeTruthy();
+    const granted = await strapi.db
+      .query('plugin::users-permissions.permission')
+      .count({
+        where: {
+          role: id,
+          action: 'api::quiz-attempt.custom-quiz-attempt.record',
+        },
+      });
+    expect(granted).toBe(1);
+
+    const res = await rest()
+      .post('/api/quiz-attempts/record')
+      .set('Authorization', `Bearer ${registered.body.jwt}`)
+      .send(body());
+
+    expect(res.status).toBe(403);
+    expect(await rows()).toHaveLength(0);
+  });
+
   it('has no core create, read, update or delete route', async () => {
     await record();
     const { documentId } = await strapi.documents(QUIZ_ATTEMPT_UID).findFirst();
@@ -207,7 +266,10 @@ describe('POST /quiz-attempts/record', () => {
       rest().post('/api/quiz-attempts').set(auth()).send({ data: {} }),
       rest().get('/api/quiz-attempts').set(auth()),
       rest().get(`/api/quiz-attempts/${documentId}`).set(auth()),
-      rest().put(`/api/quiz-attempts/${documentId}`).set(auth()).send({ data: {} }),
+      rest()
+        .put(`/api/quiz-attempts/${documentId}`)
+        .set(auth())
+        .send({ data: {} }),
       rest().delete(`/api/quiz-attempts/${documentId}`).set(auth()),
     ];
     for (const res of await Promise.all(calls)) {
