@@ -38,8 +38,6 @@ import {
   type MentorAllowance,
 } from "@/lib/mentor/usage";
 import { getMentorSetting } from "@/lib/requests/mentor-setting";
-import { mentorRequestSchema } from "@/lib/validations/mentor";
-import * as askModule from "@/lib/mentor/ask";
 import { fakeClaude } from "@/testing/mocks/claudeStreamMock";
 import {
   mentorText,
@@ -73,10 +71,6 @@ jest.mock("@/lib/mentor/cached-reply-store", () => ({
   findCachedReply: jest.fn(),
   storeCachedReply: jest.fn(),
 }));
-jest.mock("@/lib/mentor/ask", () => {
-  const actual = jest.requireActual("@/lib/mentor/ask");
-  return { ...actual, resolveMentorAsk: jest.fn(actual.resolveMentorAsk) };
-});
 jest.mock("@/lib/mentor/learner-source", () => ({
   studentAllowsPersonalization: jest.fn(),
   getLearnerContext: jest.fn(),
@@ -105,8 +99,6 @@ const setting = jest.mocked(getMentorSetting);
 const allows = jest.mocked(studentAllowsPersonalization);
 const learnerOf = jest.mocked(getLearnerContext);
 
-const resolveReal =
-  jest.requireActual<typeof askModule>("@/lib/mentor/ask").resolveMentorAsk;
 const user = { id: 7, email: "s@example.invalid", roles: [] };
 const lesson = classicLesson();
 const MC = blockNoteIdToNumber("mc-1");
@@ -473,7 +465,10 @@ describe("POST /api/mentor", () => {
     },
   );
 
-  it("sends no learner block for a kind outside the allowlist", async () => {
+  it.each([
+    ["a summary", () => ask({ message: "Summarize this lesson" })],
+    ["a quiz hint", () => hint(41, 413)],
+  ])("sends no learner block, and fetches none, for %s", async (_, body) => {
     setting.mockResolvedValue({
       enabled: true,
       personalize: true,
@@ -481,34 +476,11 @@ describe("POST /api/mentor", () => {
     });
     allows.mockResolvedValue(true);
     learnerOf.mockResolvedValue(LEARNER);
-    const parse = mentorRequestSchema.safeParse.bind(mentorRequestSchema);
-    const spy = jest.spyOn(mentorRequestSchema, "safeParse");
-    spy.mockImplementation((raw) => {
-      const result = parse(raw);
-      return result.success
-        ? { ...result, data: { ...result.data, kind: "summary" } as never }
-        : result;
-    });
-    jest
-      .mocked(askModule.resolveMentorAsk)
-      .mockImplementationOnce((...args) =>
-        resolveReal(args[0], args[1], { ...args[2], kind: "lesson" } as never),
-      );
-    try {
-      const response = await post(ask());
-      expect(response.status).toBe(200);
-      await readAllMentorEvents(response.body!);
-      expect(JSON.parse(claude.calls[0].body).messages[0].content).toHaveLength(
-        2,
-      );
-      expect(learnerOf).not.toHaveBeenCalled();
-    } finally {
-      spy.mockRestore();
-      jest
-        .mocked(askModule.resolveMentorAsk)
-        .mockReset()
-        .mockImplementation(resolveReal);
-    }
+    const response = await post(body());
+    expect(response.status).toBe(200);
+    await readAllMentorEvents(response.body!);
+    expect(claude.calls[0].body).not.toContain("<learner>");
+    expect(learnerOf).not.toHaveBeenCalled();
   });
 
   it.each([

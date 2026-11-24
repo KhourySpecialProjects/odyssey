@@ -125,12 +125,8 @@ async function learnerFor(
   }
 }
 
-/** Kinds that get the learner block; a new kind opts in here */
-const PERSONALIZED_KINDS = new Set<MentorInput["kind"]>([
-  "lesson",
-  "explain",
-  "quiz-hint",
-]);
+/** Kinds that get the learner block; hints are shared saved replies, so never them */
+const PERSONALIZED_KINDS = new Set<MentorInput["kind"]>(["lesson", "explain"]);
 
 function parseJson(raw: string): unknown {
   try {
