@@ -431,6 +431,10 @@ export function Sidebar({
   const isFrozen =
     isDraft && isFrozenFor(user.roles, droplet.inReview, isAuthor);
 
+  // Authors delete their own unpublished draft; frozen while in review, and the
+  // button is hidden for everyone else
+  const canDeleteDraft = isDraft && isAuthor && !isFrozen;
+
   const actionButtons: Pick<
     Parameters<typeof ContentActionButton>[0],
     "actionType" | "buttonText"
@@ -849,6 +853,19 @@ export function Sidebar({
                 />
               ))}
             </div>
+            {canDeleteDraft && (
+              <div className="mt-2 flex [&>button]:flex-1">
+                <ContentActionButton
+                  droplet={
+                    droplet as Parameters<
+                      typeof ContentActionButton
+                    >[0]["droplet"]
+                  }
+                  actionType="deleteDraft"
+                  buttonText="Delete draft"
+                />
+              </div>
+            )}
             {canReview && !hideReviewActions && (
               <ScoreWithAiButton dropletId={droplet.id} />
             )}

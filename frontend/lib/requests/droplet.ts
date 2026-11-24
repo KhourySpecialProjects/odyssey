@@ -4,7 +4,6 @@ import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, STRAPI_RESPONSE_FORMAT_HEADER } from "../utils";
 import { revalidateTag } from "next/cache";
-import { deleteLessonRecord } from "./lesson-delete";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
@@ -12,6 +11,7 @@ import { requireRole } from "../auth/require-role";
 import { withAuth, assertOwner } from "../auth/guards";
 import {
   checkDropletContentWrite,
+  checkDropletDelete,
   checkDropletUpdate,
   checkPublishDraft,
 } from "../auth/review-freeze";
@@ -28,6 +28,7 @@ import {
   StrapiEntryNotFoundError,
 } from "../strapi-document-id";
 import { readJsonOrNull } from "@/lib/strapi-response";
+import { REVIEW_FROZEN_ERROR } from "@/lib/review-roles";
 import { revalidatePublishedEdit } from "@/lib/revalidate-publish";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -279,56 +280,59 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
 }
 
 export async function deepDeleteDroplet(id: number) {
+  const gate = await requireRole([]);
+  if (!gate.ok) return { ok: false, error: gate.error, data: null };
+  // The write rule, and authors may delete only unpublished droplets.
+  const check = await checkDropletDelete(gate.user, id);
+  if (!check.ok) return { ok: false, error: check.error, data: null };
+  const { refuseInReview, refusePublished } = check;
+  return deleteDropletRecord(id, {
+    refuseInReview,
+    refusePublished,
+  });
+}
+
+/**
+ * Raw delete with no auth. Only call it after the caller has been checked.
+ * Strapi deletes the lessons and the droplet in one transaction and, with
+ * the flags, re-checks review and published state under a row lock.
+ */
+async function deleteDropletRecord(
+  id: number,
+  flags: { refuseInReview: boolean; refusePublished: boolean },
+) {
   try {
-    const droplet = await getDropletById<Droplet>(id, {
-      fields: ["id", "name", "slug"],
-      populate: {
-        authorized_users: { fields: ["id"] },
-        learningObjectives: { fields: ["id"] },
-        lessons: { fields: ["id"] },
-        tags: { fields: ["id"] },
-        prerequisites: { fields: ["id"] },
-        postrequisites: { fields: ["id"] },
-        nextSteps: { fields: ["id"] },
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${id}/deep-delete`,
+      {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          ...STRAPI_RESPONSE_FORMAT_HEADER,
+        },
+        body: JSON.stringify({
+          refuseInReview: flags.refuseInReview,
+          refusePublished: flags.refusePublished,
+        }),
       },
-    });
-
-    if (droplet.lessons) {
-      for (const lesson of droplet.lessons) {
-        await deleteLessonRecord(lesson.id, false);
-      }
-    }
-
-    // The fetched droplet carries its documentId, so this needs no lookup.
-    let deleteUrl: string;
-    try {
-      deleteUrl = await strapiEntryUrl("droplets", droplet);
-    } catch (err) {
-      // Same result as the 404 Strapi used to return for a missing droplet.
-      if (err instanceof StrapiEntryNotFoundError) {
-        return { ok: false, error: "Failed to delete droplet.", data: null };
-      }
-      throw err;
-    }
-    const response = await fetch(deleteUrl, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        ...STRAPI_RESPONSE_FORMAT_HEADER,
-      },
-    });
+    );
 
     const body = await readJsonOrNull(response);
 
     if (!response.ok) {
+      // The droplet went into review after the frontend check.
+      if (response.status === 409) {
+        return { ok: false, error: REVIEW_FROZEN_ERROR, data: null };
+      }
       return { ok: false, error: "Failed to delete droplet.", data: null };
     }
 
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
-    // Lessons were deleted above with revalidate=false; getLessonBySlug is
-    // tagged only with `lesson`, so flush it here.
+    // The lessons went with the droplet; getLessonBySlug is tagged only with
+    // `lesson`, so flush it here.
     revalidateTag(CACHE_TAGS.lesson);
     revalidateTag(CACHE_TAGS.allEnrollments);
     revalidateTag(CACHE_TAGS.playlists);
@@ -1186,7 +1190,10 @@ export async function duplicateDroplet(dropletId: number) {
         // A draft missing lessons can't be left behind: the next Edit would
         // open it, and publishing it would delete those lessons from the
         // live droplet along with their students' progress.
-        const cleanup = await deepDeleteDroplet(newDropletId);
+        const cleanup = await deleteDropletRecord(newDropletId, {
+          refuseInReview: false,
+          refusePublished: false,
+        });
         const reason =
           failure.reason instanceof Error
             ? failure.reason.message
