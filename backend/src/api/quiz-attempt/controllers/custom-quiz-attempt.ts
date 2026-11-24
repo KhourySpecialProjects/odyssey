@@ -43,7 +43,8 @@ export default {
       };
     } catch (err) {
       if (err instanceof QuizAttemptError) return fail(ctx, err.status, err.message);
-      strapi.log.error('Failed to record quiz attempt.', err);
+      const { name, message } = err as Error;
+      strapi.log.error(`Failed to record quiz attempt: ${name}: ${message}`);
       return fail(ctx, 500, 'Failed to record quiz attempt.');
     }
   },

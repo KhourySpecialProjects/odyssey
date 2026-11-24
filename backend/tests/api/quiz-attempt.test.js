@@ -89,9 +89,8 @@ describe('POST /quiz-attempts/record', () => {
     expect(row.user.id).toBe(user.id);
     expect(row.lesson.id).toBe(lesson.id);
     expect(row.droplet.id).toBe(droplet.id);
-    expect(Object.keys(row)).not.toEqual(
-      expect.arrayContaining(['answer', 'answerText']),
-    );
+    expect(row).not.toHaveProperty('answer');
+    expect(row).not.toHaveProperty('answerText');
   });
 
   it('numbers a retry as attempt 2, per quiz type', async () => {
@@ -208,6 +207,48 @@ describe('POST /quiz-attempts/record', () => {
       }),
     });
     expect((await record({ userId: other.id })).status).toBe(200);
+  }, 120000);
+
+  it('dedupes per user: another enrolled user with the same submitId gets their own row', async () => {
+    await strapi.documents(ENROLLMENT_UID).create({
+      data: enrollmentData({
+        authorizedUser: other.documentId,
+        droplet: droplet.documentId,
+      }),
+    });
+    const shared = submitId();
+
+    const first = await record({ submitId: shared });
+    const second = await record({ userId: other.id, submitId: shared });
+
+    expect(second.status).toBe(200);
+    expect(second.body.data.id).not.toBe(first.body.data.id);
+    expect(await rows()).toHaveLength(2);
+  });
+
+  it('returns the existing row for a replayed submitId even at the daily cap', async () => {
+    const replayed = submitId();
+    const first = await record({ submitId: replayed });
+    for (let i = 0; i < 499; i += 1) {
+      await strapi.documents(QUIZ_ATTEMPT_UID).create({
+        data: {
+          user: user.documentId,
+          lesson: lesson.documentId,
+          droplet: droplet.documentId,
+          quizType: 'choice',
+          questionId: '1',
+          correct: false,
+          attempt: 1,
+          submitId: submitId(),
+        },
+      });
+    }
+    expect((await record()).status).toBe(429);
+
+    const replay = await record({ submitId: replayed });
+
+    expect(replay.status).toBe(200);
+    expect(replay.body.data).toEqual(first.body.data);
   }, 120000);
 
   it('refuses a request without the service token', async () => {

@@ -36,7 +36,7 @@ beforeEach(() => {
 });
 
 describe("quiz attempt on submit (ODY-939)", () => {
-  it("saves a choice submit once, with a fresh submitId each time", async () => {
+  it("saves each choice submit, with a fresh submitId each time", async () => {
     const user = userEvent.setup();
     render(<QuizQuestionBlock question={choice} {...ids} />);
 

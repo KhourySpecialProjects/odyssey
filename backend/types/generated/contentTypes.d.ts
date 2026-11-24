@@ -2127,45 +2127,6 @@ export interface ApiPlaylistPlaylist extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiRecommendationDismissalRecommendationDismissal
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'recommendation_dismissals';
-  info: {
-    description: "A droplet a student said isn't for them; never recommended to them again. Student data: keep out of logs, PostHog and Slack (ODY-954)";
-    displayName: 'Recommendation Dismissal';
-    pluralName: 'recommendation-dismissals';
-    singularName: 'recommendation-dismissal';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
-    key: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMaxLength<{
-        maxLength: 70;
-      }>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::recommendation-dismissal.recommendation-dismissal'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::authorized-user.authorized-user'
-    >;
-  };
-}
-
 export interface ApiQuizAttemptQuizAttempt extends Struct.CollectionTypeSchema {
   collectionName: 'quiz_attempts';
   info: {
@@ -2208,6 +2169,45 @@ export interface ApiQuizAttemptQuizAttempt extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 64;
       }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+  };
+}
+
+export interface ApiRecommendationDismissalRecommendationDismissal
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'recommendation_dismissals';
+  info: {
+    description: "A droplet a student said isn't for them; never recommended to them again. Student data: keep out of logs, PostHog and Slack (ODY-954)";
+    displayName: 'Recommendation Dismissal';
+    pluralName: 'recommendation-dismissals';
+    singularName: 'recommendation-dismissal';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    droplet: Schema.Attribute.Relation<'manyToOne', 'api::droplet.droplet'>;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 70;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::recommendation-dismissal.recommendation-dismissal'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -3290,8 +3290,8 @@ declare module '@strapi/strapi' {
       'api::overview-scan-dismissal.overview-scan-dismissal': ApiOverviewScanDismissalOverviewScanDismissal;
       'api::overview-scan.overview-scan': ApiOverviewScanOverviewScan;
       'api::playlist.playlist': ApiPlaylistPlaylist;
-      'api::recommendation-dismissal.recommendation-dismissal': ApiRecommendationDismissalRecommendationDismissal;
       'api::quiz-attempt.quiz-attempt': ApiQuizAttemptQuizAttempt;
+      'api::recommendation-dismissal.recommendation-dismissal': ApiRecommendationDismissalRecommendationDismissal;
       'api::report.report': ApiReportReport;
       'api::review-comment.review-comment': ApiReviewCommentReviewComment;
       'api::review-criterion.review-criterion': ApiReviewCriterionReviewCriterion;
