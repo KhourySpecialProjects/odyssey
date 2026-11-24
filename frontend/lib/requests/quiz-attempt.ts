@@ -27,6 +27,19 @@ const notSaved = (reason: string, ids: object) => {
   return { ok: false, error: "not_saved" } as const;
 };
 
+/** Rejects when `signal` aborts; the listener is removed once `work` settles. */
+function withDeadline<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  let onAbort = () => {};
+  const aborted = new Promise<never>((_, reject) => {
+    onAbort = () => reject(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+  return Promise.race([work, aborted]).finally(() =>
+    signal.removeEventListener("abort", onAbort),
+  );
+}
+
 /** Saves one quiz submit (ids and result, never the answer) for the signed-in student (ODY-939). */
 export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
   const gate = await requireRole([]);
@@ -37,9 +50,14 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
   const body = parsed.data;
   const ids = { dropletId: body.dropletId, lessonId: body.lessonId };
 
+  // One deadline for the lookup and the POST: a hung Strapi must not hold the client's action queue.
+  const signal = AbortSignal.timeout(3000);
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/quiz-attempts/record`;
   try {
-    const source = await getMentorSource(body.dropletId, body.lessonId);
+    const source = await withDeadline(
+      getMentorSource(body.dropletId, body.lessonId),
+      signal,
+    );
     const access = source && lessonAccess(source.droplet, body.lessonId);
     if (!source?.lesson || !access?.ok) return notSaved("not_found", ids);
     const known =
@@ -57,8 +75,7 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
       },
       body: JSON.stringify({ ...body, userId: gate.user.id }),
       cache: "no-store",
-      // A hung Strapi must not hold the client's one-at-a-time action queue.
-      signal: AbortSignal.timeout(3000),
+      signal,
     });
     const json = await readJsonOrNull(response).catch(() => null);
     if (!response.ok || !json?.data) {
@@ -67,8 +84,11 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
     }
     return { ok: true };
   } catch (error) {
-    const { name, message } = error as Error;
-    console.error(`POST ${url} failed: ${name}: ${message}`, ids);
+    const detail =
+      error instanceof Error
+        ? `${error.name}: ${error.message}`
+        : String(error);
+    console.error(`Quiz attempt failed: ${detail}`, ids);
     return { ok: false, error: "failed" };
   }
 }

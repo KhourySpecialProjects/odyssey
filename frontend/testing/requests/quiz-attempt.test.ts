@@ -185,22 +185,28 @@ describe("recordQuizAttempt", () => {
     });
   });
 
-  it("gives the POST an abort signal", async () => {
+  it("bounds the lookup and the POST with one 3s signal", async () => {
+    const timeout = jest.spyOn(AbortSignal, "timeout");
     await recordQuizAttempt(input);
-    expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+
+    expect(timeout).toHaveBeenCalledTimes(1);
+    expect(timeout).toHaveBeenCalledWith(3000);
+    expect(fetchMock.mock.calls[0][1]?.signal).toBe(
+      timeout.mock.results[0].value,
+    );
   });
 
-  it("returns failed on a timeout, without logging the body", async () => {
-    fetchMock.mockRejectedValueOnce(
-      new DOMException("timed out", "TimeoutError"),
-    );
-    await expect(recordQuizAttempt(input)).resolves.toEqual({
-      ok: false,
-      error: "failed",
-    });
-    expect(JSON.stringify(jest.mocked(console.error).mock.calls)).not.toContain(
-      input.submitId,
-    );
+  it("returns failed, and posts nothing, when the lookup outlives the deadline", async () => {
+    const controller = new AbortController();
+    jest.spyOn(AbortSignal, "timeout").mockReturnValueOnce(controller.signal);
+    mockedSource.mockReturnValue(new Promise(() => {}));
+
+    const result = recordQuizAttempt(input);
+    await Promise.resolve();
+    controller.abort(new DOMException("timed out", "TimeoutError"));
+
+    await expect(result).resolves.toEqual({ ok: false, error: "failed" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("returns failed, and posts nothing, when loading the droplet throws", async () => {
@@ -212,13 +218,26 @@ describe("recordQuizAttempt", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("returns failed when the network call throws or the body is empty", async () => {
-    fetchMock.mockRejectedValueOnce(new Error("down"));
-    await expect(recordQuizAttempt(input)).resolves.toEqual({
-      ok: false,
-      error: "failed",
-    });
+  it.each([
+    ["an Error", new Error("down")],
+    ["a timeout", new DOMException("timed out", "TimeoutError")],
+    ["null", null],
+  ])(
+    "returns failed, without logging the body, when the POST rejects with %s",
+    async (_name, reason) => {
+      fetchMock.mockRejectedValueOnce(reason);
 
+      await expect(recordQuizAttempt(input)).resolves.toEqual({
+        ok: false,
+        error: "failed",
+      });
+      expect(
+        JSON.stringify(jest.mocked(console.error).mock.calls),
+      ).not.toContain(input.submitId);
+    },
+  );
+
+  it("returns failed when the body is empty", async () => {
     fetchMock.mockResolvedValueOnce(makeFetchResponse({}));
     await expect(recordQuizAttempt(input)).resolves.toEqual({
       ok: false,
