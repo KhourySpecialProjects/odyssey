@@ -37,17 +37,17 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
   const body = parsed.data;
   const ids = { dropletId: body.dropletId, lessonId: body.lessonId };
 
-  const source = await getMentorSource(body.dropletId, body.lessonId);
-  const access = source && lessonAccess(source.droplet, body.lessonId);
-  if (!source?.lesson || !access?.ok) return notSaved("not_found", ids);
-  const known =
-    body.quizType === "choice"
-      ? choiceQuestionById(source.lesson, body.questionId) !== null
-      : hasOpenEndedQuestion(source.lesson, body.questionId);
-  if (!known) return notSaved("invalid question", ids);
-
   const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/quiz-attempts/record`;
   try {
+    const source = await getMentorSource(body.dropletId, body.lessonId);
+    const access = source && lessonAccess(source.droplet, body.lessonId);
+    if (!source?.lesson || !access?.ok) return notSaved("not_found", ids);
+    const known =
+      body.quizType === "choice"
+        ? choiceQuestionById(source.lesson, body.questionId) !== null
+        : hasOpenEndedQuestion(source.lesson, body.questionId);
+    if (!known) return notSaved("invalid question", ids);
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -57,6 +57,8 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
       },
       body: JSON.stringify({ ...body, userId: gate.user.id }),
       cache: "no-store",
+      // A hung Strapi must not hold the client's one-at-a-time action queue.
+      signal: AbortSignal.timeout(3000),
     });
     const json = await readJsonOrNull(response).catch(() => null);
     if (!response.ok || !json?.data) {
@@ -65,7 +67,8 @@ export async function recordQuizAttempt(input: unknown): Promise<RecordResult> {
     }
     return { ok: true };
   } catch (error) {
-    console.error(`POST ${url} failed:`, error);
+    const { name, message } = error as Error;
+    console.error(`POST ${url} failed: ${name}: ${message}`, ids);
     return { ok: false, error: "failed" };
   }
 }

@@ -1,3 +1,4 @@
+/** @jest-environment node */
 import { recordQuizAttempt } from "@/lib/requests/quiz-attempt";
 import { requireRole } from "@/lib/auth/require-role";
 import { getMentorSource } from "@/lib/mentor/source";
@@ -182,6 +183,33 @@ describe("recordQuizAttempt", () => {
       ok: false,
       error,
     });
+  });
+
+  it("gives the POST an abort signal", async () => {
+    await recordQuizAttempt(input);
+    expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("returns failed on a timeout, without logging the body", async () => {
+    fetchMock.mockRejectedValueOnce(
+      new DOMException("timed out", "TimeoutError"),
+    );
+    await expect(recordQuizAttempt(input)).resolves.toEqual({
+      ok: false,
+      error: "failed",
+    });
+    expect(JSON.stringify(jest.mocked(console.error).mock.calls)).not.toContain(
+      input.submitId,
+    );
+  });
+
+  it("returns failed, and posts nothing, when loading the droplet throws", async () => {
+    mockedSource.mockRejectedValueOnce(new Error("down"));
+    await expect(recordQuizAttempt(input)).resolves.toEqual({
+      ok: false,
+      error: "failed",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("returns failed when the network call throws or the body is empty", async () => {
