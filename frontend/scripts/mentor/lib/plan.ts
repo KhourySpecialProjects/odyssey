@@ -20,6 +20,7 @@ export const SETUPS = {
   "haiku-high": { model: "claude-haiku-5-5", effort: "high" },
   "sonnet-low": { model: "claude-sonnet-5-5", effort: "low" },
   "sonnet-medium": { model: "claude-sonnet-5-5", effort: "medium" },
+  "sonnet-high": { model: "claude-sonnet-5-5", effort: "high" },
 } satisfies Record<string, MentorSetup>;
 export type SetupName = keyof typeof SETUPS;
 

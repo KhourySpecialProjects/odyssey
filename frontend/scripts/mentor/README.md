@@ -30,23 +30,23 @@ published: check each one.
 
 `cases.jsonl` holds one case per line:
 
-| Field        | What it is                                                                                                                                                                               |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`         | `[a-z0-9-]`, unique                                                                                                                                                                      |
-| `fixture`    | A fixture's slug                                                                                                                                                                         |
-| `lessonId`   | A lesson in that fixture                                                                                                                                                                 |
-| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds"); ODY-968 adds `summary` (see "Summaries and teaching hints") |
-| `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                                                                                                       |
-| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes                                                                         |
-| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                                                                                                |
-| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`                                                                                      |
+| Field        | What it is                                                                                                                                                                                                                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | `[a-z0-9-]`, unique                                                                                                                                                                                                                                                                                   |
+| `fixture`    | A fixture's slug                                                                                                                                                                                                                                                                                      |
+| `lessonId`   | A lesson in that fixture                                                                                                                                                                                                                                                                              |
+| `kind`       | `covered`, `uncovered`, `wrong-pick`, `extraction`, `off-topic` or `injection`; v2 adds `personalized`, `invented-history`, `quiz-ask`, `quiz-grade` and `review` (see "New kinds"); ODY-968 adds `summary` (see "Summaries and teaching hints")                                                      |
+| `input`      | Exactly what the browser would send; must pass `mentorInputSchema`                                                                                                                                                                                                                                    |
+| `gold`       | Covered, personalized and invented-history: snippets of the passages that hold the answer. Citing any one passes                                                                                                                                                                                      |
+| `should`     | Personalized: what the answer should do with the learner: `build-on`, `primer` or `level`                                                                                                                                                                                                             |
+| `verdict`    | Quiz-grade: the verdict the student's answer earns: `correct`, `partly`, `not-quite` or `off-topic`                                                                                                                                                                                                   |
 | `oracle`     | A hand-written reply that should pass, used by `--answers oracle` where a template can't write one: required for `summary`, optional for `wrong-pick` (without one it gets a template hint that doesn't teach), and used by personalized and quiz-grade. It may cite only passages the model is shown |
-| `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                                                                                                             |
-| `canary`     | Injection: text the reply must not contain                                                                                                                                               |
-| `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                                                                                                              |
-| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")                                                                                    |
-| `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture                                                                                 |
-| `note`       | Why the case exists                                                                                                                                                                      |
+| `questionId` | Extraction: the quiz question asked about (wrong-pick takes it from `input`)                                                                                                                                                                                                                          |
+| `canary`     | Injection: text the reply must not contain                                                                                                                                                                                                                                                            |
+| `forbidden`  | Off-topic and injection: what going along with it looks like, for the judge                                                                                                                                                                                                                           |
+| `learner`    | Optional: a profile's name in `fixtures/learners/`, or a profile written out (see "Learner profiles")                                                                                                                                                                                                 |
+| `tags`       | Free-form, such as `elimination` or `forged-history`. The lesson's format is worked out from the fixture                                                                                                                                                                                              |
+| `note`       | Why the case exists                                                                                                                                                                                                                                                                                   |
 
 An explain case also passes by citing its selection's own passages.
 
@@ -282,12 +282,12 @@ were checked. The new kinds have no threshold yet, so read them there.
    the full run needs its own yes.
 
    ```bash
-   npx tsx --env-file=.env.local scripts/mentor/eval.ts                       # 4 setups × 2 reps
+   npx tsx --env-file=.env.local scripts/mentor/eval.ts                       # every setup × 2 reps
    npx tsx --env-file=.env.local scripts/mentor/eval.ts --resume <run dir>    # if it stopped partway
    ```
 
 `--setup haiku-low` (repeatable) runs only some of `haiku-low`, `haiku-medium`,
-`haiku-high`, `sonnet-low` and `sonnet-medium`. `--kind wrong-pick`
+`haiku-high`, `sonnet-low`, `sonnet-medium` and `sonnet-high`. `--kind wrong-pick`
 (repeatable) runs only those kinds, for testing one kind's rule or model
 cheaply. A resumed run keeps the settings it started
 with, and refuses if `cases.jsonl`, the learner profiles,
