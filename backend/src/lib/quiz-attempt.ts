@@ -1,5 +1,5 @@
 // One row per lesson quiz submit (ODY-939): ids, a result and a time, never answer text.
-// The retention sweep isn't here yet: ODY-937's job will add quiz-attempt.
+// Rows live 30 days; the nightly sweep is purgeExpiredQuizAttempts.
 import { dayBounds } from './ai-scoring-spend';
 
 export const QUIZ_ATTEMPT_UID = 'api::quiz-attempt.quiz-attempt';
@@ -11,6 +11,9 @@ const ENROLLMENT_UID = 'api::enrollment.enrollment';
 export const QUIZ_TYPES = ['choice', 'open-ended'] as const;
 export type QuizType = (typeof QUIZ_TYPES)[number];
 export const DAILY_LIMIT = 500;
+export const QUIZ_ATTEMPT_RETENTION_DAYS = 30;
+const BATCH = 100;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export class QuizAttemptError extends Error {
   constructor(
@@ -92,4 +95,26 @@ export async function recordQuizAttempt(
     },
   } as any);
   return { id: Number(row.id), attempt: tries + 1 };
+}
+
+export const retentionCutoff = (now = new Date()) =>
+  new Date(now.getTime() - QUIZ_ATTEMPT_RETENTION_DAYS * DAY_MS).toISOString();
+
+/** Deletes rows past the retention window, and rows with no user, in batches */
+export async function purgeExpiredQuizAttempts(now = new Date()): Promise<{ attempts: number }> {
+  const filters = { $or: [{ createdAt: { $lt: retentionCutoff(now) } }, { user: { id: { $null: true } } }] };
+  let attempts = 0;
+  for (;;) {
+    const batch = (await strapi
+      .documents(QUIZ_ATTEMPT_UID)
+      .findMany({ filters, fields: ['id'], limit: BATCH } as any)) as Row[];
+    if (!batch.length) break;
+    const ids = batch.map((row) => row.id);
+    const { count } = await strapi.db.transaction(() =>
+      strapi.db.query(QUIZ_ATTEMPT_UID).deleteMany({ where: { id: { $in: ids } } }),
+    );
+    if (!count) break;
+    attempts += count;
+  }
+  return { attempts };
 }
