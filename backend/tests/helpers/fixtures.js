@@ -32,6 +32,7 @@ const OVERVIEW_SCAN_DISMISSAL_UID = 'api::overview-scan-dismissal.overview-scan-
 
 const MENTOR_USAGE_UID = 'api::mentor-usage.mentor-usage';
 const MENTOR_FEEDBACK_UID = 'api::mentor-feedback.mentor-feedback';
+const DROPLET_BADGE_UID = 'api::droplet-badge.droplet-badge';
 const MENTOR_SETTING_UID = 'api::mentor-setting.mentor-setting';
 const MENTOR_CHAT_UID = 'api::mentor-chat.mentor-chat';
 const MENTOR_CACHED_REPLY_UID = 'api::mentor-cached-reply.mentor-cached-reply';
@@ -221,6 +222,7 @@ module.exports = {
   MENTOR_SETTING_UID,
   STREAK_DAY_UID,
   MENTOR_FEEDBACK_UID,
+  DROPLET_BADGE_UID,
   MENTOR_CHAT_UID,
   MENTOR_CACHED_REPLY_UID,
   MENTOR_MESSAGE_UID,

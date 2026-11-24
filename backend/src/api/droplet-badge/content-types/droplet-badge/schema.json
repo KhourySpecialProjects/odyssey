@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "droplet_badges",
+  "info": {
+    "singularName": "droplet-badge",
+    "pluralName": "droplet-badges",
+    "displayName": "Droplet Badge",
+    "description": "A droplet's picked badge, or one of its up to 3 options until one is picked (ODY-987)"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "indexes": [
+    {
+      "name": "droplet_badges_emblem_hash_uq",
+      "columns": ["emblem_hash"],
+      "type": "unique"
+    }
+  ],
+  "attributes": {
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["option", "picked"],
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60
+    },
+    "emblemSvg": {
+      "type": "text",
+      "required": true
+    },
+    "emblemHash": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "model": {
+      "type": "string"
+    },
+    "promptVersion": {
+      "type": "string"
+    },
+    "createdByUser": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user"
+    }
+  }
+}

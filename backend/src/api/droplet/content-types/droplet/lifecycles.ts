@@ -5,6 +5,7 @@ import {
   capitalize,
   markClaimedVoyageNodesAuthored,
 } from '../../../../lib/lifecycle-utils';
+import { deleteDropletBadges } from '../../../../lib/droplet-badges';
 import { DropletStatus, DropletWithRelations } from '../../types';
 
 module.exports = {
@@ -43,6 +44,25 @@ module.exports = {
         data.reviewRound = (existing.reviewRound ?? 0) + 1;
       }
     }
+  },
+
+  // A deleted droplet takes its badge and options with it, which frees their designs
+  // (ODY-987). The Document Service's delete runs `db.query.delete`, which fires this hook
+  // with the numeric row id; Query Engine callers may pass a documentId instead.
+  async beforeDelete(event) {
+    const { id, documentId } = event.params.where ?? {};
+    const dropletId =
+      typeof id === 'number'
+        ? id
+        : documentId
+          ? ((
+              await strapi.documents('api::droplet.droplet').findFirst({
+                filters: { documentId },
+                fields: ['id'],
+              })
+            )?.id as number | undefined)
+          : undefined;
+    if (dropletId !== undefined) await deleteDropletBadges(dropletId);
   },
 
   async afterUpdate(event) {
