@@ -6,7 +6,7 @@ import {
   noticeAccepted,
 } from "@/components/droplets/lessons/mentor/mentor-notice";
 
-describe("MentorNotice v2", () => {
+describe("MentorNotice v3", () => {
   beforeEach(() => localStorage.clear());
 
   it("shows the approved lines and links Settings", () => {
@@ -15,6 +15,9 @@ describe("MentorNotice v2", () => {
       screen.getByText(
         /If personalization is on, it also sends the droplets you've finished/,
       ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/quiz questions you got wrong in the last 30 days/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -33,12 +36,12 @@ describe("MentorNotice v2", () => {
     );
   });
 
-  it("stores acceptance under mentor-notice-v2, so a v1 acceptance doesn't count", () => {
-    expect(MENTOR_NOTICE_VERSION).toBe(2);
-    localStorage.setItem("mentor-notice-v1", "1");
+  it("stores acceptance under mentor-notice-v3, so a v2 acceptance doesn't count", () => {
+    expect(MENTOR_NOTICE_VERSION).toBe(3);
+    localStorage.setItem("mentor-notice-v2", "1");
     expect(noticeAccepted()).toBe(false);
     acceptNotice();
-    expect(localStorage.getItem("mentor-notice-v2")).toBe("1");
+    expect(localStorage.getItem("mentor-notice-v3")).toBe("1");
     expect(noticeAccepted()).toBe(true);
   });
 });

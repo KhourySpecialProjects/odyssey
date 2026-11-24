@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-// Bump the version to show the notice to everyone again (v2: personalization, ODY-935)
-export const MENTOR_NOTICE_VERSION = 2;
+// Bump the version to show the notice to everyone again (v3: quiz results, ODY-939)
+export const MENTOR_NOTICE_VERSION = 3;
 const KEY = `mentor-notice-v${MENTOR_NOTICE_VERSION}`;
 
 export function noticeAccepted(): boolean {
@@ -23,7 +23,7 @@ export function acceptNotice() {
 }
 
 const POINTS = [
-  "Mentor sends your question and this lesson to an AI model. If personalization is on, it also sends the droplets you've finished and are working on, whether you've finished this droplet's prerequisites, and which of its lessons you've viewed.",
+  "Mentor sends your question and this lesson to an AI model. If personalization is on, it also sends the droplets you've finished and are working on, whether you've finished this droplet's prerequisites, and which of its lessons you've viewed, and the lessons whose quiz questions you got wrong in the last 30 days.",
   "It never sends your name, email or grades from instructors.",
   "Don't include personal information.",
   "Mentor can be wrong: check what it says against the lesson.",
