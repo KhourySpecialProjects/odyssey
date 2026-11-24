@@ -21,6 +21,8 @@ ENV PATH /opt/node_modules/.bin:$PATH
 WORKDIR /opt/app
 COPY . .
 RUN chown -R node:node /opt/app
+RUN wget -qO /opt/rds-global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/opt/rds-global-bundle.pem
 USER node
 RUN ["npm", "run", "build"]
 EXPOSE 1337
