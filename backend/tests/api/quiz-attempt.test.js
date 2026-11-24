@@ -319,3 +319,67 @@ describe('POST /quiz-attempts/record', () => {
     expect(await rows()).toHaveLength(1);
   });
 });
+
+describe('GET /quiz-attempts/recent', () => {
+  const get = (query) => rest().get('/api/quiz-attempts/recent').query(query).set(auth());
+
+  it('returns only that user\'s rows from the last 30 days, newest first, without submitId or attempt', async () => {
+    await record({ questionId: 1 });
+    await record({ questionId: 2, correct: true });
+    const stale = await record({ questionId: 3 });
+    await strapi.db
+      .connection('quiz_attempts')
+      .where({ id: stale.body.data.id })
+      .update({ created_at: new Date(Date.now() - 31 * 86400000) });
+    await strapi.documents(ENROLLMENT_UID).create({
+      data: enrollmentData({ authorizedUser: other.documentId, droplet: droplet.documentId }),
+    });
+    await record({ userId: other.id, questionId: 4 });
+
+    const res = await get({ userId: user.id });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((row) => row.questionId)).toEqual([2, 1]);
+    expect(res.body.data[0]).toEqual({
+      quizType: 'choice',
+      questionId: 2,
+      correct: true,
+      createdAt: expect.any(String),
+      lesson: { id: lesson.id, name: lesson.name },
+      droplet: { id: droplet.id, status: droplet.status, isHidden: droplet.isHidden },
+    });
+  });
+
+  it.each([
+    ['an extra key', (id) => ({ userId: id, lessonId: 1 })],
+    ['no userId', () => ({})],
+    ['a bad userId', () => ({ userId: 'abc' })],
+  ])('is a 400 for %s', async (_, query) => {
+    expect((await get(query(user.id))).status).toBe(400);
+  });
+
+  it('refuses a registered user JWT even when the role is granted the action', async () => {
+    const roleService = strapi.plugin('users-permissions').service('role');
+    const { id } = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findOne({ where: { type: 'authenticated' } });
+    const role = await roleService.findOne(id);
+    await roleService.updateRole(id, {
+      permissions: {
+        ...role.permissions,
+        'api::quiz-attempt': { controllers: { 'custom-quiz-attempt': { recent: { enabled: true } } } },
+      },
+    });
+    const registered = await rest()
+      .post('/api/auth/local/register')
+      .send({ username: `r${Date.now()}`, email: `r${Date.now()}@example.test`, password: 'Passw0rd!long' });
+    expect(registered.body.jwt).toBeTruthy();
+
+    const res = await rest()
+      .get('/api/quiz-attempts/recent')
+      .query({ userId: user.id })
+      .set('Authorization', `Bearer ${registered.body.jwt}`);
+
+    expect(res.status).toBe(403);
+  });
+});

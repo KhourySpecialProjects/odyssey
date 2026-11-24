@@ -364,9 +364,10 @@ Run the backend tests with `npm --prefix backend test` (see `testing-and-deploym
 
 - **Quiz attempts (ODY-939):** `quiz-attempt` (collection, no core router, so no REST find/create/update/delete) holds one row per quiz submit: `user`, `lesson`, `droplet`, `quizType` (`choice` | `open-ended`), `questionId` (biginteger: a hashed BlockNote id can be 2^31), `correct`, `attempt` and a private `submitId`. No answer text. Code in `src/lib/quiz-attempt.ts`. `attempt` = rows for (user, lesson, quizType, question) + 1; the same (user, `submitId`) returns the first row; 500 rows a day per user. Private (`global::service-token-only`). Rows older than 30 days, or with no user, are deleted nightly by `purgeQuizAttempts` (`config/cron-tasks.ts`).
 
-  | Route                            | Body                                                                                | 200 `data`        | Errors                                                       |
-  | -------------------------------- | ----------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------ |
-  | `POST /api/quiz-attempts/record` | `{ userId, lessonId, dropletId, quizType, questionId, correct, submitId }` (strict) | `{ id, attempt }` | 400 bad body, 403 not enrolled, 404 unknown id, 429 cap, 500 |
+  | Route                                   | Body                                                                                | 200 `data`                                                                                                                              | Errors                                                       |
+  | --------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+  | `POST /api/quiz-attempts/record`        | `{ userId, lessonId, dropletId, quizType, questionId, correct, submitId }` (strict) | `{ id, attempt }`                                                                                                                       | 400 bad body, 403 not enrolled, 404 unknown id, 429 cap, 500 |
+  | `GET /api/quiz-attempts/recent?userId=` | only `userId` (strict)                                                              | the last 30 days, newest first, max 500: `{ quizType, questionId, correct, createdAt, lesson, droplet }`; never `submitId` or `attempt` | 400 bad query, 500                                           |
 
 ### Streak day route (`custom-streak-day` controller, ODY-918)
 
