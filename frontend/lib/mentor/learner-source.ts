@@ -30,9 +30,14 @@ export async function getLearnerContext(
       getRecentQuizAttempts(userId),
     ]);
     const context = toLearnerContext(rows, droplet);
-    // A failed attempts fetch only leaves the line out
-    const recentlyMissed = attempts ? recentMisses(attempts) : [];
-    return recentlyMissed.length ? { ...context, recentlyMissed } : context;
+    // A failed fetch or a malformed row only leaves the line out
+    let recentlyMissed: LearnerContext["recentlyMissed"] = [];
+    try {
+      recentlyMissed = attempts ? recentMisses(attempts) : [];
+    } catch (e) {
+      console.warn("mentor recent misses failed", (e as Error).message);
+    }
+    return recentlyMissed?.length ? { ...context, recentlyMissed } : context;
   } catch (e) {
     console.warn("mentor learner context failed", (e as Error).message);
     return null;

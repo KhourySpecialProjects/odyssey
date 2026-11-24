@@ -51,6 +51,11 @@ describe("learner source", () => {
       recentlyMissed: [{ lesson: "Loops", missed: 1 }],
     });
 
+    mockAttempts.mockResolvedValueOnce([null as never]);
+    const malformed = await getLearnerContext(7, { id: 5, prerequisites: [] });
+    expect(malformed).not.toBeNull();
+    expect(malformed).not.toHaveProperty("recentlyMissed");
+
     mockAttempts.mockResolvedValueOnce(null);
     const context = await getLearnerContext(7, { id: 5, prerequisites: [] });
     expect(context).not.toBeNull();

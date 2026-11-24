@@ -29,6 +29,13 @@ describe("getRecentQuizAttempts", () => {
     });
   });
 
+  it("drops entries that aren't objects", async () => {
+    fetchMock.mockResolvedValue(
+      makeFetchResponse({ data: [null, 3, ...rows] }),
+    );
+    await expect(getRecentQuizAttempts(7)).resolves.toEqual(rows);
+  });
+
   it.each([
     ["a 500", () => fetchMock.mockResolvedValue(makeFetchResponse({}, 500))],
     ["a throw", () => fetchMock.mockRejectedValue(new Error("down"))],

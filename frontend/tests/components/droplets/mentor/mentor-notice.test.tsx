@@ -17,7 +17,9 @@ describe("MentorNotice v3", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/quiz questions you got wrong in the last 30 days/),
+      screen.getByText(
+        "Mentor sends your question and this lesson to an AI model. If personalization is on, it also sends the droplets you've finished and are working on, whether you've finished this droplet's prerequisites, which of its lessons you've viewed, and the lessons whose quiz questions you got wrong in the last 30 days.",
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

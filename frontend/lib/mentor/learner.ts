@@ -135,6 +135,7 @@ const TAGS_MAX = 3;
 
 const MISSED_MAX = 5;
 const MISSED_NAME_MAX = 40;
+// Must match QUIZ_ATTEMPT_RETENTION_DAYS in backend/src/lib/quiz-attempt.ts and the notice.
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const cut = (text: string, max = NAME_MAX) =>
@@ -244,8 +245,7 @@ export function recentMisses(
   const latest = new Map<string, RecentQuizAttempt & { time: number }>();
   for (const row of rows) {
     const time = Date.parse(row.createdAt);
-    if (!row.lesson || !row.droplet || !visible(row.droplet)) continue;
-    if (Number.isNaN(time) || time < since) continue;
+    if (!row.lesson || Number.isNaN(time) || time < since) continue;
     const key = `${row.lesson.id}:${row.quizType}:${row.questionId}`;
     if (!latest.has(key) || time > latest.get(key)!.time) {
       latest.set(key, { ...row, time });
@@ -256,7 +256,8 @@ export function recentMisses(
     { name: string; missed: number; time: number }
   >();
   for (const row of latest.values()) {
-    if (row.correct) continue;
+    // Lessons can sit in several droplets: judge visibility on the latest row only
+    if (row.correct || !row.droplet || !visible(row.droplet)) continue;
     const entry = lessons.get(row.lesson!.id);
     if (entry) {
       entry.missed += 1;

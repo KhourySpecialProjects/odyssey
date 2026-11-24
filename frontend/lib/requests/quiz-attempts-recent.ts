@@ -25,7 +25,9 @@ export async function getRecentQuizAttempts(
       return null;
     }
     const json = await response.json();
-    return Array.isArray(json?.data) ? json.data : null;
+    return Array.isArray(json?.data)
+      ? json.data.filter((row: unknown) => row && typeof row === "object")
+      : null;
   } catch (error) {
     console.warn(
       "recent quiz attempts failed:",

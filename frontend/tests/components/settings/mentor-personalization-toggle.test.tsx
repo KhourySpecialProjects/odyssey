@@ -30,7 +30,11 @@ describe("MentorPersonalizationToggle", () => {
 
   it("explains everything the notice lists", () => {
     render(<MentorPersonalizationToggle userId={5} initialValue={true} />);
-    expect(screen.getByText(/prerequisites, and which lessons/)).toBeVisible();
+    const help = screen.getByText(/Mentor uses the droplets/);
+    expect(help).toHaveTextContent(
+      "prerequisites, which lessons you've viewed, and the lesson quizzes you've recently missed, to tailor its answers.",
+    );
+    expect(help).not.toHaveTextContent("and which");
   });
 
   it("saves on change", async () => {

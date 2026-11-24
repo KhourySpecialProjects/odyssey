@@ -327,6 +327,37 @@ describe("recentMisses", () => {
     ["a droplet without flags", [attempt({ droplet: { id: 1 } })], []],
     ["a deleted lesson", [attempt({ lesson: null })], []],
     [
+      "wrong then right, listed oldest first",
+      [
+        attempt({ createdAt: hoursAgo(2) }),
+        attempt({ correct: true, createdAt: hoursAgo(1) }),
+      ],
+      [],
+    ],
+    [
+      "right later in a now-hidden droplet",
+      [
+        attempt({ createdAt: hoursAgo(2) }),
+        attempt({
+          correct: true,
+          createdAt: hoursAgo(1),
+          droplet: { id: 2, status: "published", isHidden: true },
+        }),
+      ],
+      [],
+    ],
+    [
+      "wrong later in a hidden droplet, right earlier in a visible one",
+      [
+        attempt({ correct: true, createdAt: hoursAgo(2) }),
+        attempt({
+          createdAt: hoursAgo(1),
+          droplet: { id: 2, status: "published", isHidden: true },
+        }),
+      ],
+      [],
+    ],
+    [
       "the same id under both quiz types",
       [attempt(), attempt({ quizType: "open-ended" })],
       [{ lesson: "Loops", missed: 2 }],
@@ -378,6 +409,24 @@ describe("learnerBlock recently missed", () => {
       "Recently",
     );
     expect(learnerBlock(base)).not.toContain("Recently");
+  });
+
+  it("keeps all 5 missed lessons and shrinks finished when over the cap", () => {
+    const finished = Array.from({ length: 15 }, (_, i) => ({
+      name: `${"f".repeat(55)}${i}`,
+      tags: ["a".repeat(55)],
+      difficulty: "beginner",
+      month: "2025-01",
+    }));
+    const recentlyMissed = Array.from({ length: 5 }, (_, i) => ({
+      lesson: `${"m".repeat(39)}${i}`,
+      missed: 2,
+    }));
+    const text = learnerBlock({ ...base, finished, recentlyMissed });
+
+    expect(text.length).toBeLessThanOrEqual(LEARNER_MAX_CHARS);
+    expect(text.match(/m{39}\d \(2 questions\)/g)).toHaveLength(5);
+    expect(text.match(/f{55}\d+/g)!.length).toBeLessThan(15);
   });
 
   it("stays within the cap in the worst case, keeping at least 4 missed lessons and the line", () => {

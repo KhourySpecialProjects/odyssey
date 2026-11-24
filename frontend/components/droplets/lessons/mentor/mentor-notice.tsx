@@ -23,7 +23,7 @@ export function acceptNotice() {
 }
 
 const POINTS = [
-  "Mentor sends your question and this lesson to an AI model. If personalization is on, it also sends the droplets you've finished and are working on, whether you've finished this droplet's prerequisites, and which of its lessons you've viewed, and the lessons whose quiz questions you got wrong in the last 30 days.",
+  "Mentor sends your question and this lesson to an AI model. If personalization is on, it also sends the droplets you've finished and are working on, whether you've finished this droplet's prerequisites, which of its lessons you've viewed, and the lessons whose quiz questions you got wrong in the last 30 days.",
   "It never sends your name, email or grades from instructors.",
   "Don't include personal information.",
   "Mentor can be wrong: check what it says against the lesson.",
