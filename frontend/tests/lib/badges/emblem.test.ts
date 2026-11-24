@@ -95,6 +95,11 @@ describe("emblemToDataUrl", () => {
       "input over 12 KB",
       svgWith(`<desc>${"x".repeat(EMBLEM_MAX_BYTES)}</desc>`),
     ],
+    // A third as many characters, but each is 3 bytes in UTF-8
+    [
+      "multibyte input over 12 KB",
+      svgWith(`<desc>${"界".repeat(EMBLEM_MAX_BYTES / 3)}</desc>`),
+    ],
   ])("returns null for %s", (_label, svg) => {
     expect(emblemToDataUrl(svg)).toBeNull();
   });
