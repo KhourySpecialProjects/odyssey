@@ -17,9 +17,11 @@ export type LearnerContext = {
   prerequisites: { name: string; finished: boolean }[];
   /** Titles of this droplet's lessons the student has viewed */
   viewedLessons: string[];
+  /** At most 5, newest miss first; left out when empty */
+  recentlyMissed?: { lesson: string; missed: number }[];
 };
 
-/** About 600 tokens at 4 characters a token; the oldest finished droplets go first */
+/** About 600 tokens at 4 characters a token; the oldest finished droplets go first, then the oldest missed lessons */
 export const LEARNER_MAX_CHARS = 2400;
 
 const section = (title: string, lines: string[]) => [
@@ -40,6 +42,16 @@ function render(learner: LearnerContext): string {
     ({ name, finished: done }) =>
       `${name}: ${done ? "finished" : "not finished"}`,
   );
+  const missed = learner.recentlyMissed?.length
+    ? [
+        `Recently missed: ${learner.recentlyMissed
+          .map(
+            ({ lesson, missed: n }) =>
+              `${lesson} (${n} ${n === 1 ? "question" : "questions"})`,
+          )
+          .join(", ")}`,
+      ]
+    : [];
   return [
     ...section("Finished droplets, newest first:", finished),
     ...section("In progress:", inProgress),
@@ -48,16 +60,22 @@ function render(learner: LearnerContext): string {
       "Lessons of this droplet already viewed:",
       learner.viewedLessons,
     ),
+    ...missed,
   ].join("\n");
 }
 
-/** The block's text, without its <learner> tags, within LEARNER_MAX_CHARS where dropping old droplets can do it */
+/** The block's text, without its <learner> tags, within LEARNER_MAX_CHARS where dropping old droplets, then old missed lessons, can do it */
 export function learnerBlock(learner: LearnerContext): string {
   let { finished } = learner;
   let text = render(learner);
   while (text.length > LEARNER_MAX_CHARS && finished.length) {
     finished = finished.slice(0, -1);
     text = render({ ...learner, finished });
+  }
+  let recentlyMissed = learner.recentlyMissed;
+  while (text.length > LEARNER_MAX_CHARS && recentlyMissed?.length) {
+    recentlyMissed = recentlyMissed.slice(0, -1);
+    text = render({ ...learner, finished, recentlyMissed });
   }
   return text;
 }
@@ -81,6 +99,20 @@ export type LearnerEnrollment = {
   viewedLessons?: { id: number; name: string }[] | null;
 };
 
+/** One row of GET /quiz-attempts/recent (ODY-939) */
+export type RecentQuizAttempt = {
+  quizType: "choice" | "open-ended";
+  questionId: number;
+  correct: boolean;
+  createdAt: string;
+  lesson: { id: number; name: string } | null;
+  droplet: {
+    id: number;
+    status?: string | null;
+    isHidden?: boolean | null;
+  } | null;
+};
+
 export type LearnerPrerequisite = {
   id: number;
   name: string;
@@ -101,8 +133,12 @@ const IN_PROGRESS_MAX = 5;
 const VIEWED_MAX = 15;
 const TAGS_MAX = 3;
 
-const cut = (text: string) =>
-  text.length > NAME_MAX ? `${text.slice(0, NAME_MAX - 1).trimEnd()}…` : text;
+const MISSED_MAX = 5;
+const MISSED_NAME_MAX = 40;
+const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+const cut = (text: string, max = NAME_MAX) =>
+  text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 
 // Fails closed: a droplet whose flags are missing counts as hidden
 const visible = (d: { status?: string | null; isHidden?: boolean | null }) =>
@@ -193,4 +229,51 @@ export function toLearnerContext(
       .slice(0, VIEWED_MAX)
       .map((l) => cut(l.name)),
   };
+}
+
+/**
+ * Lessons with a question whose latest answer in the last 30 days is wrong:
+ * at most 5, newest miss first, names cut to 40. Rows of hidden droplets and
+ * deleted lessons are dropped.
+ */
+export function recentMisses(
+  rows: RecentQuizAttempt[],
+  now = new Date(),
+): NonNullable<LearnerContext["recentlyMissed"]> {
+  const since = now.getTime() - RETENTION_MS;
+  const latest = new Map<string, RecentQuizAttempt & { time: number }>();
+  for (const row of rows) {
+    const time = Date.parse(row.createdAt);
+    if (!row.lesson || !row.droplet || !visible(row.droplet)) continue;
+    if (Number.isNaN(time) || time < since) continue;
+    const key = `${row.lesson.id}:${row.quizType}:${row.questionId}`;
+    if (!latest.has(key) || time > latest.get(key)!.time) {
+      latest.set(key, { ...row, time });
+    }
+  }
+  const lessons = new Map<
+    number,
+    { name: string; missed: number; time: number }
+  >();
+  for (const row of latest.values()) {
+    if (row.correct) continue;
+    const entry = lessons.get(row.lesson!.id);
+    if (entry) {
+      entry.missed += 1;
+      entry.time = Math.max(entry.time, row.time);
+    } else {
+      lessons.set(row.lesson!.id, {
+        name: row.lesson!.name,
+        missed: 1,
+        time: row.time,
+      });
+    }
+  }
+  return [...lessons.values()]
+    .sort((a, b) => b.time - a.time)
+    .slice(0, MISSED_MAX)
+    .map(({ name, missed }) => ({
+      lesson: cut(name, MISSED_NAME_MAX),
+      missed,
+    }));
 }

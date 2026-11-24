@@ -1,9 +1,11 @@
 import {
   LEARNER_MAX_CHARS,
   learnerBlock,
+  recentMisses,
   toLearnerContext,
   type LearnerCurrentDroplet,
   type LearnerEnrollment,
+  type RecentQuizAttempt,
 } from "@/lib/mentor/learner";
 
 const lessons = [{ id: 1 }, { id: 2 }, { id: 3 }];
@@ -275,5 +277,141 @@ describe("toLearnerContext bounds", () => {
     const rest = learnerBlock({ ...ctx, finished: [] });
     expect(rest.length).toBeLessThanOrEqual(LEARNER_MAX_CHARS);
     expect(ctx.viewedLessons).toHaveLength(15);
+  });
+});
+
+const NOW = new Date("2025-03-01T12:00:00Z");
+const hoursAgo = (h: number) =>
+  new Date(NOW.getTime() - h * 3600000).toISOString();
+const attempt = (over: Partial<RecentQuizAttempt> = {}): RecentQuizAttempt => ({
+  quizType: "choice",
+  questionId: 1,
+  correct: false,
+  createdAt: hoursAgo(1),
+  lesson: { id: 1, name: "Loops" },
+  droplet: { id: 1, status: "published", isHidden: false },
+  ...over,
+});
+const misses = (...rows: RecentQuizAttempt[]) => recentMisses(rows, NOW);
+
+describe("recentMisses", () => {
+  it.each([
+    ["a wrong answer", [attempt()], [{ lesson: "Loops", missed: 1 }]],
+    [
+      "wrong then right",
+      [
+        attempt({ correct: true, createdAt: hoursAgo(1) }),
+        attempt({ createdAt: hoursAgo(2) }),
+      ],
+      [],
+    ],
+    [
+      "right then wrong",
+      [
+        attempt({ createdAt: hoursAgo(1) }),
+        attempt({ correct: true, createdAt: hoursAgo(2) }),
+      ],
+      [{ lesson: "Loops", missed: 1 }],
+    ],
+    ["a 31-day-old row", [attempt({ createdAt: hoursAgo(31 * 24) })], []],
+    [
+      "a hidden droplet",
+      [attempt({ droplet: { id: 1, status: "published", isHidden: true } })],
+      [],
+    ],
+    [
+      "an edit droplet",
+      [attempt({ droplet: { id: 1, status: "edit", isHidden: false } })],
+      [],
+    ],
+    ["a droplet without flags", [attempt({ droplet: { id: 1 } })], []],
+    ["a deleted lesson", [attempt({ lesson: null })], []],
+    [
+      "the same id under both quiz types",
+      [attempt(), attempt({ quizType: "open-ended" })],
+      [{ lesson: "Loops", missed: 2 }],
+    ],
+  ])("%s", (_name, rows, expected) => {
+    expect(misses(...rows)).toEqual(expected);
+  });
+
+  it("returns 5 of 7 lessons, newest miss first, with names cut to 40", () => {
+    const rows = Array.from({ length: 7 }, (_, i) =>
+      attempt({
+        lesson: { id: i + 1, name: i === 6 ? "z".repeat(60) : `L${i + 1}` },
+        createdAt: hoursAgo(i + 1),
+      }),
+    );
+    expect(misses(...rows).map((m) => m.lesson)).toEqual([
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5",
+    ]);
+    const [long] = misses(attempt({ lesson: { id: 9, name: "z".repeat(60) } }));
+    expect(long.lesson).toHaveLength(40);
+    expect(long.lesson.endsWith("…")).toBe(true);
+  });
+});
+
+describe("learnerBlock recently missed", () => {
+  const base = {
+    finished: [],
+    inProgress: [],
+    prerequisites: [],
+    viewedLessons: [],
+  };
+
+  it("adds a plural and singular line, and none when empty or missing", () => {
+    const text = learnerBlock({
+      ...base,
+      recentlyMissed: [
+        { lesson: "Loops", missed: 2 },
+        { lesson: "Recursion", missed: 1 },
+      ],
+    });
+    expect(text).toContain(
+      "Recently missed: Loops (2 questions), Recursion (1 question)",
+    );
+    expect(learnerBlock({ ...base, recentlyMissed: [] })).not.toContain(
+      "Recently",
+    );
+    expect(learnerBlock(base)).not.toContain("Recently");
+  });
+
+  it("stays within the cap in the worst case, keeping at least 4 missed lessons and the line", () => {
+    const long = "y".repeat(100);
+    const many = Array.from({ length: 22 }, (_, i) => ({ id: i + 1 }));
+    const rows: LearnerEnrollment[] = [
+      {
+        isComplete: false,
+        droplet: droplet(99, { lessons: many }),
+        viewedLessons: many.map((l) => ({ id: l.id, name: long })),
+      },
+      ...Array.from({ length: 6 }, (_, i) => ({
+        isComplete: false,
+        lastProgressDate: "2025-02-01T12:00:00Z",
+        droplet: droplet(100 + i, { name: long }),
+        viewedLessons: [{ id: 1, name: "A" }],
+      })),
+    ];
+    const prerequisites = Array.from({ length: 12 }, (_, i) => ({
+      id: 200 + i,
+      name: long,
+      status: "published",
+      isHidden: false,
+    }));
+    const recentlyMissed = Array.from({ length: 5 }, (_, i) => ({
+      lesson: `${"m".repeat(39)}${i}`,
+      missed: 9,
+    }));
+    const ctx = { ...run(rows, { id: 99, prerequisites }), recentlyMissed };
+    const text = learnerBlock(ctx);
+
+    expect(text.length).toBeLessThanOrEqual(LEARNER_MAX_CHARS);
+    expect(
+      text.match(/m{39}\d \(9 questions\)/g)!.length,
+    ).toBeGreaterThanOrEqual(4);
   });
 });
