@@ -319,6 +319,7 @@ describe("MENTOR_SYSTEM_PROMPT", () => {
     expect(links.map((m) => [m[1], m[2]])).toEqual([
       ["combine rows from two tables", "p3"],
       ["Joins", "p3"],
+      ["why tests fail", "p3"],
     ]);
     expect(displayAnswer(links[0][0], { streaming: false })).toBe(
       "combine rows from two tables",
