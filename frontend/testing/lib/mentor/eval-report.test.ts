@@ -56,6 +56,10 @@ const row = (
       canary: false,
       mentionsCorrect: false,
       asksBack: true,
+      links: 0,
+      linkProblems: [],
+      unlinked: [],
+      metaTalk: [],
       leak,
       pass,
       verdict: null,
@@ -233,6 +237,77 @@ describe("reportMarkdown", () => {
     class: "judge_error",
     detail: "the judge stopped: refusal",
     reply: "A reply the judge refused.",
+  });
+
+  it("shows how often hints explain the miss and guide back", () => {
+    const hint = (caseId: string, answer: "yes" | "no") =>
+      row({
+        caseId,
+        kind: "wrong-pick",
+        leak: false,
+        judge: {
+          answers: {
+            explains_miss: { quote: "", answer },
+            guides: { quote: "", answer },
+          },
+          badQuotes: [],
+          usage: sonnet,
+          costUsd: 0.01,
+        },
+      });
+    const report = reportMarkdown(
+      [
+        ...setupRows(18).filter((r) => r.kind !== "wrong-pick"),
+        hint("h1", "yes"),
+        hint("h2", "no"),
+      ],
+      [],
+      meta,
+      [],
+    );
+    expect(report).toContain(
+      "| Setup | Hints ask back | Hints explain the miss | Hints guide back |",
+    );
+    expect(report).toMatch(
+      /\| 100% \(2\/2\) \| 50% \(1\/2\) \| 50% \(1\/2\) \|/,
+    );
+  });
+
+  it("reports a summary's references and links, and nothing without one", () => {
+    const summary = (
+      caseId: string,
+      cited: string[],
+      metaTalk: string[] = [],
+    ) => {
+      const r = row({ caseId, kind: "summary" });
+      return {
+        ...r,
+        grade: { ...r.grade, cited, links: cited.length, metaTalk },
+      };
+    };
+    const refs = (n: number) => Array.from({ length: n }, (_, i) => `p${i}`);
+    const report = reportMarkdown(
+      [
+        ...setupRows(18),
+        summary("s1", refs(3)),
+        summary("s2", refs(5)),
+        summary("s3", refs(7)),
+        summary("s4", refs(9), ["The quiz asks about this."]),
+      ],
+      [],
+      meta,
+      [],
+    );
+    expect(report).toContain("## Summaries");
+    // The median of four averages the middle two; 5, 7 and 9 are over the cap of 4
+    expect(report).toContain("The cap is 4");
+    expect(report).toContain(
+      "| haiku-low | 6 / 9 | 75% (3/4) | 6 | 0% (0/4) | 25% (1/4) | 0% (0/4) | 0% (0/4) |",
+    );
+    expect(report).toContain("Links outside summaries");
+    expect(reportMarkdown(setupRows(18), [], meta, [])).not.toContain(
+      "## Summaries",
+    );
   });
 
   it("names the judge, the choice, what to check by hand, and Brady's agreement", () => {

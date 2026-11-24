@@ -13,10 +13,38 @@ jest.mock("sonner", () => ({
 jest.mock("@/lib/requests/mentor-feedback", () => ({
   saveMentorFeedback: jest.fn(),
 }));
-// react-markdown is ESM-only; a stand-in is enough to see what text reaches it
+// react-markdown is ESM-only. The stand-in renders [words](href) through
+// components.a when links are allowed, and as plain words when they aren't.
 jest.mock("react-markdown", () => ({
   __esModule: true,
-  default: ({ children }: { children: string }) => <p>{children}</p>,
+  default: ({
+    children,
+    allowedElements,
+    components,
+  }: {
+    children: string;
+    allowedElements: string[];
+    components?: {
+      a?: React.ComponentType<{ href: string; children: string }>;
+    };
+  }) => {
+    const A = allowedElements.includes("a") ? components?.a : undefined;
+    return (
+      <p>
+        {children.split(/(\[[^\]]*\]\([^)]*\))/).map((part, i) => {
+          const link = /^\[([^\]]*)\]\(([^)]*)\)$/.exec(part);
+          if (!link) return part;
+          return A ? (
+            <A key={i} href={link[2]}>
+              {link[1]}
+            </A>
+          ) : (
+            link[1]
+          );
+        })}
+      </p>
+    );
+  },
 }));
 
 const citation = {
@@ -79,6 +107,59 @@ describe("MentorMessage", () => {
     );
 
     expect(onShowSource).toHaveBeenCalledWith(citation);
+  });
+
+  it("makes a linked phrase a button that shows its passage", async () => {
+    const onShowSource = jest.fn();
+    const linkedMsg = mentorMsg({ text: "A [join combines rows][p3]." });
+    const { rerender } = renderMessage(linkedMsg, { onShowSource });
+    const link = screen.getByRole("button", {
+      name: "join combines rows (Show in lesson: Joins combine tables)",
+    });
+
+    await userEvent.tab();
+    expect(link).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    expect(onShowSource).toHaveBeenCalledWith(citation);
+    await userEvent.click(link);
+    expect(onShowSource).toHaveBeenCalledTimes(2);
+
+    // A re-render, as when the panel reacts to the click, keeps the focus
+    rerender(
+      <ol>
+        <MentorMessage
+          message={linkedMsg}
+          lessonName="Joins"
+          onShowSource={jest.fn()}
+        />
+      </ol>,
+    );
+    expect(link).toHaveFocus();
+    await userEvent.click(screen.getByRole("button", { name: /Copy/ }));
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      "A join combines rows.",
+    );
+  });
+
+  it.each([
+    [
+      "while streaming",
+      mentorMsg({ status: "streaming", citations: [] }),
+      "p3",
+      {},
+    ],
+    ["to a passage it didn't cite", mentorMsg({}), "p9", {}],
+    ["in an answer from another lesson", mentorMsg({}), "p3", { stale: true }],
+  ])("shows a linked phrase as plain words %s", async (_, base, ref, props) => {
+    renderMessage({ ...base, text: `A [join combines rows][${ref}].` }, props);
+
+    expect(
+      await screen.findByText("A join combines rows."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^join combines rows/ }),
+    ).toBeNull();
+    expect(screen.queryByText(/\[/)).toBeNull();
   });
 
   it("copies the answer without refs and confirms", async () => {

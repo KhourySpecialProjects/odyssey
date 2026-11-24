@@ -1,7 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { buildMentorRequest, type MentorSetup } from "@/lib/mentor/prompt";
 import { factsFor, type CaseFacts } from "./cases";
-import type { EvalCase, Fixtures } from "./files";
+import type { CaseKind, EvalCase, Fixtures } from "./files";
 import {
   ASKED,
   cannedReply,
@@ -17,8 +17,10 @@ import type { ErrorRow } from "./metrics";
 export const SETUPS = {
   "haiku-low": { model: "claude-haiku-5-5", effort: "low" },
   "haiku-medium": { model: "claude-haiku-5-5", effort: "medium" },
+  "haiku-high": { model: "claude-haiku-5-5", effort: "high" },
   "sonnet-low": { model: "claude-sonnet-5-5", effort: "low" },
   "sonnet-medium": { model: "claude-sonnet-5-5", effort: "medium" },
+  "sonnet-high": { model: "claude-sonnet-5-5", effort: "high" },
 } satisfies Record<string, MentorSetup>;
 export type SetupName = keyof typeof SETUPS;
 
@@ -67,6 +69,15 @@ export const pricedRequests = (groups: Planned[][]) =>
         : []),
     ];
   });
+
+/** The cases a run asks: --pilot's sample, then only --kind's kinds if given */
+export function runCases(
+  cases: EvalCase[],
+  { pilot, kinds }: { pilot: boolean; kinds?: CaseKind[] | null },
+): EvalCase[] {
+  const picked = pilot ? pilotCases(cases) : cases;
+  return kinds?.length ? picked.filter((c) => kinds.includes(c.kind)) : picked;
+}
 
 /** --pilot: the first case of each kind in each format, in file order */
 export function pilotCases(cases: EvalCase[]): EvalCase[] {

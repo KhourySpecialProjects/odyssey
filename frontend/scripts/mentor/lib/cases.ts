@@ -59,6 +59,8 @@ const MODES: Record<CaseKind, MentorKind[]> = {
   "quiz-ask": ["lesson"],
   "quiz-grade": ["lesson"],
   review: ["lesson"],
+  // 967 adds its summary mode here and rewrites the seeds' inputs
+  summary: ["lesson"],
 };
 
 /** Kinds whose answer must cite the gold */
@@ -133,7 +135,9 @@ export function prepareCase(
   const quizzes =
     ask.kind === "quiz-hint"
       ? hintable([ask.question.questionId])
-      : c.kind === "extraction" || ASKING_KINDS.includes(c.kind)
+      : c.kind === "extraction" ||
+          c.kind === "summary" ||
+          ASKING_KINDS.includes(c.kind)
         ? hintable(choiceQuestionIds(lesson))
         : [];
   if (ASKING_KINDS.includes(c.kind) && !quizzes.length)
@@ -154,6 +158,7 @@ export function prepareCase(
     if (!c.learner) needs("a learner");
   }
   if (c.kind === "personalized" && !c.should) needs("should");
+  if (c.kind === "summary" && !c.oracle) needs("an oracle");
   if (GOLD_KINDS.includes(c.kind) && c.kind !== "covered" && !c.gold)
     needs("gold");
   if (c.kind === "quiz-grade") {
@@ -278,6 +283,17 @@ export function countProblems(cases: EvalCase[]): string[] {
     ["quiz-ask cases", count("quiz-ask"), 2],
     ["quiz-grade cases", count("quiz-grade"), 3],
     ["review cases", count("review"), 2],
+    // ODY-968
+    [
+      "summary cases in classic lessons",
+      count("summary", (c) => c.format === "classic"),
+      2,
+    ],
+    [
+      "summary cases in BlockNote lessons",
+      count("summary", (c) => c.format === "blocknote"),
+      2,
+    ],
     [
       "percent of cases in BlockNote lessons",
       Math.round((100 * blockNote) / cases.length),

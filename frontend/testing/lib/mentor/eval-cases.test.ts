@@ -198,6 +198,21 @@ describe("validateCases", () => {
       /a review case needs a learner/,
     ],
     [
+      "a summary written as an explain request",
+      [
+        {
+          ...caseById("summary-01"),
+          input: { kind: "explain", selection: "Wrapped paragraph" },
+        },
+      ],
+      /summary cases can't be explain requests/,
+    ],
+    [
+      "a summary without an oracle",
+      [{ ...caseById("summary-01"), oracle: undefined }],
+      /a summary case needs an oracle/,
+    ],
+    [
       "an oracle citing a passage the model isn't shown",
       [{ ...covered, oracle: "Joins combine rows [p2, p99]." }],
       /the oracle cites p99, which the model isn't shown/,
@@ -250,6 +265,8 @@ describe("countProblems", () => {
         "1 questions with wrong picks, at least 6 needed",
         "0 extraction cases with history, at least 2 needed",
         "no off-topic case in a blocknote lesson",
+        "1 summary cases in classic lessons, at least 2 needed",
+        "1 summary cases in BlockNote lessons, at least 2 needed",
       ]),
     );
   });

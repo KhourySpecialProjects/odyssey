@@ -12,6 +12,7 @@ import type {
 import {
   cannedGroups,
   pilotCases,
+  runCases,
   planGroups,
   pricedRequests,
   SETUPS,
@@ -131,7 +132,7 @@ describe("planGroups", () => {
     const setups = Object.keys(SETUPS) as SetupName[];
     const groups = planGroups(EVAL_CASES, fixtures, setups, 2);
     // A group per setup, rep and lesson
-    expect(groups).toHaveLength(4 * 2 * 2);
+    expect(groups).toHaveLength(setups.length * 2 * 2);
     for (const { params, setup } of groups.flat()) {
       const cached = params!.messages.flatMap((m, i) =>
         typeof m.content === "string"
@@ -165,6 +166,25 @@ describe("pricedRequests", () => {
     expect(pricedRequests(canned)).toEqual([
       expect.objectContaining({ outputTokens: 2500 }),
     ]);
+  });
+});
+
+describe("runCases", () => {
+  const cases = EVAL_CASES.slice(0, 6);
+  it.each([
+    ["every case", { pilot: false }, cases],
+    [
+      "only --kind's kinds",
+      { pilot: false, kinds: ["wrong-pick" as const] },
+      cases.filter((c) => c.kind === "wrong-pick"),
+    ],
+    [
+      "the pilot's sample of them",
+      { pilot: true, kinds: null },
+      pilotCases(cases),
+    ],
+  ])("%s", (_, options, expected) => {
+    expect(runCases(cases, options)).toEqual(expected);
   });
 });
 

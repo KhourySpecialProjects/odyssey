@@ -11,8 +11,11 @@ import {
   invalidRefs,
   judgeRequest,
   mentionsCorrect,
+  metaTalk,
   parseJudge,
+  linkProblems,
   saysNotCovered,
+  unlinkedRefs,
   verdictOf,
   wordCount,
   type AnswerMode,
@@ -116,6 +119,62 @@ describe("code checks", () => {
       () => mentionsCorrect("Only matching", "Only matching rows"),
       false,
     ],
+    ...(
+      [
+        ["a clean link", "A [base case][p2] stops it.", []],
+        ["empty words", "A [][p3] stops it.", ["an empty link before [p3]"]],
+        [
+          "two refs",
+          "A [base case][p2, p3] stops it.",
+          ['"base case" links p2, p3: one ref per link'],
+        ],
+        [
+          "a ref the model isn't shown",
+          "A [base case][p99] stops it.",
+          ['"base case" links p99, which the model isn\'t shown'],
+        ],
+        [
+          "too many words",
+          "A [one two three four five six seven eight nine][p2] stops it.",
+          [
+            '"one two three four five six seven eight nine" is 9 words: link a few',
+          ],
+        ],
+        [
+          "a label after a sentence",
+          "A base case stops it. [Base case][p2]\nNext point.",
+          ['"Base case" is a label outside its sentence: link words inside it'],
+        ],
+        [
+          "a label alone on a list item",
+          "- [Base case][p2]",
+          ['"Base case" is a label outside its sentence: link words inside it'],
+        ],
+        ["words ending a sentence", "It stops at the [base case][p2].", []],
+        ["words starting a sentence", "Done. [A base case][p2] stops it.", []],
+      ] as const
+    ).map(
+      ([name, reply, problems]) =>
+        [
+          `link problems: ${name}`,
+          () => linkProblems(reply, facts(caseById("covered-01"))),
+          problems,
+        ] as [string, () => unknown, unknown],
+    ),
+    [
+      "a summary's sentences about the quiz or citing",
+      () =>
+        metaTalk(
+          "Joins combine rows.\n- **Keys:** The quiz asks about this. No citation needed.",
+        ),
+      ["- **Keys:** The quiz asks about this.", "No citation needed."],
+    ],
+    ["a ref outside a link", () => unlinkedRefs("[a][p1] and [p2]"), ["p2"]],
+    [
+      "a space before the ref isn't a link",
+      () => unlinkedRefs("[a] [p1]"),
+      ["p1"],
+    ],
     [
       "words, without refs or lone punctuation",
       () => wordCount("One two [p1] three [p2, p3] ."),
@@ -172,6 +231,13 @@ describe("judgeRequest", () => {
     );
     const text = content("What does a join keep?", caseById("quiz-ask-01"));
     // Uncited passages too: the question may draw on any of them
+    expect(text).toContain("Every passage Mentor was shown:");
+    expect(text).toContain("[p3] Keys matter.");
+    expect(text).toContain("The right option: All rows from the left table");
+  });
+
+  it("shows a summary every passage Mentor was shown, and the right option", () => {
+    const text = content("A [join][p2] combines rows.", caseById("summary-01"));
     expect(text).toContain("Every passage Mentor was shown:");
     expect(text).toContain("[p3] Keys matter.");
     expect(text).toContain("The right option: All rows from the left table");
@@ -237,6 +303,12 @@ describe("parseJudge", () => {
       reply,
       { ok: true, badQuotes: ["gives_answer"] },
     ],
+    [
+      "a quote that leaves out the reply's ref and link brackets",
+      judgeMessage(yes("It keeps every row.")),
+      "It [keeps every row][p2]. Which rows match?",
+      { ok: true, badQuotes: [] },
+    ],
     ["a refusal", judgeMessage({}, "refusal"), reply, { ok: false }],
     ["a cut-off answer", judgeMessage({}, "max_tokens"), reply, { ok: false }],
     [
@@ -264,6 +336,10 @@ describe("gradeRow", () => {
       "from_passages",
       "explains",
       "backed",
+      "explains_miss",
+      "guides",
+      "backs_points",
+      "covers_main",
     ],
     wrong: [
       "made_up",
@@ -273,7 +349,6 @@ describe("gradeRow", () => {
       "repeats_quiz",
     ],
   };
-  const quiz = (c: EvalCase) => ["wrong-pick", "extraction"].includes(c.kind);
   const asking = (c: EvalCase) => ["quiz-ask", "review"].includes(c.kind);
   // "I don't know." makes nothing up, which is all an uncovered explain needs
   const passes = (mode: AnswerMode, c: EvalCase) =>
@@ -293,13 +368,110 @@ describe("gradeRow", () => {
     ),
   )("%s, %s replies", (_, mode, c) => {
     const reply = cannedReply(mode, facts(c));
+    const quiz = ["wrong-pick", "extraction", "summary"].includes(c.kind);
     expect(
       grade(reply, c, reply ? "ok" : "empty", yesTo[mode] ?? []),
-    ).toMatchObject(
-      quiz(c)
-        ? { pass: null, leak: mode === "wrong" }
-        : { pass: passes(mode, c), leak: asking(c) ? mode === "wrong" : null },
-    );
+    ).toMatchObject({
+      // An extraction has no pass: its leak is its measure
+      pass: c.kind === "extraction" ? null : passes(mode, c),
+      leak: quiz || asking(c) ? mode === "wrong" : null,
+    });
+  });
+
+  it.each<[string, string, Question[], boolean]>([
+    [
+      "no citation",
+      "Joins combine rows.",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "an invalid ref",
+      "A [join][p99] combines rows.",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "a link problem (two refs)",
+      "A [join][p2, p3] combines rows.",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "a ref outside a link",
+      "A [join][p2] combines rows [p3].",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "a right option named",
+      "A [join][p2] keeps all rows from the left table.",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    ["covers_main no", "A [join][p2] combines rows.", ["backs_points"], false],
+    [
+      "talk about the quiz",
+      "A [join][p2] combines rows. The quiz asks about keys.",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "more references than the cap",
+      "[Joins][p1]: [a join][p2], [keys][p3], [inner joins][p4], [wraps][p6].",
+      ["backs_points", "covers_main"],
+      false,
+    ],
+    [
+      "as many references as the cap",
+      "[Joins][p1]: [a join][p2], [keys][p3], [inner joins][p4].",
+      ["backs_points", "covers_main"],
+      true,
+    ],
+    [
+      "everything in order",
+      "A [join][p2] combines rows.",
+      ["backs_points", "covers_main"],
+      true,
+    ],
+  ])("a summary with %s", (_, reply, yes, pass) => {
+    expect(grade(reply, caseById("summary-01"), "ok", yes).pass).toBe(pass);
+  });
+
+  it.each<[string, string, Question[], boolean, boolean]>([
+    [
+      "today's template hint, which doesn't teach",
+      "That choice leaves out part of what the lesson describes. What does the lesson say this is for?",
+      ["guides"],
+      false,
+      false,
+    ],
+    [
+      "a teaching hint with no leak",
+      "Bitmap isn't described in the lesson [p2]. Reread [p6]: which index does it list?",
+      ["explains_miss", "guides"],
+      false,
+      true,
+    ],
+    [
+      "one no fails it",
+      "Bitmap isn't described in the lesson [p2]. Reread [p6]: which index does it list?",
+      ["explains_miss"],
+      false,
+      false,
+    ],
+    [
+      "a leak fails it, whatever the judge says about teaching",
+      "Bitmap isn't it [p2]. Reread [p6]: which index does it list?",
+      ["explains_miss", "guides", "gives_answer"],
+      true,
+      false,
+    ],
+  ])("wrong-pick, %s", (_, reply, yes, leak, pass) => {
+    expect(grade(reply, caseById("wrong-pick-01"), "ok", yes)).toMatchObject({
+      leak,
+      pass,
+    });
   });
 
   it.each<[string, AnswerMode, Status, Question[], object]>([

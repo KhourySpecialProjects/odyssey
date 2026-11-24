@@ -1,6 +1,10 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { costOf } from "@/lib/ai-review/models";
-import type { MentorModel, MentorSetup } from "@/lib/mentor/prompt";
+import {
+  MENTOR_SUMMARY_MAX_LINKS,
+  type MentorModel,
+  type MentorSetup,
+} from "@/lib/mentor/prompt";
 import type { MentorKind } from "@/lib/mentor/types";
 import { dollars } from "@/scripts/ai-review/lib/run";
 import { fenced, table } from "./cases";
@@ -70,6 +74,8 @@ export type RunMeta = {
   setups: string[];
   reps: number;
   pilot: boolean;
+  /** --kind: only these kinds; null or missing for all */
+  kinds?: CaseKind[] | null;
   answers: AnswerMode | null;
   /** How many cases this run asks, for each setup and rep */
   cases: number;
@@ -129,8 +135,12 @@ const said = (q: Question) => (r: ResultRow) =>
 const pct = (x: number) => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`);
 const mean = (xs: number[]) =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
-const median = (xs: number[]) =>
-  xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] : NaN;
+const median = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  if (!s.length) return NaN;
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+};
 const money = (x: number) => (Number.isNaN(x) ? "–" : dollars(x));
 const whole = (x: number) => (Number.isNaN(x) ? "–" : Math.round(x));
 const seconds = (ms: number) =>
@@ -347,7 +357,16 @@ export function reportMarkdown(
   const quality = perSetup({
     "Hints ask back": (rs) =>
       ratio(rs.filter(ofKind(["wrong-pick"])), (r) => r.grade.asksBack),
+    "Hints explain the miss": (rs) =>
+      ratio(rs.filter(ofKind(["wrong-pick"])), said("explains_miss")),
+    "Hints guide back": (rs) =>
+      ratio(rs.filter(ofKind(["wrong-pick"])), said("guides")),
     "Invalid refs": (rs) => rs.reduce((n, r) => n + r.grade.invalid.length, 0),
+    // Only a summary links words (ODY-968): 0 once the prompt says so
+    "Links outside summaries": (rs) =>
+      rs
+        .filter((r) => r.kind !== "summary")
+        .reduce((n, r) => n + r.grade.links, 0),
     'False "not covered"': (rs) =>
       ratio(
         rs.filter(ofKind(["covered"])),
@@ -357,6 +376,30 @@ export function reportMarkdown(
       (["refused", "truncated", "empty"] as const)
         .map((s) => rs.filter((r) => r.status === s).length)
         .join(" / "),
+  });
+  const summaryRows = (rs: ResultRow[]) => rs.filter(ofKind(["summary"]));
+  const summaryTable = perSetup({
+    "References (median / max)": (rs) => {
+      const cited = ok(summaryRows(rs)).map((r) => r.grade.cited.length);
+      return cited.length ? `${median(cited)} / ${Math.max(...cited)}` : "–";
+    },
+    "Over the cap": (rs) =>
+      ratio(
+        ok(summaryRows(rs)),
+        (r) => r.grade.cited.length > MENTOR_SUMMARY_MAX_LINKS,
+      ),
+    "Linked phrases (median)": (rs) =>
+      whole(median(ok(summaryRows(rs)).map((r) => r.grade.links))),
+    "With link problems": (rs) =>
+      ratio(
+        summaryRows(rs),
+        (r) => !!r.grade.linkProblems.length || !!r.grade.unlinked.length,
+      ),
+    "Talks about the quiz or citing": (rs) =>
+      ratio(summaryRows(rs), (r) => !!r.grade.metaTalk.length),
+    "Backs its points": (rs) => ratio(summaryRows(rs), said("backs_points")),
+    "Covers the main points": (rs) =>
+      ratio(summaryRows(rs), said("covers_main")),
   });
   const length = perSetup({
     "Median words": (rs) => whole(median(words(rs))),
@@ -460,6 +503,9 @@ export function reportMarkdown(
   const sections: Record<string, string | false> = {
     Thresholds: `Pooled over the reps, each rep in brackets. Leaks must be 0 and each rate at least 90%, with no open errors, missing rows or truncations.\n\n${thresholds}\n\nCheapest setup that meets every threshold: ${chosen ? `**${chosen.setup}**, ${money(chosen.cost)} an answer at a 50% hit rate` : "none"}.`,
     "By kind and profile": `Pass rates by kind and learner profile; new kinds have no threshold yet.\n\n${byKindAndProfile}`,
+    Summaries:
+      rows.some((r) => r.kind === "summary") &&
+      `References are the distinct passages a summary cites: one Sources chip each. The cap is ${MENTOR_SUMMARY_MAX_LINKS} (\`MENTOR_SUMMARY_MAX_LINKS\`).\n\n${summaryTable}`,
     "More quality": quality,
     Length: `Words with refs removed, in replies that ended normally.\n\n${length}`,
     "Cost per answer": `Each answer's tokens priced as a cache miss (the lesson written to the cache) and as a hit (read from it). "Read from cache" is the share of prompt tokens read from the cache after a lesson's first request.${uncached.length ? `\n\n**Nothing was read from the cache for ${uncached.map((s) => s.setup).join(", ")}: something invalidates it, or the prefix is too short to cache.**` : ""}\n\n${cost}`,
@@ -477,7 +523,7 @@ export function reportMarkdown(
       `- Prompt \`${meta.promptVersion}\`, judge \`${meta.judgeVersion}\`, cases.jsonl \`${meta.casesSha.slice(0, 12)}\``,
       `- Judge: ${meta.judge.model} at ${meta.judge.effort}, also a model under test. Code decides citations, the not-covered phrase, canaries, named right options, length and cost.`,
       `- Fixtures: ${meta.fixtures.map((f) => `${f.slug} (taken ${f.takenAt.slice(0, 10)})`).join(", ")}`,
-      `- ${meta.answers ? `Canned replies: ${meta.answers}` : `Setups: ${meta.setups.join(", ")}`}; ${meta.cases} cases × ${meta.reps} reps${meta.pilot ? "; pilot" : ""}; started ${meta.startedAt}`,
+      `- ${meta.answers ? `Canned replies: ${meta.answers}` : `Setups: ${meta.setups.join(", ")}`}; ${meta.cases} cases × ${meta.reps} reps${meta.pilot ? "; pilot" : ""}${meta.kinds?.length ? `; only ${meta.kinds.join(", ")}` : ""}; started ${meta.startedAt}`,
       `- ${rows.length} rows, ${errors.length} errors`,
     ].join("\n"),
     ...Object.entries(sections).flatMap(([title, body]) =>

@@ -158,7 +158,11 @@ describe("Explain my answer", () => {
   it("posts the exact body and streams the hint into the box", async () => {
     fetchMock.mockImplementation(async (_url, init) =>
       mentorSseResponse(
-        [mentorText("A LEFT JOIN "), mentorText("keeps more."), mentorDone()],
+        [
+          mentorText("A [LEFT JOIN][p2] "),
+          mentorText("keeps more."),
+          mentorDone(),
+        ],
         { signal: init.signal },
       ),
     );
@@ -182,6 +186,10 @@ describe("Explain my answer", () => {
       expect(box).toHaveTextContent("A LEFT JOIN keeps more."),
     );
     expect(box).toHaveAttribute("aria-busy", "false");
+    // A hint's linked phrase stays plain words, never a button
+    expect(
+      within(box).queryByRole("button", { name: /Show in lesson/ }),
+    ).toBeNull();
     // Only the two result badges are role=status: the footer counts them
     expect(within(box).queryByRole("status")).toBeNull();
   });

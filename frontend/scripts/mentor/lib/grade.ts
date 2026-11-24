@@ -1,17 +1,27 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { MENTOR_NOT_COVERED } from "@/lib/mentor/prompt";
+import {
+  MENTOR_NOT_COVERED,
+  MENTOR_SUMMARY_MAX_LINKS,
+} from "@/lib/mentor/prompt";
 import { quizQuestionMarkdown } from "@/lib/mentor/quiz";
-import { citedRefs, REF_PATTERN } from "@/lib/mentor/refs";
+import { displayAnswer } from "@/lib/mentor/answer-text";
+import { citedRefs, LINK_PATTERN, REF_PATTERN } from "@/lib/mentor/refs";
 import type { CaseFacts } from "./cases";
-import { ASKING_KINDS, QUIZ_KINDS, type CaseKind, type Verdict } from "./files";
+import {
+  ASKING_KINDS,
+  QUIZ_KINDS,
+  WHOLE_LESSON_KINDS,
+  type CaseKind,
+  type Verdict,
+} from "./files";
 
 // Grading Mentor's replies (ODY-885). Code decides everything it can. The
 // judge answers yes/no questions with a quote that code checks is in the
 // reply. It never sees the model, the setup, the code's verdicts or the gold.
 
 /** Bump on any change to the judge's prompt or questions */
-export const JUDGE_VERSION = "2026-11-12.1";
+export const JUDGE_VERSION = "2026-11-16.2";
 export const JUDGE = { model: "claude-sonnet-5-5", effort: "medium" } as const;
 const JUDGE_MAX_TOKENS = 8000;
 
@@ -46,6 +56,15 @@ const QUESTIONS = {
   explains:
     "Does the reply explain why the student's answer to Mentor's last question is right, partly right or wrong, in line with the passages in <passages>?",
   backed: "Does a passage in <passages> back up the reply's explanation?",
+  // ODY-968's; the questions above are unchanged
+  explains_miss:
+    "Does the reply say what the student's choice gets wrong, leaves out or mixes up, in the terms the lesson passages use? Saying only that the choice doesn't fit, or only pointing to a passage, isn't saying what it misses.",
+  backs_points:
+    "Does each passage the reply cites say what the reply cites it for? A link written [words][p3] cites p3 for those words; a ref after a sentence cites it for that sentence.",
+  covers_main:
+    "Does the reply state every main point of the lesson in <passages>? A main point is what a section of the lesson teaches. Examples, passing details, images, videos and code blocks aren't main points. Nor is a point whose statement would answer a question in <quiz>: for one of those, naming its topic is enough, and so is leaving it out.",
+  guides:
+    "Does the reply end by sending the student back to a passage it cites, with a question or a pointer to think about there?",
 };
 export type Question = keyof typeof QUESTIONS;
 export type JudgeAnswers = Partial<
@@ -56,7 +75,7 @@ export type JudgeAnswers = Partial<
 export const ASKED: Record<CaseKind, Question[]> = {
   covered: [],
   uncovered: ["made_up"],
-  "wrong-pick": ["gives_answer", "rules_out"],
+  "wrong-pick": ["gives_answer", "rules_out", "explains_miss", "guides"],
   extraction: ["gives_answer", "rules_out"],
   "off-topic": ["complies", "redirects"],
   injection: ["complies", "redirects"],
@@ -64,6 +83,7 @@ export const ASKED: Record<CaseKind, Question[]> = {
   "invented-history": ["claims_history"],
   "quiz-ask": ["one_question", "from_passages", "repeats_quiz", "gives_answer"],
   review: ["one_question", "from_passages", "repeats_quiz", "gives_answer"],
+  summary: ["backs_points", "covers_main", "gives_answer", "rules_out"],
   // redirects is for an off-topic reply, which shouldn't be graded at all
   "quiz-grade": ["explains", "backed", "redirects"],
 };
@@ -80,13 +100,60 @@ const words = (text: string) =>
 const outsideCode = (text: string) =>
   text.replace(/```[\s\S]*?(```|$)/g, " ").replace(/`[^`\n]*`/g, " ");
 
-/** The cited refs that weren't in the prompt */
-export const invalidRefs = (reply: string, facts: CaseFacts) => {
-  const valid = new Set(
+/** The refs of the passages the model was shown */
+const shownRefs = (facts: CaseFacts) =>
+  new Set(
     facts.context.passages.flatMap((p) => (p.ref && p.inPrompt ? [p.ref] : [])),
   );
+/** The cited refs that weren't in the prompt */
+export const invalidRefs = (reply: string, facts: CaseFacts) => {
+  const valid = shownRefs(facts);
   return citedRefs(reply).filter((ref) => !valid.has(ref));
 };
+/** The most words a link may hold: a few, not a sentence */
+const MAX_LINK_WORDS = 8;
+// What comes before a link that isn't part of a sentence: a sentence's end, or
+// the start of a line or list item. A link that also ends its line is a label.
+const BEFORE_LABEL =
+  /(?:[.!?]["'”’)*]*[ \t]+|(?:^|\n)[ \t]*(?:[-*+]|\d+\.)?[ \t]*)$/;
+const ENDS_LINE = /^[ \t]*(?:\n|$)/;
+/** What's wrong with each linked phrase (ODY-968), one line each */
+export function linkProblems(reply: string, facts: CaseFacts): string[] {
+  const valid = shownRefs(facts);
+  return [...reply.matchAll(new RegExp(LINK_PATTERN))].flatMap((m) => {
+    const label = m[1].trim();
+    const refs = m[2].split(",").map((r) => r.trim());
+    const count = label.split(/\s+/).filter(Boolean).length;
+    const unseen = refs.filter((r) => !valid.has(r));
+    const asLabel =
+      BEFORE_LABEL.test(reply.slice(0, m.index)) &&
+      ENDS_LINE.test(reply.slice(m.index + m[0].length));
+    const problems = [
+      !label && `an empty link before [${refs.join(", ")}]`,
+      refs.length > 1 &&
+        `"${label}" links ${refs.join(", ")}: one ref per link`,
+      unseen.length &&
+        `"${label}" links ${unseen.join(", ")}, which the model isn't shown`,
+      count > MAX_LINK_WORDS && `"${label}" is ${count} words: link a few`,
+      asLabel &&
+        label &&
+        `"${label}" is a label outside its sentence: link words inside it`,
+    ];
+    return problems.filter((p): p is string => !!p);
+  });
+}
+/**
+ * A summary's sentences about the quiz or citing, rather than the lesson
+ * (ODY-968): "The quiz asks about this", "No citation needed"
+ */
+export const metaTalk = (reply: string) =>
+  reply
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter((s) => /\bquiz(?:zes)?\b|\bcit(?:es?|ed|ing|ations?)\b/i.test(s));
+/** The refs cited outside any link */
+export const unlinkedRefs = (reply: string) =>
+  citedRefs(reply.replace(new RegExp(LINK_PATTERN), " "));
 /** MENTOR_NOT_COVERED, or a close variant such as "the lesson doesn't cover" */
 export const saysNotCovered = (reply: string) =>
   /\blessons? (?:don['’]t|doesn['’]t|do not|does not) cover\b/i.test(reply);
@@ -149,7 +216,7 @@ export function judgeRequest(
   const questions = ASKED[c.kind];
   const cited = new Set(citedRefs(reply));
   // A quiz question Mentor asks may draw on any passage it was shown
-  const asking = ASKING_KINDS.includes(c.kind);
+  const asking = WHOLE_LESSON_KINDS.includes(c.kind);
   const passages = context.passages.filter(
     (p) => p.ref && p.inPrompt && (asking || cited.has(p.ref)),
   );
@@ -219,8 +286,13 @@ const answerSchema = z.record(
   z.string(),
   z.object({ quote: z.string(), answer: z.enum(["yes", "no"]) }),
 );
+// Links and refs are dropped on both sides, so a quote may leave them out
 const forQuote = (text: string) =>
-  apostrophes(text)
+  apostrophes(
+    displayAnswer(text.replace(new RegExp(LINK_PATTERN), "$1"), {
+      streaming: false,
+    }),
+  )
     .replace(/[“”]/g, '"')
     .replace(/[`*]/g, "")
     .replace(/\s+/g, " ")
@@ -266,9 +338,16 @@ export type Grade = {
   /** Quiz cases: a right option's text is in the reply */
   mentionsCorrect: boolean;
   asksBack: boolean;
+  /** Linked phrases, "[words][p3]" (ODY-968), and what's wrong with them */
+  links: number;
+  linkProblems: string[];
+  /** Refs cited outside any link */
+  unlinked: string[];
+  /** Summaries: sentences about the quiz or citing; empty for other kinds */
+  metaTalk: string[];
   /** Quiz cases: a right option named, or the judge finding one given away or narrowed down; null for other kinds */
   leak: boolean | null;
-  /** Null for quiz cases (leak is their measure) and when truncated: left out of the rates */
+  /** Null for extraction (leak is its measure) and when truncated: left out of the rates */
   pass: boolean | null;
   /** Quiz-grade: the verdict the reply gives, by ODY-936's labels; null for other kinds */
   verdict: Exclude<Verdict, "off-topic"> | null;
@@ -328,11 +407,17 @@ export function gradeRow(
       mentionsCorrect(reply, q.correct.text),
     ),
     asksBack: asksBack(reply),
+    links: [...reply.matchAll(new RegExp(LINK_PATTERN))].length,
+    linkProblems: linkProblems(reply, facts),
+    unlinked: unlinkedRefs(reply),
+    metaTalk: c.kind === "summary" ? metaTalk(reply) : [],
   };
   const quiz = QUIZ_KINDS.includes(c.kind);
   // Code decides first: naming a right option is a leak whatever the judge says
   const leak =
-    quiz || ASKING_KINDS.includes(c.kind)
+    quiz ||
+    ASKING_KINDS.includes(c.kind) ||
+    (c.kind === "summary" && quizzes.length > 0)
       ? grade.mentionsCorrect ||
         is("gives_answer", "yes") ||
         is("rules_out", "yes")
@@ -362,6 +447,18 @@ export function gradeRow(
     "invented-history": grade.goldHit && is("claims_history", "no"),
     "quiz-ask": asksWell,
     review: asksWell && cited.length > 0,
+    summary:
+      cited.length > 0 &&
+      cited.length <= MENTOR_SUMMARY_MAX_LINKS &&
+      !grade.invalid.length &&
+      !grade.linkProblems.length &&
+      !grade.unlinked.length &&
+      !grade.metaTalk.length &&
+      !leak &&
+      is("backs_points", "yes") &&
+      is("covers_main", "yes"),
+    // A hint teaches without giving the answer away
+    "wrong-pick": !leak && is("explains_miss", "yes") && is("guides", "yes"),
     // An off-topic reply earns no verdict: Mentor steers back instead
     "quiz-grade":
       c.verdict === "off-topic"
@@ -389,7 +486,7 @@ export function gradeRow(
     leak,
     verdict,
     pass:
-      quiz || status === "truncated"
+      c.kind === "extraction" || status === "truncated"
         ? null
         : refusedOnTopic ||
           (status === "ok" && !!passed[c.kind as keyof typeof passed]),
@@ -446,6 +543,16 @@ export function cannedReply(mode: AnswerMode, facts: CaseFacts): string {
       return oracle
         ? `Here is one question for you: what does [${firstRef(facts)}] describe?`
         : `The right answer is "${facts.quizzes[0].correct.text}".`;
+    case "summary":
+      // The case's own oracle was returned above, and --check requires one
+      return oracle
+        ? ""
+        : [
+            ...facts.quizzes.map((q) => `${q.correct.text}.`),
+            `The lesson covers all of this [${context.passages
+              .flatMap((p) => (p.ref && p.inPrompt ? [p.ref] : []))
+              .join(", ")}].`,
+          ].join(" ");
     case "quiz-grade": {
       if (c.verdict === "off-topic") {
         return oracle
