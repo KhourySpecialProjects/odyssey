@@ -234,8 +234,8 @@ export function toLearnerContext(
 
 /**
  * Lessons with a question whose latest answer in the last 30 days is wrong:
- * at most 5, newest miss first, names cut to 40. Rows of hidden droplets and
- * deleted lessons are dropped.
+ * at most 5, newest miss first, names cut to 40. Deleted lessons are dropped,
+ * and so is a question whose latest answer is in a hidden droplet.
  */
 export function recentMisses(
   rows: RecentQuizAttempt[],
