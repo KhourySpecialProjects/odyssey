@@ -304,7 +304,8 @@ rewritten). Runs are gitignored.
 
 ## 5. Results
 
-Record the chosen setup in `MENTOR_SETUP`, and here: the run's date, the
+Record the chosen setup in `MENTOR_SETUP` (lesson summaries have their own,
+`MENTOR_SUMMARY_SETUP`), and here: the run's date, the
 prompt version, the four threshold results, the cost per answer (miss, hit,
 blended at 50%) and the proposed cap. Post the same on the AI Mentor project in
 Linear, and the cap on ODY-884 and ODY-891.
@@ -383,7 +384,8 @@ the other 85 cases on haiku-medium × 2 reps (170 replies). It cost $0.82.
 - **How they changed:** summaries now state every main point and link at most
   4, each in a few words inside its sentence. Hints didn't change: the hint
   rule moved to ODY-972.
-- **Summaries run on Sonnet at high effort,** Brady's choice on 2026-11-24.
+- **Summaries run on Sonnet at high effort** (`MENTOR_SUMMARY_SETUP`), Brady's
+  choice on 2026-11-24.
   On haiku-medium (prompt `2026-11-18.7`) 1 summary in 8 gave a quiz answer
   away. Sonnet at medium effort skipped thinking on lessons with no quiz, and
   wrote its planning into the reply ("The lesson has no quiz, so I can link

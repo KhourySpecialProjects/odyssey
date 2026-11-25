@@ -24,7 +24,11 @@ import {
 import { findCachedReply } from "@/lib/mentor/cached-reply-store";
 import { buildLessonContext } from "@/lib/mentor/context";
 import type { MentorHttpError, MentorHttpErrorCode } from "@/lib/mentor/events";
-import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
+import {
+  buildMentorRequest,
+  MENTOR_SETUP,
+  MENTOR_SUMMARY_SETUP,
+} from "@/lib/mentor/prompt";
 import { getMentorSource } from "@/lib/mentor/source";
 import { isSummaryRequest } from "@/lib/mentor/summary-request";
 import {
@@ -140,10 +144,15 @@ export async function POST(request: Request): Promise<Response> {
     // A saved reply calls no model, so only Mentor's switch and the pilot can
     // refuse it.
     const ids = { dropletId: input.dropletId, lessonId: input.lessonId };
-    const reply =
+    // ODY-968: summaries run on their own setup; everything else on Mentor's
+    const setup =
       input.kind === "lesson" &&
       isSummaryRequest(input.message, { hasHistory: !!input.history?.length })
-        ? summaryReply(context, ids)
+        ? MENTOR_SUMMARY_SETUP
+        : MENTOR_SETUP;
+    const reply =
+      setup === MENTOR_SUMMARY_SETUP
+        ? summaryReply(context, ids, { setup })
         : resolved.ask.kind === "quiz-hint"
           ? hintReply(context, resolved.ask, ids)
           : null;
@@ -235,7 +244,7 @@ export async function POST(request: Request): Promise<Response> {
         await recordMentorUsage({
           user: gate.user,
           kind: input.kind,
-          model: MENTOR_SETUP.model,
+          model: setup.model,
           usage,
         });
       }
