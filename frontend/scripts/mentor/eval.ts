@@ -47,6 +47,7 @@ import {
   FULL_REPS,
   parseSetups,
   planGroups,
+  pilotCases,
   pricedContrasts,
   pricedRequests,
   runCases,
