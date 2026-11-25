@@ -23,15 +23,22 @@ import {
 } from "@/lib/mentor/cached-reply";
 import { findCachedReply } from "@/lib/mentor/cached-reply-store";
 import { buildLessonContext } from "@/lib/mentor/context";
+import type { MentorInput } from "@/lib/mentor/types";
 import type { MentorHttpError, MentorHttpErrorCode } from "@/lib/mentor/events";
+import { learnerBlock } from "@/lib/mentor/learner";
+import {
+  getLearnerContext,
+  studentAllowsPersonalization,
+} from "@/lib/mentor/learner-source";
 import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
-import { getMentorSource } from "@/lib/mentor/source";
+import { getMentorSource, type MentorSource } from "@/lib/mentor/source";
 import { isSummaryRequest } from "@/lib/mentor/summary-request";
 import {
   checkMentorAccess,
   checkMentorAllowance,
   recordMentorUsage,
 } from "@/lib/mentor/usage";
+import { getMentorSetting } from "@/lib/requests/mentor-setting";
 import { mentorRequestSchema } from "@/lib/validations/mentor";
 
 // POST /api/mentor (ODY-886): every Mentor answer, streamed as server-sent
@@ -99,6 +106,27 @@ function startNote(chat: MentorChatRow, lessonId: number): string | null {
     ? `This chat started in ${lesson} (${droplet}).`
     : "This chat started in another lesson.";
 }
+
+/** ODY-938: the learner block when both switches are on; undefined on any failure */
+async function learnerFor(
+  userId: number,
+  droplet: MentorSource["droplet"],
+): Promise<string | undefined> {
+  try {
+    const { personalize } = await getMentorSetting();
+    if (!personalize || !(await studentAllowsPersonalization(userId))) {
+      return undefined;
+    }
+    const learner = await getLearnerContext(userId, droplet);
+    return learner ? learnerBlock(learner) : undefined;
+  } catch (error) {
+    console.error("[mentor] learner block failed:", errorName(error));
+    return undefined;
+  }
+}
+
+/** Kinds that get the learner block; hints are shared saved replies, so never them */
+const PERSONALIZED_KINDS = new Set<MentorInput["kind"]>(["lesson", "explain"]);
 
 function parseJson(raw: string): unknown {
   try {
@@ -175,6 +203,12 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
+    // Runs alongside the chat lookup; learnerFor never rejects
+    const learnerPending =
+      !reply && PERSONALIZED_KINDS.has(input.kind)
+        ? learnerFor(gate.user.id, source.droplet)
+        : undefined;
+
     // ODY-937: any saved chat of this kind continues on any lesson; quiz hints are never saved
     let own: MentorChatRow | null = null;
     let chatLookupFailed = false;
@@ -187,14 +221,17 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
+    const learner = await learnerPending;
     // A reply's request is the one its key names: no note, no learner block
-    const params = reply?.params ?? buildMentorRequest(context, resolved.ask);
+    const params =
+      reply?.params ??
+      buildMentorRequest(context, resolved.ask, MENTOR_SETUP, { learner });
     const note = !reply && own && startNote(own, input.lessonId);
-    // After the cached lesson block, so the cached prefix stays the lesson's
+    // After the cached lesson and learner blocks, before the first turn
     if (note) {
       const first = params.messages[0].content;
       if (Array.isArray(first))
-        first.splice(1, 0, { type: "text", text: note });
+        first.splice(first.length - 1, 0, { type: "text", text: note });
     }
 
     if (saved && reply) console.info(`[mentor] saved reply hit, ${reply.slot}`);

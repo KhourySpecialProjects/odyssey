@@ -64,7 +64,7 @@ export const MENTOR_SYSTEM_PROMPT = [
 // Whitespace, zero-width characters and soft hyphens a tag could hide behind
 const GAP = "[\\s\\u200b-\\u200d\\u2060\\ufeff\\u00ad]*";
 const OWN_TAG = new RegExp(
-  `<${GAP}(/?)${GAP}(lesson|selection|student_message|quiz_hint)\\b`,
+  `<${GAP}(/?)${GAP}(lesson|selection|student_message|quiz_hint|learner)\\b`,
   "gi",
 );
 
@@ -129,7 +129,6 @@ export function buildMentorRequest(
     cache_control: { type: "ephemeral" },
   };
   // Not cached: it changes with the student, and the lesson's prefix doesn't.
-  // ODY-934 adds `learner` to the tags asMaterial makes harmless.
   const opening: Anthropic.TextBlockParam[] = learner
     ? [
         lesson,

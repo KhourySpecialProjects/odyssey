@@ -22,6 +22,10 @@ import { mentorClient } from "@/lib/mentor/client";
 import { buildLessonContext, citationsFor } from "@/lib/mentor/context";
 import { readMentorEvents, type MentorHttpError } from "@/lib/mentor/events";
 import { resolveMentorAsk } from "@/lib/mentor/ask";
+import {
+  getLearnerContext,
+  studentAllowsPersonalization,
+} from "@/lib/mentor/learner-source";
 import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
 import { getMentorSource, type MentorSource } from "@/lib/mentor/source";
 import { SSE_HEADERS } from "@/lib/mentor/sse";
@@ -33,6 +37,7 @@ import {
   recordMentorUsage,
   type MentorAllowance,
 } from "@/lib/mentor/usage";
+import { getMentorSetting } from "@/lib/requests/mentor-setting";
 import { fakeClaude } from "@/testing/mocks/claudeStreamMock";
 import {
   mentorText,
@@ -66,6 +71,13 @@ jest.mock("@/lib/mentor/cached-reply-store", () => ({
   findCachedReply: jest.fn(),
   storeCachedReply: jest.fn(),
 }));
+jest.mock("@/lib/mentor/learner-source", () => ({
+  studentAllowsPersonalization: jest.fn(),
+  getLearnerContext: jest.fn(),
+}));
+jest.mock("@/lib/requests/mentor-setting", () => ({
+  getMentorSetting: jest.fn(),
+}));
 jest.mock("@/lib/mentor/usage", () => ({
   checkMentorAccess: jest.fn(),
   checkMentorAllowance: jest.fn(),
@@ -83,6 +95,9 @@ const record = jest.mocked(recordMentorUsage);
 const owned = jest.mocked(ownedChat);
 const start = jest.mocked(startMentorChat);
 const save = jest.mocked(saveMentorExchange);
+const setting = jest.mocked(getMentorSetting);
+const allows = jest.mocked(studentAllowsPersonalization);
+const learnerOf = jest.mocked(getLearnerContext);
 
 const user = { id: 7, email: "s@example.invalid", roles: [] };
 const lesson = classicLesson();
@@ -166,6 +181,13 @@ beforeEach(() => {
   owned.mockResolvedValue(null);
   start.mockResolvedValue("newchat0001");
   save.mockResolvedValue(undefined);
+  setting.mockResolvedValue({
+    enabled: true,
+    personalize: false,
+    pilotGroupIds: [],
+  });
+  allows.mockResolvedValue(false);
+  learnerOf.mockResolvedValue(null);
   useClaude();
 });
 
@@ -353,6 +375,112 @@ describe("POST /api/mentor", () => {
         output_tokens: 30,
       },
     });
+  });
+
+  const LEARNER = {
+    finished: [
+      {
+        name: "SQL Basics",
+        tags: ["sql"],
+        difficulty: "Beginner",
+        month: "2026-09",
+      },
+    ],
+    inProgress: [],
+    prerequisites: [],
+    viewedLessons: [],
+  };
+  it.each<[string, boolean, boolean, "context" | "null" | "throws", boolean]>([
+    ["the switch off", false, true, "context", false],
+    ["the student not allowing it", true, false, "context", false],
+    ["both on", true, true, "context", true],
+    ["both on but no learner context", true, true, "null", false],
+    ["the learner fetch throwing", true, true, "throws", false],
+  ])(
+    "the learner block, with %s",
+    async (_, personalize, studentAllows, result, sent) => {
+      setting.mockResolvedValue({
+        enabled: true,
+        personalize,
+        pilotGroupIds: [],
+      });
+      allows.mockResolvedValue(studentAllows);
+      if (result === "throws") learnerOf.mockRejectedValue(new Error("down"));
+      else learnerOf.mockResolvedValue(result === "null" ? null : LEARNER);
+      const response = await post({ ...ask(), userId: 99 });
+      expect(response.status).toBe(200);
+      await readAllMentorEvents(response.body!);
+      const content = JSON.parse(claude.calls[0].body).messages[0].content;
+      expect(content).toHaveLength(sent ? 3 : 2);
+      if (sent) expect(content[1].text).toMatch(/^<learner>[\s\S]*SQL Basics/);
+      // The cache breakpoint stays on the lesson; the learner block has none
+      expect(content[0].cache_control).toEqual({ type: "ephemeral" });
+      if (sent) expect(content[1].cache_control).toBeUndefined();
+      // The id comes from the session, not the body
+      if (personalize) expect(allows).toHaveBeenCalledWith(user.id);
+      else expect(allows).not.toHaveBeenCalled();
+      if (personalize && studentAllows) {
+        expect(learnerOf).toHaveBeenCalledWith(user.id, expect.anything());
+        expect(learnerOf).toHaveBeenCalledTimes(1);
+      } else expect(learnerOf).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["no history", undefined, "What does an index do?"],
+    [
+      "earlier turns",
+      [
+        { role: "student", text: "What is a table?" },
+        { role: "mentor", text: "Rows and columns [p2]." },
+      ],
+      "What is a table?",
+    ],
+  ])(
+    "puts a start note after the learner block, before the first turn (%s)",
+    async (_, history, firstTurn) => {
+      setting.mockResolvedValue({
+        enabled: true,
+        personalize: true,
+        pilotGroupIds: [],
+      });
+      allows.mockResolvedValue(true);
+      learnerOf.mockResolvedValue(LEARNER);
+      owned.mockResolvedValue({
+        documentId: "ownedchat01",
+        kind: "lesson",
+        lesson: { id: lesson.id + 1, name: "Joins" },
+        droplet: { id: 4, name: "SQL basics" },
+      } as never);
+      const response = await post(ask({ chatId: "ownedchat01", history }));
+      await readAllMentorEvents(response.body!);
+      const content = JSON.parse(claude.calls[0].body).messages[0].content;
+      expect(content.map((b: { text: string }) => b.text.slice(0, 9))).toEqual([
+        "<lesson>\n",
+        "<learner>",
+        "This chat",
+        "<student_",
+      ]);
+      expect(content[3].text).toContain(firstTurn);
+    },
+  );
+
+  it.each([
+    ["a summary", () => ask({ message: "Summarize this lesson" })],
+    ["a quiz hint", () => hint(41, 413)],
+  ])("sends no learner block, and fetches none, for %s", async (_, body) => {
+    setting.mockResolvedValue({
+      enabled: true,
+      personalize: true,
+      pilotGroupIds: [],
+    });
+    allows.mockResolvedValue(true);
+    learnerOf.mockResolvedValue(LEARNER);
+    const response = await post(body());
+    expect(response.status).toBe(200);
+    await readAllMentorEvents(response.body!);
+    expect(claude.calls[0].body).not.toContain("<learner>");
+    expect(learnerOf).not.toHaveBeenCalled();
   });
 
   it.each([
