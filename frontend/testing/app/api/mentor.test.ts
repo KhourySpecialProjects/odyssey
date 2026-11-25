@@ -22,7 +22,11 @@ import { mentorClient } from "@/lib/mentor/client";
 import { buildLessonContext, citationsFor } from "@/lib/mentor/context";
 import { readMentorEvents, type MentorHttpError } from "@/lib/mentor/events";
 import { resolveMentorAsk } from "@/lib/mentor/ask";
-import { buildMentorRequest, MENTOR_SETUP } from "@/lib/mentor/prompt";
+import {
+  buildMentorRequest,
+  MENTOR_SETUP,
+  MENTOR_SUMMARY_SETUP,
+} from "@/lib/mentor/prompt";
 import { getMentorSource, type MentorSource } from "@/lib/mentor/source";
 import { SSE_HEADERS } from "@/lib/mentor/sse";
 import { summaryRequest } from "@/lib/mentor/summary-request";
@@ -601,14 +605,18 @@ describe("POST /api/mentor", () => {
     const SUMMARY = "Summarize this lesson";
     const ids = { dropletId: 5, lessonId: lesson.id };
     const context = () => buildLessonContext(lesson, sourceOf().droplet);
-    const key = () => summaryReply(context(), ids).key;
+    const reply = () =>
+      summaryReply(context(), ids, { setup: MENTOR_SUMMARY_SETUP });
+    const key = () => reply().key;
     /** The whole body Claude was sent, minus `stream` */
     const sentRequest = () => {
       const { stream: _stream, ...body } = JSON.parse(claude.calls[0].body);
       return body;
     };
     const canonical = () =>
-      JSON.parse(JSON.stringify(summaryRequest(context())));
+      JSON.parse(
+        JSON.stringify(summaryRequest(context(), MENTOR_SUMMARY_SETUP)),
+      );
     /** What today's route sends for this body: no saved reply involved */
     const normal = (body: Record<string, unknown>) => {
       const resolved = resolveMentorAsk(lesson, context(), body as never);
@@ -754,13 +762,18 @@ describe("POST /api/mentor", () => {
         expect(allowance).toHaveBeenCalledWith(user);
         expect(access).not.toHaveBeenCalled();
         expect(sentRequest()).toEqual(canonical());
-        expect(record).toHaveBeenCalledWith(
-          expect.objectContaining({ kind: "lesson" }),
-        );
-        expect(store).toHaveBeenCalledWith({
-          ...summaryReply(context(), ids).row,
-          text: SAVED,
+        // On Sonnet at high effort, and its usage says so (ODY-968)
+        expect(sentRequest()).toMatchObject({
+          model: "claude-sonnet-5-5",
+          output_config: { effort: "high" },
         });
+        expect(record).toHaveBeenCalledWith(
+          expect.objectContaining({
+            kind: "lesson",
+            model: "claude-sonnet-5-5",
+          }),
+        );
+        expect(store).toHaveBeenCalledWith({ ...reply().row, text: SAVED });
       });
 
       it("stores nothing when Claude refuses", async () => {
@@ -938,7 +951,10 @@ describe("POST /api/mentor", () => {
           expect(claude.calls).toHaveLength(1);
           expect(sentRequest()).toEqual(normal(hint(41, 413)));
           expect(record).toHaveBeenCalledWith(
-            expect.objectContaining({ kind: "quiz-hint" }),
+            expect.objectContaining({
+              kind: "quiz-hint",
+              model: MENTOR_SETUP.model,
+            }),
           );
           expect(start).not.toHaveBeenCalled();
           expect(save).not.toHaveBeenCalled();

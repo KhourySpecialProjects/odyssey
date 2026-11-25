@@ -37,6 +37,18 @@ export const MENTOR_SETUP: MentorSetup = {
   effort: "medium",
 };
 
+/**
+ * Lesson summaries' setup, from ODY-968's after run (prompt 2026-11-24.5; see
+ * scripts/mentor/README.md). Haiku gave a quiz answer away in about 1 summary
+ * in 8, and Sonnet at medium effort skipped thinking on lessons without a quiz.
+ * Sonnet at high effort thinks first and gave none away. ODY-967 saves a
+ * summary once per lesson version, so it costs about $0.02 once per lesson.
+ */
+export const MENTOR_SUMMARY_SETUP: MentorSetup = {
+  model: "claude-sonnet-5-5",
+  effort: "high",
+};
+
 /** Thinking counts against it; answers are about 120 words */
 export const MENTOR_MAX_TOKENS = 4000;
 
