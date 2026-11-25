@@ -118,3 +118,26 @@ export async function purgeExpiredQuizAttempts(now = new Date()): Promise<{ atte
   }
   return { attempts };
 }
+
+const RECENT_MAX = 500;
+
+/** The student's attempts from the retention window, newest first; never submitId or attempt */
+export async function recentQuizAttempts(userId: number, now = new Date()) {
+  const rows = (await strapi.documents(QUIZ_ATTEMPT_UID).findMany({
+    filters: { user: { id: userId }, createdAt: { $gte: retentionCutoff(now) } },
+    sort: ['createdAt:desc', 'id:desc'],
+    limit: RECENT_MAX,
+    fields: ['quizType', 'questionId', 'correct', 'createdAt'],
+    populate: { lesson: { fields: ['name'] }, droplet: { fields: ['status', 'isHidden'] } },
+  } as any)) as Row[];
+  return rows.map((row) => ({
+    quizType: row.quizType as QuizType,
+    questionId: Number(row.questionId),
+    correct: row.correct as boolean,
+    createdAt: row.createdAt as string,
+    lesson: row.lesson ? { id: Number(row.lesson.id), name: row.lesson.name as string } : null,
+    droplet: row.droplet
+      ? { id: Number(row.droplet.id), status: row.droplet.status as string, isHidden: row.droplet.isHidden as boolean }
+      : null,
+  }));
+}

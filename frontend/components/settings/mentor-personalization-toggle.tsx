@@ -52,9 +52,10 @@ export function MentorPersonalizationToggle({
         className="text-sm text-gray-600 dark:text-slate-300"
       >
         Mentor uses the droplets you&apos;ve finished and are working on,
-        whether you&apos;ve finished this droplet&apos;s prerequisites, and
-        which lessons you&apos;ve viewed to tailor its answers. Turn this off
-        and Mentor answers everyone the same way. Saved automatically.
+        whether you&apos;ve finished this droplet&apos;s prerequisites, which
+        lessons you&apos;ve viewed, and the lesson quizzes you&apos;ve recently
+        missed, to tailor its answers. Turn this off and Mentor answers everyone
+        the same way. Saved automatically.
       </p>
     </div>
   );

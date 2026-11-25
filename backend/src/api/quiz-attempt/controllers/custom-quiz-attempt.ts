@@ -1,5 +1,11 @@
-import { QuizAttemptError, QUIZ_TYPES, recordQuizAttempt, type QuizType } from '../../../lib/quiz-attempt';
-import { fail, parseBody } from '../../../lib/route-body';
+import {
+  QuizAttemptError,
+  QUIZ_TYPES,
+  recentQuizAttempts,
+  recordQuizAttempt,
+  type QuizType,
+} from '../../../lib/quiz-attempt';
+import { fail, isRowId, parseBody } from '../../../lib/route-body';
 
 const KEYS = ['userId', 'lessonId', 'dropletId', 'quizType', 'questionId', 'correct', 'submitId'];
 const MAX_QUESTION_ID = 2147483648; // Math.abs of a 32-bit hash
@@ -46,6 +52,22 @@ export default {
       const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       strapi.log.error(`Failed to record quiz attempt: ${detail}`);
       return fail(ctx, 500, 'Failed to record quiz attempt.');
+    }
+  },
+
+  async recent(ctx) {
+    const query = (ctx.query ?? {}) as Record<string, unknown>;
+    const extra = Object.keys(query).find((key) => key !== 'userId');
+    if (extra) return fail(ctx, 400, `Invalid key ${extra}`);
+    const userId = typeof query.userId === 'string' && /^\d{1,10}$/.test(query.userId) ? Number(query.userId) : null;
+    if (!isRowId(userId)) return fail(ctx, 400, 'userId must be a positive integer');
+
+    try {
+      ctx.body = { data: await recentQuizAttempts(userId) };
+    } catch (err) {
+      const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      strapi.log.error(`Failed to read recent quiz attempts: ${detail}`);
+      return fail(ctx, 500, 'Failed to read recent quiz attempts.');
     }
   },
 };

@@ -479,6 +479,7 @@ export const MODULE_PATHS: Record<string, string> = {
   "mentor-chats": "@/lib/requests/mentor-chats",
   "mentor-setting": "@/lib/requests/mentor-setting",
   "quiz-attempt": "@/lib/requests/quiz-attempt",
+  "quiz-attempts-recent": "@/lib/requests/quiz-attempts-recent",
   notes: "@/lib/requests/notes",
   "playlist-enrollment": "@/lib/requests/playlist-enrollment",
   playlist: "@/lib/requests/playlist",
@@ -1124,6 +1125,10 @@ export const SKIPPED: Record<string, Record<string, string>> = {
   "mentor-feedback": {
     saveMentorFeedback:
       "custom route POST /mentor-feedbacks/record, not a v4 entry (ODY-890)",
+  },
+  "quiz-attempts-recent": {
+    getRecentQuizAttempts:
+      "service-token route GET /quiz-attempts/recent, covered by testing/requests (ODY-939)",
   },
   "quiz-attempt": {
     recordQuizAttempt:

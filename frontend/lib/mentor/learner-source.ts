@@ -1,6 +1,11 @@
 import "server-only";
-import { toLearnerContext, type LearnerContext } from "@/lib/mentor/learner";
+import {
+  recentMisses,
+  toLearnerContext,
+  type LearnerContext,
+} from "@/lib/mentor/learner";
 import { getLearnerEnrollments } from "@/lib/requests/learner-enrollments";
+import { getRecentQuizAttempts } from "@/lib/requests/quiz-attempts-recent";
 import type { MentorSource } from "./source";
 
 /** Whether the student allows personalization; false until ODY-935 swaps this body or re-exports its function. */
@@ -20,7 +25,19 @@ export async function getLearnerContext(
   droplet: Pick<MentorSource["droplet"], "id" | "prerequisites">,
 ): Promise<LearnerContext | null> {
   try {
-    return toLearnerContext(await getLearnerEnrollments(userId), droplet);
+    const [rows, attempts] = await Promise.all([
+      getLearnerEnrollments(userId),
+      getRecentQuizAttempts(userId),
+    ]);
+    const context = toLearnerContext(rows, droplet);
+    // A failed fetch or a malformed row only leaves the line out
+    let recentlyMissed: LearnerContext["recentlyMissed"] = [];
+    try {
+      recentlyMissed = attempts ? recentMisses(attempts) : [];
+    } catch (e) {
+      console.warn("mentor recent misses failed", (e as Error).message);
+    }
+    return recentlyMissed?.length ? { ...context, recentlyMissed } : context;
   } catch (e) {
     console.warn("mentor learner context failed", (e as Error).message);
     return null;
