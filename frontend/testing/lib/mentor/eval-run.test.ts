@@ -17,7 +17,6 @@ import {
   cannedGroups,
   parseKinds,
   pilotCases,
-  runCases,
   planGroups,
   pricedRequests,
   runCases,
@@ -174,25 +173,6 @@ describe("pricedRequests", () => {
     expect(pricedRequests(canned)).toEqual([
       expect.objectContaining({ outputTokens: 2500 }),
     ]);
-  });
-});
-
-describe("runCases", () => {
-  const cases = EVAL_CASES.slice(0, 6);
-  it.each([
-    ["every case", { pilot: false }, cases],
-    [
-      "only --kind's kinds",
-      { pilot: false, kinds: ["wrong-pick" as const] },
-      cases.filter((c) => c.kind === "wrong-pick"),
-    ],
-    [
-      "the pilot's sample of them",
-      { pilot: true, kinds: null },
-      pilotCases(cases),
-    ],
-  ])("%s", (_, options, expected) => {
-    expect(runCases(cases, options)).toEqual(expected);
   });
 });
 

@@ -175,9 +175,9 @@ cited most of the lesson (one Sources chip per passage, with nothing saying
 which point came from where), and a wrong-answer hint said the pick didn't fit
 without saying what it misses.
 
-| Kind      | Input today, and its fields                                                            | Code checks                                                                                                  | Judge asks                                                 | Passes when                                                                                |
-| --------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `summary` | "Summarize this lesson" (the chip's text, or the student's own words), and an `oracle` | A citation; no invalid ref, link problem or ref outside a link; right options named, on a lesson with a quiz | `backs_points`, `covers_main`, `gives_answer`, `rules_out` | Cited, none of those code problems, no leak, and a yes to `backs_points` and `covers_main` |
+| Kind      | Input today, and its fields                                                            | Code checks                                                                                                                               | Judge asks                                                 | Passes when                                                                                |
+| --------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `summary` | "Summarize this lesson" (the chip's text, or the student's own words), and an `oracle` | A citation; no invalid ref, link problem, ref outside a link, or talk of the quiz or citing; right options named, on a lesson with a quiz | `backs_points`, `covers_main`, `gives_answer`, `rules_out` | Cited, none of those code problems, no leak, and a yes to `backs_points` and `covers_main` |
 
 - **Linked text.** Mentor writes a summary's main points as `[the words][p3]`:
   a few words, then one ref, with no space between. A link problem is empty
@@ -336,7 +336,7 @@ and review have no threshold yet, so read them there.
    ```
 
 `--setup haiku-low` (repeatable) runs only some of `haiku-low`, `haiku-medium`,
-`haiku-high`, `sonnet-low` and `sonnet-medium`. `--kind personalized`
+`haiku-high`, `sonnet-low`, `sonnet-medium` and `sonnet-high`. `--kind personalized`
 (repeatable) keeps only those kinds, for a cheap iteration run, for example
 `--kind personalized --kind invented-history --setup haiku-medium --reps 1`.
 `--twins <name>` or `--twins none` picks the twin profile (default

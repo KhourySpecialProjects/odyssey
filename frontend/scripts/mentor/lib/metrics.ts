@@ -87,8 +87,6 @@ export type RunMeta = {
   setups: string[];
   reps: number;
   pilot: boolean;
-  /** --kind: only these kinds; null or missing for all */
-  kinds?: CaseKind[] | null;
   answers: AnswerMode | null;
   /** How many cases this run asks, for each setup and rep */
   cases: number;
