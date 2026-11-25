@@ -22,7 +22,7 @@ import type { LessonContext } from "./types";
  */
 
 /** Bump on any change to the wording or the request's shape */
-export const MENTOR_PROMPT_VERSION = "2026-11-23.4";
+export const MENTOR_PROMPT_VERSION = "2026-11-25.1";
 
 export const MENTOR_MODELS = [
   "claude-haiku-5-5",

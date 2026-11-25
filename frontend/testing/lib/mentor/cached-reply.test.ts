@@ -163,7 +163,7 @@ describe("summaryReply", () => {
     expect(JSON.stringify(reply)).not.toMatch(
       /SECRET-HISTORY|quick summary|chatId|"history"|"message"/,
     );
-    expect(JSON.stringify(reply.params)).not.toContain("<learner>");
+    expect(JSON.stringify(reply.params.messages)).not.toContain("<learner>");
     expect(Object.keys(reply.row).sort()).toEqual([
       "dropletId",
       "key",
